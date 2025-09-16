@@ -64,15 +64,16 @@ const Hero = () => {
             
             <FloatingCards variants={containerVariants} initial="hidden" animate="visible">
               {floatingCards.map((card, index) => (
-                <FloatingCard 
+                <FloatingCardWrap
                   key={index}
                   className={card.position}
-                  style={{ ['--rot' as any]: `${card.rotate || 0}deg` }}
+                  style={{ ['--rot' as any]: `${card.rotate || 0}deg`, ['--dur' as any]: `${6 + (index % 4) * 0.3}s` }}
                   variants={itemVariants}
-                  whileHover={{ scale: 1.05 }}
                 >
-                  {card.text}
-                </FloatingCard>
+                  <FloatingCard whileHover={{ scale: 1.05 }}>
+                    {card.text}
+                  </FloatingCard>
+                </FloatingCardWrap>
               ))}
             </FloatingCards>
           </ImageContainer>
@@ -233,11 +234,14 @@ const FloatingCards = styled(motion.div)`
   pointer-events: none;
 `;
 
-const FloatingCard = styled(motion.div)`
+const FloatingCardWrap = styled(motion.div)`
   position: absolute;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  animation: card-bob var(--dur, 6s) ease-in-out infinite;
+  will-change: transform;
+
+  background: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 100%);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 1.5rem;
   padding: 1.5rem 2.5rem;
   font-size: 1.4rem;
@@ -245,34 +249,38 @@ const FloatingCard = styled(motion.div)`
   color: var(--white);
   text-align: center;
   pointer-events: auto;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 250ms ease, box-shadow 250ms ease, background 250ms ease, border-color 250ms ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 30px rgba(0, 0, 0, 0.25);
   z-index: 2;
-  will-change: transform, opacity;
-  animation: card-bob var(----dur, 6s) ease-in-out infinite;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 100%);
+    opacity: 0.6;
+  }
 
   &.top-left {
     top: 4rem;
     left: -2rem;
-    transform: rotate(-6deg);
   }
 
   &.bottom-left {
     bottom: 8rem;
     left: 2rem;
-    transform: rotate(4deg);
   }
 
   &.top-right {
     top: 6rem;
     right: 2rem;
-    transform: rotate(5deg);
   }
 
   &.bottom-right {
     bottom: 4rem;
     right: -1rem;
-    transform: rotate(-4deg);
   }
 
   @media (max-width: 768px) {
@@ -281,7 +289,6 @@ const FloatingCard = styled(motion.div)`
     
     &.top-left, &.bottom-left, &.top-right, &.bottom-right {
       position: static;
-      transform: none;
       margin: 1rem 0;
       display: inline-block;
     }
@@ -294,8 +301,12 @@ const FloatingCard = styled(motion.div)`
   
   &:hover {
     transform: translateY(-4px) scale(1.05) rotate(var(--rot, 0deg));
-    box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 16px 32px rgba(0,0,0,0.35);
   }
+`;
+
+const FloatingCard = styled(motion.div)`
+  pointer-events: auto;
 `;
 
 export default Hero;
