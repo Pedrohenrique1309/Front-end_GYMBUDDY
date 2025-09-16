@@ -7,6 +7,7 @@ import { BRAND } from '../../config/branding';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -32,14 +33,14 @@ const Header = () => {
     <HeaderContainer $scrolled={scrolled}>
       <div className="container">
         <Logo>
-          <img
-            src={BRAND.logoSrc}
-            alt={BRAND.name}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-          <FaDumbbell className="fallback" />
+          {!logoError && (
+            <img
+              src={BRAND.logoSrc}
+              alt={BRAND.name}
+              onError={() => setLogoError(true)}
+            />
+          )}
+          {logoError && <FaDumbbell className="fallback" />}
           <span>{BRAND.name}</span>
         </Logo>
         
@@ -109,6 +110,7 @@ const Logo = styled.div`
   font-size: 2.4rem;
   font-weight: 700;
   color: var(--white);
+  margin-left: calc(-1 * var(--gutter));
   
   .fallback {
     color: var(--primary);
