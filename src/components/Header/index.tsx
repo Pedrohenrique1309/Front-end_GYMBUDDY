@@ -6,11 +6,13 @@ import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
 import LoginPopup from '../LoginPopup';
+import SignupPopup from '../SignupPopup';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [showSignupPopup, setShowSignupPopup] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -68,7 +70,7 @@ const Header = () => {
         
         <AuthButtons>
           <LoginButton onClick={() => setShowLoginPopup(true)}>Login</LoginButton>
-          <SignUpButton>Cadastro</SignUpButton>
+          <SignUpButton onClick={() => setShowSignupPopup(true)}>Cadastro</SignUpButton>
         </AuthButtons>
         
         <ThemeToggle 
@@ -83,6 +85,11 @@ const Header = () => {
       <LoginPopup 
         isOpen={showLoginPopup} 
         onClose={() => setShowLoginPopup(false)} 
+      />
+      
+      <SignupPopup 
+        isOpen={showSignupPopup} 
+        onClose={() => setShowSignupPopup(false)} 
       />
     </HeaderContainer>
   );
