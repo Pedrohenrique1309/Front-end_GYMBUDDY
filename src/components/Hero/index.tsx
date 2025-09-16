@@ -66,14 +66,25 @@ const Hero = () => {
             <FloatingCards variants={containerVariants} initial="hidden" animate="visible">
               {floatingCards.map((card, index) => (
                 <FloatingCardWrap
-                  key={index}
+                  key={card.id}
                   className={card.position}
-                  style={{ ['--rot' as any]: `${card.rotate || 0}deg`, ['--dur' as any]: `${6 + (index % 4) * 0.3}s` }}
+                  style={{ 
+                    ['--rot' as any]: `${card.rotate || 0}deg`, 
+                    ['--dur' as any]: `${6 + (index % 5) * 0.2}s`,
+                    zIndex: card.zIndex
+                  }}
                   variants={itemVariants}
                   whileHover={{ scale: 1.05 }}
                 >
                   <FloatingCard>
-                    {card.text}
+                    <div className="card-header">
+                      <span className="category">{card.category}</span>
+                    </div>
+                    <div className="card-stat">{card.stat}</div>
+                    <div className="card-content">
+                      <h3 className="card-title">{card.title}</h3>
+                      <p className="card-description">{card.description}</p>
+                    </div>
                   </FloatingCard>
                 </FloatingCardWrap>
               ))}
@@ -244,12 +255,14 @@ const FloatingCardWrap = styled(motion.div)`
   animation: card-bob var(--dur, 6s) ease-in-out infinite;
   will-change: transform;
 
-  /* Dog tag / medalhão style */
-  background: linear-gradient(165deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%);
-  backdrop-filter: blur(14px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 2.4rem; /* capsule corners */
-  padding: 1.3rem 2.4rem;
+  /* Info card style */
+  background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.8rem;
+  padding: 2rem 2.4rem;
+  min-width: 24rem;
+  min-height: 18rem;
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--white);
@@ -274,23 +287,29 @@ const FloatingCardWrap = styled(motion.div)`
   }
 
   &.top-left {
-    top: 4rem;
-    left: -2rem;
+    top: 2rem;
+    left: -3rem;
   }
 
   &.bottom-left {
-    bottom: 8rem;
-    left: 2rem;
+    bottom: 6rem;
+    left: 1rem;
   }
 
   &.top-right {
-    top: 6rem;
-    right: 2rem;
+    top: 4rem;
+    right: 1rem;
   }
 
   &.bottom-right {
-    bottom: 4rem;
-    right: -1rem;
+    bottom: 2rem;
+    right: -2rem;
+  }
+
+  &.center-back {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
   }
 
   @media (max-width: 768px) {
@@ -320,8 +339,54 @@ const FloatingCardWrap = styled(motion.div)`
 
 const FloatingCard = styled(motion.div)`
   pointer-events: auto;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.35);
-  letter-spacing: 0.02em;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .category {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .card-stat {
+    font-size: 3.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  .card-content {
+    flex: 1;
+  }
+  
+  .card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.8rem;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  
+  .card-description {
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.4;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
 `;
 
 export default Hero;

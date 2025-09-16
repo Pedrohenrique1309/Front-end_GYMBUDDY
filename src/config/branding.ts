@@ -4,12 +4,58 @@ export const BRAND = {
   logoSrc: '/icon-hand-dumbbell-red.png',
   // Imagem do herói: coloque em /public e ajuste aqui se necessário
   heroSrc: '/hero-image.png',
-  // Títulos dos cards (ajuste conforme o protótipo)
+  // Cards informativos com dados ficticios
   floatingCards: [
-    { text: 'INTELIGÊNCIA ARTIFICIAL', position: 'top-left', rotate: -10 },
-    { text: 'SEU PARCEIRO DE ACADEMIA', position: 'bottom-left', rotate: 10 },
-    { text: 'GRATUITO', position: 'top-right', rotate: 10 },
-    { text: 'SEU OBJETIVO VEM EM PRIMEIRO LUGAR', position: 'bottom-right', rotate: -10 },
+    {
+      id: 'progress',
+      position: 'top-left',
+      rotate: -8,
+      zIndex: 3,
+      stat: '87%',
+      title: 'Progresso Mensal',
+      description: 'usuários atingem suas metas de treino com nosso sistema de acompanhamento personalizado.',
+      category: 'Resultados'
+    },
+    {
+      id: 'users',
+      position: 'top-right',
+      rotate: 12,
+      zIndex: 1,
+      stat: '15k+',
+      title: 'Usuários Ativos',
+      description: 'pessoas já transformaram seus corpos usando nossa plataforma de treinos inteligentes.',
+      category: 'Comunidade'
+    },
+    {
+      id: 'workouts',
+      position: 'bottom-left',
+      rotate: 6,
+      zIndex: 2,
+      stat: '200+',
+      title: 'Exercícios Disponíveis',
+      description: 'diferentes modalidades de treino adaptadas ao seu nível e objetivos pessoais.',
+      category: 'Variedade'
+    },
+    {
+      id: 'ai',
+      position: 'bottom-right',
+      rotate: -15,
+      zIndex: 4,
+      stat: '24/7',
+      title: 'IA Personal Trainer',
+      description: 'assistente inteligente disponível para ajustar seus treinos em tempo real.',
+      category: 'Tecnologia'
+    },
+    {
+      id: 'nutrition',
+      position: 'center-back',
+      rotate: 3,
+      zIndex: 0,
+      stat: '95%',
+      title: 'Planos Nutricionais',
+      description: 'dos usuários relatam melhora na alimentação com nossas sugestões personalizadas.',
+      category: 'Nutrição'
+    }
   ],
 } as const;
 
