@@ -354,6 +354,7 @@ const FixedCTA = styled(motion.button)`
     position: relative;
     width: var(--arrow-size);
     height: var(--arrow-size);
+    margin-left: -4px; /* slight left nudge */
   }
   .arrows .a1,
   .arrows .a2,
@@ -373,9 +374,9 @@ const FixedCTA = styled(motion.button)`
     box-shadow: 0 0 20px rgba(227, 6, 19, 0.6);
     
     /* staggered separation */
-    .arrows .a1 { transform: translateX(3px); transition-delay: 0s; }
-    .arrows .a2 { transform: translateX(6px); transition-delay: 0.1s; }
-    .arrows .a3 { transform: translateX(9px); transition-delay: 0.2s; }
+    .arrows .a1 { transform: translateX(10px); transition-delay: 0s; }
+    .arrows .a2 { transform: translateX(20px); transition-delay: 0.1s; }
+    .arrows .a3 { transform: translateX(30px); transition-delay: 0.2s; }
   }
   
   @media (max-width: 480px) {

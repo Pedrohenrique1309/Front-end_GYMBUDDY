@@ -164,10 +164,10 @@ const AuthButtons = styled.div`
 `;
 
 const Button = styled.button`
-  height: 3.6rem;
-  padding: 0 1.8rem;
-  border-radius: 1.8rem;
-  font-size: 1.3rem;
+  height: 4.4rem;
+  padding: 0 2.4rem;
+  border-radius: 2.2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   transition: all 0.2s ease;
 `;
