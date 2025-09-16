@@ -325,7 +325,7 @@ const FixedCTA = styled(motion.button)`
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.6rem;
   
   .arrows {
     display: inline-flex;
@@ -345,8 +345,8 @@ const FixedCTA = styled(motion.button)`
   .arrows svg:nth-child(3) { opacity: 1; }
   
   /* Initial tighter spacing (overlap) */
-  .arrows svg:nth-child(2) { margin-left: -8px; }
-  .arrows svg:nth-child(3) { margin-left: -16px; }
+  .arrows svg:nth-child(2) { margin-left: -12px; }
+  .arrows svg:nth-child(3) { margin-left: -24px; }
   
   &:hover {
     background: var(--primary-dark);
