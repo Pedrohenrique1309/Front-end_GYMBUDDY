@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
+import { FiChevronRight } from 'react-icons/fi';
 
 const Hero = () => {
   const floatingCards = BRAND.floatingCards;
@@ -83,7 +84,12 @@ const Hero = () => {
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.96 }}
           >
-            Vamos começar
+            <span className="label">Vamos começar</span>
+            <span className="arrows" aria-hidden="true">
+              <FiChevronRight />
+              <FiChevronRight />
+              <FiChevronRight />
+            </span>
           </FixedCTA>
         </Content>
       </div>
@@ -317,10 +323,33 @@ const FixedCTA = styled(motion.button)`
   box-shadow: 0 12px 28px rgba(227, 6, 19, 0.35);
   letter-spacing: 0.02em;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  
+  .arrows {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+  
+  .arrows svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .arrows svg:nth-child(1) { opacity: 0.75; }
+  .arrows svg:nth-child(2) { opacity: 0.9; }
+  .arrows svg:nth-child(3) { opacity: 1; }
   
   &:hover {
     background: var(--primary-dark);
     box-shadow: 0 16px 36px rgba(227, 6, 19, 0.42);
+    
+    .arrows svg:nth-child(1) { transform: translateX(2px); }
+    .arrows svg:nth-child(2) { transform: translateX(4px); }
+    .arrows svg:nth-child(3) { transform: translateX(6px); }
   }
   
   @media (max-width: 480px) {

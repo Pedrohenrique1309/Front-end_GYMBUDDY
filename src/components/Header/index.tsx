@@ -7,7 +7,6 @@ import { BRAND } from '../../config/branding';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [logoError, setLogoError] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -33,14 +32,7 @@ const Header = () => {
     <HeaderContainer $scrolled={scrolled}>
       <div className="container">
         <Logo>
-          {!logoError && (
-            <img
-              src={BRAND.logoSrc}
-              alt={BRAND.name}
-              onError={() => setLogoError(true)}
-            />
-          )}
-          {logoError && <FaDumbbell className="fallback" />}
+          <FaDumbbell className="icon" />
           <span>{BRAND.name}</span>
         </Logo>
         
@@ -100,6 +92,7 @@ const HeaderContainer = styled.header<{ $scrolled: boolean }>`
     justify-content: space-between;
     align-items: center;
     height: 100%;
+    padding-left: 0; /* flush left for header only */
   }
 `;
 
@@ -110,18 +103,13 @@ const Logo = styled.div`
   font-size: 2.4rem;
   font-weight: 700;
   color: var(--white);
-  margin-left: calc(-1 * var(--gutter));
+  margin-left: 0;
   
-  .fallback {
+  .icon {
     color: var(--primary);
     font-size: 2.8rem;
   }
 
-  img {
-    height: 2.8rem;
-    width: auto;
-    display: block;
-  }
 `;
 
 const Nav = styled.nav`
