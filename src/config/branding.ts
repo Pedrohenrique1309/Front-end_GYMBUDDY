@@ -3,7 +3,7 @@ export const BRAND = {
   // Coloque sua logo em /public/logo.png (ou ajuste o caminho abaixo)
   logoSrc: '/icon-hand-dumbbell-red.png',
   // Imagem do herói: coloque em /public e ajuste aqui se necessário
-  heroSrc: '/muscle-man.png',
+  heroSrc: '/hero-image.png',
   // Títulos dos cards (ajuste conforme o protótipo)
   floatingCards: [
     { text: 'INTELIGÊNCIA ARTIFICIAL', position: 'top-left', rotate: -10 },

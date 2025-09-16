@@ -56,7 +56,7 @@ const Hero = () => {
               className="hero-image"
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement;
-                if (img.src.includes('Sem%20t%C3%ADtulo.png') || img.src.includes('Sem título.png') || img.src.includes('hero.png')) {
+                if (!img.src.endsWith('/hero-image.png')) {
                   img.src = '/hero-image.png';
                 }
               }}
