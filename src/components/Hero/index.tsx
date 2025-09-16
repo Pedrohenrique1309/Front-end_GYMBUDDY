@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
+import { FiChevronRight } from 'react-icons/fi';
 
 const Hero = () => {
   const floatingCards = BRAND.floatingCards;
@@ -69,8 +70,9 @@ const Hero = () => {
                   className={card.position}
                   style={{ ['--rot' as any]: `${card.rotate || 0}deg`, ['--dur' as any]: `${6 + (index % 4) * 0.3}s` }}
                   variants={itemVariants}
+                  whileHover={{ scale: 1.05 }}
                 >
-                  <FloatingCard whileHover={{ scale: 1.05 }}>
+                  <FloatingCard>
                     {card.text}
                   </FloatingCard>
                 </FloatingCardWrap>
@@ -81,10 +83,13 @@ const Hero = () => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.96 }}
           >
-            Vamos começar
+            <span className="label">Vamos começar</span>
+            <span className="arrows" aria-hidden="true">
+              <FiChevronRight className="a1" />
+              <FiChevronRight className="a2" />
+              <FiChevronRight className="a3" />
+            </span>
           </FixedCTA>
         </Content>
       </div>
@@ -239,18 +244,22 @@ const FloatingCardWrap = styled(motion.div)`
   animation: card-bob var(--dur, 6s) ease-in-out infinite;
   will-change: transform;
 
-  background: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 100%);
-  backdrop-filter: blur(12px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 1.5rem;
-  padding: 1.5rem 2.5rem;
+  /* Dog tag / medalhão style */
+  background: linear-gradient(165deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 2.4rem; /* capsule corners */
+  padding: 1.3rem 2.4rem;
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--white);
   text-align: center;
   pointer-events: auto;
   transition: transform 250ms ease, box-shadow 250ms ease, background 250ms ease, border-color 250ms ease;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.25),
+    0 12px 32px rgba(0,0,0,0.28);
   z-index: 2;
   
   &::after {
@@ -259,8 +268,9 @@ const FloatingCardWrap = styled(motion.div)`
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 100%);
-    opacity: 0.6;
+    /* Shine band */
+    background: linear-gradient(110deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0) 60%);
+    opacity: 0.5;
   }
 
   &.top-left {
@@ -301,12 +311,17 @@ const FloatingCardWrap = styled(motion.div)`
   
   &:hover {
     transform: translateY(-4px) scale(1.05) rotate(var(--rot, 0deg));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 16px 32px rgba(0,0,0,0.35);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.26),
+      inset 0 -1px 0 rgba(0,0,0,0.3),
+      0 18px 36px rgba(0,0,0,0.35);
   }
 `;
 
 const FloatingCard = styled(motion.div)`
   pointer-events: auto;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  letter-spacing: 0.02em;
 `;
 
 export default Hero;
@@ -317,26 +332,54 @@ const FixedCTA = styled(motion.button)`
   right: clamp(1.6rem, 2.5vw, 3.2rem);
   bottom: clamp(1.6rem, 2.5vw, 3.2rem);
   z-index: 1500;
+  --arrow-size: 18px;
   background: var(--primary);
   color: var(--white);
   font-weight: 800;
   font-size: 1.6rem;
   border: none;
-  border-radius: 3rem;
-  height: 5.6rem;
-  padding: 0 2.4rem;
+  border-radius: 25px;
+  height: auto;
+  padding: 12px 32px;
   box-shadow: 0 12px 28px rgba(227, 6, 19, 0.35);
   letter-spacing: 0.02em;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease-in-out;
+  
+  .arrows {
+    display: inline-block;
+    position: relative;
+    width: var(--arrow-size);
+    height: var(--arrow-size);
+  }
+  .arrows .a1,
+  .arrows .a2,
+  .arrows .a3 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--arrow-size);
+    height: var(--arrow-size);
+    transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+  }
   
   &:hover {
     background: var(--primary-dark);
-    box-shadow: 0 16px 36px rgba(227, 6, 19, 0.42);
+    transform: scale(1.05);
+    filter: brightness(1.2);
+    box-shadow: 0 0 20px rgba(227, 6, 19, 0.6);
+    
+    /* staggered separation */
+    .arrows .a1 { transform: translateX(3px); transition-delay: 0s; }
+    .arrows .a2 { transform: translateX(6px); transition-delay: 0.1s; }
+    .arrows .a3 { transform: translateX(9px); transition-delay: 0.2s; }
   }
   
   @media (max-width: 480px) {
-    height: 5rem;
     font-size: 1.4rem;
-    padding: 0 2rem;
+    padding: 10px 20px;
   }
 `;
