@@ -7,9 +7,10 @@ import styled from 'styled-components';
 interface SignupPopupProps {
   isOpen: boolean;
   onClose: () => void;
+  onSwitchToLogin: () => void;
 }
 
-const SignupPopup = ({ isOpen, onClose }: SignupPopupProps) => {
+const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -141,7 +142,10 @@ const SignupPopup = ({ isOpen, onClose }: SignupPopupProps) => {
               </SignupForm>
 
               <LoginPrompt>
-                Já possui uma conta? <LoginLink href="#" onClick={(e) => e.preventDefault()}>Fazer Login</LoginLink>
+                Já possui uma conta? <LoginLink href="#" onClick={(e) => {
+                  e.preventDefault();
+                  onSwitchToLogin();
+                }}>Fazer Login</LoginLink>
               </LoginPrompt>
             </div>
           </PopupContainer>

@@ -15,6 +15,16 @@ const Header = () => {
   const [showSignupPopup, setShowSignupPopup] = useState(false);
   const location = useLocation();
 
+  const handleSwitchToSignup = () => {
+    setShowLoginPopup(false);
+    setShowSignupPopup(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setShowSignupPopup(false);
+    setShowLoginPopup(true);
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
@@ -84,12 +94,14 @@ const Header = () => {
       
       <LoginPopup 
         isOpen={showLoginPopup} 
-        onClose={() => setShowLoginPopup(false)} 
+        onClose={() => setShowLoginPopup(false)}
+        onSwitchToSignup={handleSwitchToSignup}
       />
       
       <SignupPopup 
         isOpen={showSignupPopup} 
-        onClose={() => setShowSignupPopup(false)} 
+        onClose={() => setShowSignupPopup(false)}
+        onSwitchToLogin={handleSwitchToLogin}
       />
     </HeaderContainer>
   );
