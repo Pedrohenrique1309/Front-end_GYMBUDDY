@@ -10,7 +10,7 @@ export const BRAND = {
       id: 'progress',
       position: 'top-left',
       rotate: -8,
-      zIndex: 3,
+      zIndex: 0,
       stat: '87%',
       title: 'Progresso Mensal',
       description: 'usuários atingem suas metas de treino com nosso sistema de acompanhamento personalizado.',
@@ -20,7 +20,7 @@ export const BRAND = {
       id: 'users',
       position: 'top-right',
       rotate: 12,
-      zIndex: 1,
+      zIndex: 0,
       stat: '15k+',
       title: 'Usuários Ativos',
       description: 'pessoas já transformaram seus corpos usando nossa plataforma de treinos inteligentes.',
@@ -30,7 +30,7 @@ export const BRAND = {
       id: 'workouts',
       position: 'bottom-left',
       rotate: 6,
-      zIndex: 2,
+      zIndex: 0,
       stat: '200+',
       title: 'Exercícios Disponíveis',
       description: 'diferentes modalidades de treino adaptadas ao seu nível e objetivos pessoais.',
@@ -40,22 +40,12 @@ export const BRAND = {
       id: 'ai',
       position: 'bottom-right',
       rotate: -15,
-      zIndex: 4,
+      zIndex: 0,
       stat: '24/7',
       title: 'IA Personal Trainer',
       description: 'assistente inteligente disponível para ajustar seus treinos em tempo real.',
       category: 'Tecnologia'
     },
-    {
-      id: 'nutrition',
-      position: 'center-back',
-      rotate: 3,
-      zIndex: 0,
-      stat: '95%',
-      title: 'Planos Nutricionais',
-      description: 'dos usuários relatam melhora na alimentação com nossas sugestões personalizadas.',
-      category: 'Nutrição'
-    }
   ],
 } as const;
 

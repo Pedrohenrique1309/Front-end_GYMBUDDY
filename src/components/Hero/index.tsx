@@ -80,10 +80,23 @@ const Hero = () => {
                     <div className="card-header">
                       <span className="category">{card.category}</span>
                     </div>
-                    <div className="card-stat">{card.stat}</div>
-                    <div className="card-content">
+                    <div className="card-main">
+                      <div className="card-stat">{card.stat}</div>
                       <h3 className="card-title">{card.title}</h3>
                       <p className="card-description">{card.description}</p>
+                    </div>
+                    <div className="card-footer">
+                      <div className="card-thumbnails">
+                        <div className="thumbnail">🏋️</div>
+                        <div className="thumbnail">💪</div>
+                      </div>
+                      <div className="progress-dots">
+                        <div className="dot active"></div>
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                        <div className="dot"></div>
+                      </div>
                     </div>
                   </FloatingCard>
                 </FloatingCardWrap>
@@ -255,14 +268,14 @@ const FloatingCardWrap = styled(motion.div)`
   animation: card-bob var(--dur, 6s) ease-in-out infinite;
   will-change: transform;
 
-  /* Info card style */
-  background: linear-gradient(145deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
-  backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1.8rem;
-  padding: 2rem 2.4rem;
-  min-width: 24rem;
-  min-height: 18rem;
+  /* Modern card style similar to reference */
+  background: linear-gradient(135deg, rgba(227, 6, 19, 0.8) 0%, rgba(139, 69, 19, 0.6) 100%);
+  backdrop-filter: blur(20px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2.4rem;
+  padding: 2.4rem 2rem;
+  min-width: 22rem;
+  min-height: 32rem;
   font-size: 1.4rem;
   font-weight: 600;
   color: var(--white);
@@ -287,23 +300,23 @@ const FloatingCardWrap = styled(motion.div)`
   }
 
   &.top-left {
-    top: 2rem;
-    left: -3rem;
+    top: 1rem;
+    left: -6rem;
   }
 
   &.bottom-left {
-    bottom: 6rem;
-    left: 1rem;
+    bottom: 4rem;
+    left: -3rem;
   }
 
   &.top-right {
-    top: 4rem;
-    right: 1rem;
+    top: 2rem;
+    right: -4rem;
   }
 
   &.bottom-right {
-    bottom: 2rem;
-    right: -2rem;
+    bottom: 1rem;
+    right: -5rem;
   }
 
   &.center-back {
@@ -343,49 +356,114 @@ const FloatingCard = styled(motion.div)`
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  justify-content: space-between;
+  position: relative;
   
   .card-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    margin-bottom: 1rem;
   }
   
   .category {
     font-size: 1.1rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.9);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .card-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
   }
   
   .card-stat {
-    font-size: 3.2rem;
-    font-weight: 800;
-    color: var(--primary);
-    line-height: 1;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  }
-  
-  .card-content {
-    flex: 1;
+    font-size: 5.6rem;
+    font-weight: 900;
+    color: var(--white);
+    line-height: 0.9;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    margin-bottom: 1.5rem;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 1rem;
+      right: 2rem;
+      width: 2rem;
+      height: 2rem;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0.4rem;
+      transform: rotate(45deg);
+    }
   }
   
   .card-title {
-    font-size: 1.4rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--white);
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
     line-height: 1.2;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
   }
   
   .card-description {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     line-height: 1.4;
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    margin-bottom: 2rem;
+  }
+  
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+  }
+  
+  .card-thumbnails {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .thumbnail {
+    width: 4rem;
+    height: 3rem;
+    background: linear-gradient(45deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+    border-radius: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .progress-dots {
+    display: flex;
+    gap: 0.6rem;
+  }
+  
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    
+    &.active {
+      background: var(--white);
+    }
   }
 `;
 
