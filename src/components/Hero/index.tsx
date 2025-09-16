@@ -36,15 +36,12 @@ const Hero = () => {
             transition={{ duration: 0.9, ease: 'easeOut' }}
           >
             <h1>
-              O SEU <span>PARCEIRO</span> DA ACADEMIA PRONTO PARA A AÇÃO
+              <span className="line no-wrap">
+                O SEU <span className="highlight">PARCEIRO</span> DA ACADEMIA
+              </span>
+              <br className="title-break" />
+              <span className="line no-wrap">PRONTO PARA A AÇÃO</span>
             </h1>
-            <motion.div
-              className="cta-button"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Vamos começar
-            </motion.div>
           </TextArea>
 
           <ImageContainer
@@ -79,6 +76,15 @@ const Hero = () => {
               ))}
             </FloatingCards>
           </ImageContainer>
+          <FixedCTA
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.96 }}
+          >
+            Vamos começar
+          </FixedCTA>
         </Content>
       </div>
     </HeroSection>
@@ -128,7 +134,7 @@ const TextArea = styled(motion.div)`
     margin-bottom: 3.2rem;
     color: var(--white);
 
-    span {
+    .highlight {
       color: var(--primary);
       position: relative;
       display: inline-block;
@@ -140,10 +146,13 @@ const TextArea = styled(motion.div)`
         left: 0;
         width: 100%;
         height: 10px;
-        background: rgba(255, 0, 0, 0.2);
+        background: rgba(227, 6, 19, 0.2);
         z-index: -1;
       }
     }
+
+    .line { display: inline-block; }
+    .line.no-wrap { white-space: nowrap; }
 
     @media (max-width: 1024px) {
       margin-bottom: 2.4rem;
@@ -290,3 +299,33 @@ const FloatingCard = styled(motion.div)`
 `;
 
 export default Hero;
+
+// Fixed Call-To-Action at bottom-right
+const FixedCTA = styled(motion.button)`
+  position: fixed;
+  right: clamp(1.6rem, 2.5vw, 3.2rem);
+  bottom: clamp(1.6rem, 2.5vw, 3.2rem);
+  z-index: 1500;
+  background: var(--primary);
+  color: var(--white);
+  font-weight: 800;
+  font-size: 1.6rem;
+  border: none;
+  border-radius: 3rem;
+  height: 5.6rem;
+  padding: 0 2.4rem;
+  box-shadow: 0 12px 28px rgba(227, 6, 19, 0.35);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  
+  &:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 16px 36px rgba(227, 6, 19, 0.42);
+  }
+  
+  @media (max-width: 480px) {
+    height: 5rem;
+    font-size: 1.4rem;
+    padding: 0 2rem;
+  }
+`;
