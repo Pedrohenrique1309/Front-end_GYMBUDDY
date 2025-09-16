@@ -330,26 +330,32 @@ const FixedCTA = styled(motion.button)`
   .arrows {
     display: inline-flex;
     align-items: center;
-    gap: 0.1rem;
+    gap: 0;
     transition: transform 0.25s ease, opacity 0.25s ease;
   }
   
   .arrows svg {
     width: 18px;
     height: 18px;
+    transition: transform 0.25s ease, margin-left 0.25s ease, opacity 0.25s ease;
   }
   
   .arrows svg:nth-child(1) { opacity: 0.75; }
   .arrows svg:nth-child(2) { opacity: 0.9; }
   .arrows svg:nth-child(3) { opacity: 1; }
   
+  /* Initial tighter spacing (overlap) */
+  .arrows svg:nth-child(2) { margin-left: -8px; }
+  .arrows svg:nth-child(3) { margin-left: -16px; }
+  
   &:hover {
     background: var(--primary-dark);
     box-shadow: 0 16px 36px rgba(227, 6, 19, 0.42);
     
+    /* Separate on hover like current behavior */
     .arrows svg:nth-child(1) { transform: translateX(2px); }
-    .arrows svg:nth-child(2) { transform: translateX(4px); }
-    .arrows svg:nth-child(3) { transform: translateX(6px); }
+    .arrows svg:nth-child(2) { margin-left: 0; transform: translateX(4px); }
+    .arrows svg:nth-child(3) { margin-left: 0; transform: translateX(6px); }
   }
   
   @media (max-width: 480px) {
