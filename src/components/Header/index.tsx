@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
+import { FiSun, FiMoon } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
+import LoginPopup from '../LoginPopup';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -63,10 +67,23 @@ const Header = () => {
         </Nav>
         
         <AuthButtons>
-          <LoginButton>Login</LoginButton>
+          <LoginButton onClick={() => setShowLoginPopup(true)}>Login</LoginButton>
           <SignUpButton>Cadastro</SignUpButton>
         </AuthButtons>
+        
+        <ThemeToggle 
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <FiSun className="theme-icon sun" />
+        </ThemeToggle>
       </div>
+      
+      <LoginPopup 
+        isOpen={showLoginPopup} 
+        onClose={() => setShowLoginPopup(false)} 
+      />
     </HeaderContainer>
   );
 };
@@ -154,6 +171,60 @@ const NavLink = styled(Link)`
   }
 `;
 
+const ThemeToggle = styled(motion.button)`
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.8rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-left: 1.5rem;
+  
+  .theme-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    transition: all 0.4s ease;
+  }
+  
+  .sun {
+    color: #FFA500;
+    animation: sun-glow 2s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.4));
+    
+    &:hover {
+      transform: rotate(90deg);
+      filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.6));
+    }
+  }
+  
+  .moon {
+    color: #E6E6FA;
+    filter: drop-shadow(0 0 6px rgba(230, 230, 250, 0.3));
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  @keyframes sun-glow {
+    0% { 
+      filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.4));
+      transform: rotate(0deg);
+    }
+    100% { 
+      filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.6));
+      transform: rotate(15deg);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 const AuthButtons = styled.div`
   display: flex;
   gap: 1.5rem;
@@ -164,10 +235,10 @@ const AuthButtons = styled.div`
 `;
 
 const Button = styled.button`
-  height: 4.4rem;
-  padding: 0 2.4rem;
-  border-radius: 2.2rem;
-  font-size: 1.5rem;
+  height: 5rem;
+  padding: 0 3rem;
+  border-radius: 2.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
   transition: all 0.2s ease;
 `;
@@ -175,7 +246,7 @@ const Button = styled.button`
 const LoginButton = styled(Button)`
   background: transparent;
   color: var(--white);
-  border: 2px solid var(--primary);
+  border: 1px solid var(--primary);
   
   &:hover {
     background: rgba(255, 0, 0, 0.12);
@@ -185,7 +256,7 @@ const LoginButton = styled(Button)`
 const SignUpButton = styled(Button)`
   background: var(--primary);
   color: var(--white);
-  border: 2px solid var(--primary);
+  border: 1px solid var(--primary);
   box-shadow: 0 8px 24px rgba(255,0,0,0.25);
   
   &:hover {
