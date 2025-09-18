@@ -503,8 +503,9 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
 
 const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>`
   position: absolute;
-  right: 36.3rem;
-  top: 30%;
+  right: 2.5rem;
+  top: 90%;
+  bottom: 32px;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -591,9 +592,9 @@ const PasswordToggle = styled.button`
 
 const PasswordTooltip = styled(motion.div)`
   position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 50%;
+  right: 120%;
+  transform: translateY(-50%);
   background: linear-gradient(135deg, 
     rgba(227, 6, 19, 0.15) 0%, 
     rgba(139, 69, 19, 0.12) 50%,
@@ -633,15 +634,15 @@ const PasswordTooltip = styled(motion.div)`
   &::after {
     content: '';
     position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
     width: 0;
     height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid rgba(227, 6, 19, 0.8);
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid rgba(227, 6, 19, 0.8);
+    filter: drop-shadow(2px 0 4px rgba(0, 0, 0, 0.2));
   }
 
   @keyframes shine {
