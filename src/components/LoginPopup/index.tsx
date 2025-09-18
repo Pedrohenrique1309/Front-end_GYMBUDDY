@@ -17,6 +17,21 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
     password: ''
   });
 
+  // Função para resetar o formulário
+  const resetForm = () => {
+    setFormData({
+      email: '',
+      password: ''
+    });
+    setShowPassword(false);
+  };
+
+  // Função personalizada para fechar o popup
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle login logic here
@@ -39,7 +54,7 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={onClose}
+            onClick={handleClose}
           />
           <PopupContainer
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -48,7 +63,7 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             <div>
-              <CloseButton onClick={onClose}>
+              <CloseButton onClick={handleClose}>
                 <FiX />
               </CloseButton>
             
