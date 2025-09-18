@@ -1,28 +1,38 @@
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
-import { FiChevronRight } from 'react-icons/fi';
+import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward } from 'react-icons/fi';
 
 const Hero = () => {
   const floatingCards = BRAND.floatingCards;
+
+  // Mapeamento de ícones para cada card
+  const cardIcons = {
+    'progress': FiTrendingUp,
+    'users': FiUsers,
+    'workouts': FiActivity,
+    'ai': FiZap
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2,
+        staggerChildren: 0.15,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { y: 30, opacity: 0, scale: 0.8 },
     visible: {
       y: 0,
       opacity: 1,
+      scale: 1,
       transition: {
-        duration: 0.6,
+        duration: 0.8,
+        ease: [0.25, 0.46, 0.45, 0.94],
       },
     },
   };
@@ -64,43 +74,46 @@ const Hero = () => {
             />
             
             <FloatingCards variants={containerVariants} initial="hidden" animate="visible">
-              {floatingCards.map((card, index) => (
-                <FloatingCardWrap
-                  key={card.id}
-                  className={card.position}
-                  style={{ 
-                    ['--rot' as any]: `${card.rotate || 0}deg`, 
-                    ['--dur' as any]: `${6 + (index % 5) * 0.2}s`,
-                    zIndex: card.zIndex
-                  }}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <FloatingCard>
-                    <div className="card-header">
-                      <span className="category">{card.category}</span>
-                    </div>
-                    <div className="card-main">
-                      <div className="card-stat">{card.stat}</div>
-                      <h3 className="card-title">{card.title}</h3>
-                      <p className="card-description">{card.description}</p>
-                    </div>
-                    <div className="card-footer">
-                      <div className="card-thumbnails">
-                        <div className="thumbnail">🏋️</div>
-                        <div className="thumbnail">💪</div>
+              {floatingCards.map((card, index) => {
+                const IconComponent = cardIcons[card.id as keyof typeof cardIcons];
+                return (
+                  <FloatingCardWrap
+                    key={card.id}
+                    className={card.position}
+                    style={{ 
+                      ['--rot' as any]: `${card.rotate || 0}deg`, 
+                      ['--dur' as any]: `${6 + (index % 5) * 0.3}s`,
+                      zIndex: card.zIndex
+                    }}
+                    variants={itemVariants}
+                    whileHover={{ 
+                      scale: 1.08,
+                      rotate: 0,
+                      transition: { duration: 0.3, ease: "easeOut" }
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FloatingCard>
+                      <div className="card-header">
+                        <div className="card-icon">
+                          <IconComponent />
+                        </div>
+                        <span className="category">{card.category}</span>
                       </div>
-                      <div className="progress-dots">
-                        <div className="dot active"></div>
-                        <div className="dot"></div>
-                        <div className="dot"></div>
-                        <div className="dot"></div>
-                        <div className="dot"></div>
+                      <div className="card-main">
+                        <div className="card-stat">{card.stat}</div>
+                        <h3 className="card-title">{card.title}</h3>
                       </div>
-                    </div>
-                  </FloatingCard>
-                </FloatingCardWrap>
-              ))}
+                      <div className="card-footer">
+                        <div className="card-indicators">
+                          <FiTarget className="indicator-icon" />
+                          <FiAward className="indicator-icon" />
+                        </div>
+                      </div>
+                    </FloatingCard>
+                  </FloatingCardWrap>
+                );
+              })}
             </FloatingCards>
           </ImageContainer>
           <FixedCTA
@@ -267,26 +280,48 @@ const FloatingCardWrap = styled(motion.div)`
   position: absolute;
   animation: card-bob var(--dur, 6s) ease-in-out infinite;
   will-change: transform;
+  cursor: pointer;
 
-  /* Modern card style similar to reference */
-  background: linear-gradient(135deg, rgba(227, 6, 19, 0.8) 0%, rgba(139, 69, 19, 0.6) 100%);
-  backdrop-filter: blur(20px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2.4rem;
-  padding: 2.4rem 2rem;
-  min-width: 22rem;
-  min-height: 32rem;
-  font-size: 1.4rem;
+  /* Liquid Glass Design */
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(227, 6, 19, 0.1) 100%
+  );
+  backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1.6rem;
+  padding: 1.6rem 1.4rem;
+  min-width: 16rem;
+  min-height: 18rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--white);
-  text-align: center;
+  text-align: left;
   pointer-events: auto;
-  transition: transform 250ms ease, box-shadow 250ms ease, background 250ms ease, border-color 250ms ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.22),
-    inset 0 -1px 0 rgba(0,0,0,0.25),
-    0 12px 32px rgba(0,0,0,0.28);
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -1px 0 rgba(0,0,0,0.1),
+    0 8px 32px rgba(0,0,0,0.12),
+    0 4px 16px rgba(227, 6, 19, 0.1);
   z-index: 2;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.2), 
+      transparent
+    );
+    transition: left 0.6s ease;
+  }
   
   &::after {
     content: '';
@@ -294,29 +329,32 @@ const FloatingCardWrap = styled(motion.div)`
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    /* Shine band */
-    background: linear-gradient(110deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0) 60%);
-    opacity: 0.5;
+    background: linear-gradient(135deg, 
+      rgba(255,255,255,0.1) 0%, 
+      rgba(255,255,255,0.05) 40%, 
+      rgba(255,255,255,0) 60%
+    );
+    opacity: 0.8;
   }
 
   &.top-left {
-    top: 1rem;
-    left: -6rem;
+    top: 8%;
+    left: -8rem;
   }
 
   &.bottom-left {
-    bottom: 4rem;
-    left: -3rem;
+    bottom: 15%;
+    left: -6rem;
   }
 
   &.top-right {
-    top: 2rem;
-    right: -4rem;
+    top: 12%;
+    right: -8rem;
   }
 
   &.bottom-right {
-    bottom: 1rem;
-    right: -5rem;
+    bottom: 8%;
+    right: -6rem;
   }
 
   &.center-back {
@@ -326,8 +364,10 @@ const FloatingCardWrap = styled(motion.div)`
   }
 
   @media (max-width: 768px) {
-    padding: 1rem 1.5rem;
-    font-size: 1.2rem;
+    padding: 1.2rem 1rem;
+    font-size: 1.1rem;
+    min-width: 14rem;
+    min-height: 16rem;
     
     &.top-left, &.bottom-left, &.top-right, &.bottom-right {
       position: static;
@@ -338,15 +378,25 @@ const FloatingCardWrap = styled(motion.div)`
   
   @keyframes card-bob {
     0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
-    50% { transform: translateY(-8px) rotate(var(--rot, 0deg)); }
+    50% { transform: translateY(-12px) rotate(var(--rot, 0deg)); }
   }
   
   &:hover {
-    transform: translateY(-4px) scale(1.05) rotate(var(--rot, 0deg));
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.15) 0%, 
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(227, 6, 19, 0.15) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.3);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.26),
-      inset 0 -1px 0 rgba(0,0,0,0.3),
-      0 18px 36px rgba(0,0,0,0.35);
+      inset 0 1px 0 rgba(255,255,255,0.3),
+      inset 0 -1px 0 rgba(0,0,0,0.1),
+      0 16px 48px rgba(0,0,0,0.2),
+      0 8px 24px rgba(227, 6, 19, 0.2);
+    
+    &::before {
+      left: 100%;
+    }
   }
 `;
 
@@ -361,21 +411,38 @@ const FloatingCard = styled(motion.div)`
   
   .card-header {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .card-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.8rem;
+    background: linear-gradient(135deg, 
+      rgba(227, 6, 19, 0.2) 0%, 
+      rgba(227, 6, 19, 0.1) 100%
+    );
+    border: 1px solid rgba(227, 6, 19, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(227, 6, 19, 0.9);
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
   }
   
   .category {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.8);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.4rem 1rem;
-    border-radius: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.3rem 0.8rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
   
   .card-main {
@@ -387,83 +454,60 @@ const FloatingCard = styled(motion.div)`
   }
   
   .card-stat {
-    font-size: 5.6rem;
+    font-size: 3.2rem;
     font-weight: 900;
     color: var(--white);
     line-height: 0.9;
-    text-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    margin-bottom: 1.5rem;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      top: 1rem;
-      right: 2rem;
-      width: 2rem;
-      height: 2rem;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 0.4rem;
-      transform: rotate(45deg);
-    }
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, #ffffff 0%, rgba(227, 6, 19, 0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
   .card-title {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--white);
-    margin-bottom: 1rem;
-    line-height: 1.2;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  }
-  
-  .card-description {
-    font-size: 1.3rem;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.4;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
   }
   
   .card-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-top: auto;
   }
   
-  .card-thumbnails {
+  .card-indicators {
     display: flex;
-    gap: 1rem;
+    gap: 0.8rem;
   }
   
-  .thumbnail {
-    width: 4rem;
-    height: 3rem;
-    background: linear-gradient(45deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
-    border-radius: 1.2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  .progress-dots {
-    display: flex;
-    gap: 0.6rem;
-  }
-  
-  .dot {
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
+  .indicator-icon {
+    width: 1.6rem;
+    height: 1.6rem;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
     
-    &.active {
-      background: var(--white);
+    &:hover {
+      color: rgba(227, 6, 19, 0.8);
+      transform: scale(1.2);
     }
+  }
+  
+  /* Hover effect for card icon */
+  &:hover .card-icon {
+    background: linear-gradient(135deg, 
+      rgba(227, 6, 19, 0.3) 0%, 
+      rgba(227, 6, 19, 0.2) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.5);
+    color: rgba(227, 6, 19, 1);
+    transform: scale(1.1) rotate(5deg);
   }
 `;
 
