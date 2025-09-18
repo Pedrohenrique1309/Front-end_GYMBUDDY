@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiEye, FiEyeOff, FiX } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { FaDumbbell } from 'react-icons/fa';
 import styled from 'styled-components';
 
@@ -20,6 +20,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     password: '',
     confirmPassword: ''
   });
+  const [isPasswordValid, setIsPasswordValid] = useState<boolean | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +28,32 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     console.log('Signup attempt:', formData);
   };
 
+  // Função para validar senha
+  const validatePassword = (password: string): boolean => {
+    const minLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    return minLength && hasUpperCase && hasNumber && hasSpecialChar;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    
+    // Validar senha em tempo real
+    if (name === 'password') {
+      if (value === '') {
+        setIsPasswordValid(null);
+      } else {
+        setIsPasswordValid(validatePassword(value));
+      }
+    }
   };
 
   return (
@@ -106,7 +128,55 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                     value={formData.password}
                     onChange={handleInputChange}
                     required
+                    $isValid={isPasswordValid}
                   />
+                  <PasswordValidationIcon
+                    initial={{ scale: 0, opacity: 0, rotate: -180 }}
+                    animate={{ 
+                      scale: isPasswordValid !== null ? [0, 1.2, 0.9, 1.05, 1] : 0,
+                      opacity: isPasswordValid !== null ? 1 : 0,
+                      rotate: isPasswordValid !== null ? 0 : -180,
+                      filter: isPasswordValid !== null 
+                        ? ["blur(4px)", "blur(0px)"]
+                        : "blur(4px)"
+                    }}
+                    exit={{ 
+                      scale: 0,
+                      opacity: 0,
+                      rotate: 180,
+                      filter: "blur(4px)"
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      duration: 0.6,
+                      filter: { duration: 0.3 }
+                    }}
+                    whileHover={{ 
+                      scale: 1.15,
+                      rotate: [0, -5, 5, -5, 5, 0],
+                      transition: { duration: 0.5 }
+                    }}
+                    $isValid={isPasswordValid}
+                  >
+                    <motion.div
+                      key={isPasswordValid ? 'check' : 'x'}
+                      initial={{ scale: 0, rotate: -90 }}
+                      animate={{ 
+                        scale: 1, 
+                        rotate: 0,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 15,
+                        delay: 0.1
+                      }}
+                    >
+                      {isPasswordValid === true ? <FiCheck /> : <FiX />}
+                    </motion.div>
+                  </PasswordValidationIcon>
                   <PasswordToggle
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -257,12 +327,16 @@ const InputGroup = styled.div`
   position: relative;
 `;
 
-const Input = styled.input`
+const Input = styled.input<{ $isValid?: boolean | null }>`
   width: 100%;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid ${props => 
+    props.$isValid === true ? '#10B981' : 
+    props.$isValid === false ? '#EF4444' : 
+    'rgba(255, 255, 255, 0.2)'
+  };
   border-radius: 0.8rem;
-  padding: 1.4rem 1.6rem;
+  padding: 1.4rem ${props => props.name === 'password' ? '8rem' : '1.6rem'} 1.4rem 1.6rem;
   color: var(--white);
   font-size: 1.5rem;
   transition: all 0.3s ease;
@@ -273,9 +347,43 @@ const Input = styled.input`
   
   &:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
+    border-color: ${props => 
+      props.$isValid === true ? '#10B981' : 
+      props.$isValid === false ? '#EF4444' : 
+      'var(--primary)'
+    };
+    box-shadow: 0 0 0 2px ${props => 
+      props.$isValid === true ? 'rgba(16, 185, 129, 0.2)' : 
+      props.$isValid === false ? 'rgba(239, 68, 68, 0.2)' : 
+      'rgba(227, 6, 19, 0.2)'
+    };
   }
+`;
+
+const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>`
+  position: absolute;
+  right: 5.2rem;
+  top: 27%;
+  transform: translateY(-55%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background: ${props => 
+    props.$isValid === true ? 'rgba(16, 185, 129, 0.15)' : 
+    props.$isValid === false ? 'rgba(239, 68, 68, 0.15)' : 
+    'transparent'
+  };
+  color: ${props => 
+    props.$isValid === true ? '#10B981' : 
+    props.$isValid === false ? '#EF4444' : 
+    'transparent'
+  };
+  font-size: 1.3rem;
+  font-weight: 700;
+  z-index: 2;
 `;
 
 const PasswordToggle = styled.button`
@@ -289,6 +397,7 @@ const PasswordToggle = styled.button`
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
+  z-index: 3;
   
   &:hover {
     color: var(--white);
