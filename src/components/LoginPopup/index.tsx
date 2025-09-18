@@ -12,12 +12,12 @@ interface LoginPopupProps {
 
 const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   // Função para resetar o formulário
   const resetForm = () => {
@@ -26,7 +26,8 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
       password: ''
     });
     setShowPassword(false);
-    setErrorMessage('');
+    setError(null);
+    setIsLoading(false);
   };
 
   // Função personalizada para fechar o popup
@@ -38,60 +39,48 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMessage('');
+    setError(null);
 
     try {
-      const response = await fetch(
-        `http://10.107.140.3:8080/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          mode: 'cors', // Explicitamente define CORS
-        }
-      );
+      const url = `https://back-end-gymbuddy.onrender.com/v1/gymbuddy/usuario/login/${encodeURIComponent(formData.email)}/${encodeURIComponent(formData.password)}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Login bem-sucedido:', data);
+        // Login bem-sucedido
+        console.log('Login successful:', data);
         
-        // Armazena os dados do usuário no localStorage
-        localStorage.setItem('userToken', data.token || '');
-        localStorage.setItem('userData', JSON.stringify(data));
+        // Salvar token no localStorage se fornecido
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
         
-        // Fecha o popup após login bem-sucedido
+        // Salvar dados do usuário se fornecidos
+        if (data.user) {
+          localStorage.setItem('userData', JSON.stringify(data.user));
+        }
+
+        // Fechar popup e resetar formulário
         handleClose();
         
-        // Opcional: Redirecionar ou atualizar o estado global
-        // window.location.reload(); // ou usar React Router para redirecionar
-      } else {
-        // Trata erros de autenticação
-        const errorData = await response.text();
-        console.error('Erro da API:', response.status, errorData);
+        // Aqui você pode adicionar redirecionamento ou atualização de estado global
+        alert('Login realizado com sucesso!');
         
-        if (response.status === 401) {
-          setErrorMessage('Email ou senha incorretos');
-        } else if (response.status === 404) {
-          setErrorMessage('Usuário não encontrado');
-        } else if (response.status === 500) {
-          setErrorMessage('Erro interno do servidor. Tente novamente mais tarde.');
-        } else {
-          setErrorMessage(`Erro ${response.status}: ${errorData || 'Tente novamente.'}`);
-        }
+      } else {
+        // Erro de login
+        setError(data.message || 'Erro ao fazer login. Verifique suas credenciais.');
       }
     } catch (error) {
-      console.error('Erro na requisição:', error);
-      
-      // Verifica se é erro de CORS ou rede
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        setErrorMessage('Erro de conexão com o servidor. Verifique se a API está rodando e acessível.');
-      } else if (error instanceof TypeError && error.message.includes('CORS')) {
-        setErrorMessage('Erro de CORS. Configure o servidor para permitir requisições do frontend.');
-      } else {
-        setErrorMessage('Erro de conexão. Verifique sua internet e tente novamente.');
-      }
+      console.error('Login error:', error);
+      setError('Erro de conexão. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -102,38 +91,6 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
       ...formData,
       [e.target.name]: e.target.value
     });
-  };
-
-  // Função para testar a conectividade da API
-  const testAPIConnection = async () => {
-    setErrorMessage('Testando conexão...');
-    try {
-      // Primeiro tenta com CORS
-      const response = await fetch('http://10.107.140.3:8080/v1/gymbuddy/usuario/login/email/senha?email=test@test.com&senha=test', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        mode: 'cors',
-      });
-      
-      console.log('Teste de conectividade:', response.status, response.statusText);
-      
-      if (response.status === 0) {
-        setErrorMessage('❌ CORS bloqueado. Configure o servidor para permitir requisições do frontend.');
-      } else {
-        setErrorMessage(`✅ API respondeu com status: ${response.status}. Conexão OK!`);
-      }
-    } catch (error: any) {
-      console.error('Erro no teste:', error);
-      
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        setErrorMessage('❌ Erro de rede. Verifique se:\n1. A API está rodando em http://10.107.140.3:8080\n2. Não há firewall bloqueando\n3. O CORS está configurado no servidor');
-      } else {
-        setErrorMessage(`❌ Erro: ${error.message}`);
-      }
-    }
   };
 
   return (
@@ -167,12 +124,6 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
             <Title>FAZER LOGIN</Title>
 
             <LoginForm onSubmit={handleSubmit}>
-              {errorMessage && (
-                <ErrorMessage>
-                  {errorMessage}
-                </ErrorMessage>
-              )}
-              
               <InputGroup>
                 <Input
                   type="email"
@@ -181,7 +132,6 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  disabled={isLoading}
                 />
               </InputGroup>
 
@@ -193,25 +143,37 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  disabled={isLoading}
                 />
                 <PasswordToggle
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </PasswordToggle>
               </InputGroup>
 
-              <SubmitButton type="submit" disabled={isLoading}>
+              <ForgotPassword href="#" onClick={(e) => e.preventDefault()}>
+                Esqueci minha senha
+              </ForgotPassword>
+
+              {error && (
+                <ErrorMessage
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {error}
+                </ErrorMessage>
+              )}
+
+              <SubmitButton
+                type="submit"
+                disabled={isLoading}
+                whileHover={!isLoading ? { scale: 1.02 } : {}}
+                whileTap={!isLoading ? { scale: 0.98 } : {}}
+              >
                 {isLoading ? 'Entrando...' : 'Fazer Login'}
               </SubmitButton>
-              
-              {/* Botão temporário para testar API */}
-              <TestButton type="button" onClick={testAPIConnection}>
-                Testar Conexão API
-              </TestButton>
             </LoginForm>
 
             <SignupPrompt>
@@ -348,12 +310,6 @@ const Input = styled.input`
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
   }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.02);
-  }
 `;
 
 const PasswordToggle = styled.button`
@@ -386,57 +342,33 @@ const ForgotPassword = styled.a`
   }
 `;
 
-const ErrorMessage = styled.div`
-  background: rgba(227, 6, 19, 0.15);
-  border: 1px solid rgba(227, 6, 19, 0.3);
+const ErrorMessage = styled(motion.div)`
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: 0.8rem;
-  padding: 1.2rem 1.6rem;
-  color: #ff6b6b;
+  padding: 1rem 1.5rem;
+  color: #ef4444;
   font-size: 1.4rem;
-  text-align: left;
-  margin-bottom: 1rem;
-  white-space: pre-line; /* Permite quebras de linha */
-  line-height: 1.5;
+  text-align: center;
+  margin: 1rem 0;
 `;
 
-const SubmitButton = styled.button`
-  background: var(--primary);
+const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
+  background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
   color: var(--white);
   border: none;
   border-radius: 2.5rem;
   padding: 1.4rem 2rem;
   font-size: 1.6rem;
   font-weight: 700;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s ease;
   margin-top: 1rem;
-  
-  &:hover:not(:disabled) {
-    background: var(--primary-dark);
-    box-shadow: 0 8px 24px rgba(227, 6, 19, 0.4);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const TestButton = styled.button`
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 2.5rem;
-  padding: 1rem 2rem;
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 0.5rem;
+  opacity: ${props => props.disabled ? 0.7 : 1};
   
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary-dark)'};
+    box-shadow: ${props => props.disabled ? 'none' : '0 8px 24px rgba(227, 6, 19, 0.4)'};
   }
 `;
 
