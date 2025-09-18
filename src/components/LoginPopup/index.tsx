@@ -42,19 +42,72 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
     setError(null);
 
     try {
-      const url = `https://back-end-gymbuddy.onrender.com/v1/gymbuddy/usuario/login/${encodeURIComponent(formData.email)}/${encodeURIComponent(formData.password)}`;
+      // Vamos testar diferentes formatos de endpoint
+      console.log('Testando diferentes endpoints...');
       
-      const response = await fetch(url, {
+      // Opção 1: Com query parameters (mais comum para GET)
+      const urlWithQuery = `/api/v1/gymbuddy/usuario/login?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
+      
+      console.log('Tentando com query parameters:', urlWithQuery);
+      console.log('Form data:', formData);
+      console.log('Email encoded:', encodeURIComponent(formData.email));
+      console.log('Password encoded:', encodeURIComponent(formData.password));
+      
+      const response = await fetch(urlWithQuery, {
         method: 'GET',
-        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
-      if (response.ok) {
+      // Verificar se a resposta é JSON antes de tentar fazer parse
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+        console.log('Response data:', data);
+      } else {
+        // Se não for JSON, pegar como texto para debug
+        const textResponse = await response.text();
+        console.log('Response text (não JSON):', textResponse);
+        
+        // Para status 400, vamos tentar outras variações de parâmetros
+        if (response.status === 400) {
+          console.log('Status 400 - testando outras variações...');
+          
+          // Tentar com 'password' em vez de 'senha'
+          const urlWithPassword = `/api/v1/gymbuddy/usuario/login?email=${encodeURIComponent(formData.email)}&password=${encodeURIComponent(formData.password)}`;
+          console.log('Tentando com password:', urlWithPassword);
+          
+          const response2 = await fetch(urlWithPassword, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          console.log('Response2 status:', response2.status);
+          
+          if (response2.ok) {
+            const data2 = await response2.json();
+            console.log('Success with password param:', data2);
+            data = data2;
+          } else {
+            const text2 = await response2.text();
+            console.log('Response2 text:', text2);
+            throw new Error(`Parâmetros incorretos. Status: ${response.status}. Verifique os logs.`);
+          }
+        } else {
+          throw new Error(`Resposta não é JSON. Status: ${response.status}. Endpoint pode estar incorreto.`);
+        }
+      }
+
+      // Verificar se o login foi bem-sucedido baseado no campo 'status' da resposta
+      if (data && data.status === true) {
         // Login bem-sucedido
         console.log('Login successful:', data);
         
@@ -64,8 +117,8 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
         }
         
         // Salvar dados do usuário se fornecidos
-        if (data.user) {
-          localStorage.setItem('userData', JSON.stringify(data.user));
+        if (data.user || data.data) {
+          localStorage.setItem('userData', JSON.stringify(data.user || data.data));
         }
 
         // Fechar popup e resetar formulário
@@ -75,12 +128,26 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
         alert('Login realizado com sucesso!');
         
       } else {
-        // Erro de login
-        setError(data.message || 'Erro ao fazer login. Verifique suas credenciais.');
+        // Erro de login - usar a mensagem da API
+        let errorMessage = data?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+        
+        // Melhorar mensagens de erro específicas
+        if (errorMessage.includes('campos com preenchimento obrigatórios')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais e tente novamente.';
+        }
+        
+        console.log('Login error from API:', errorMessage);
+        setError(errorMessage);
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('Erro de conexão. Tente novamente.');
+      
+      // Verificar se é erro de CORS
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setError('Erro de CORS: O servidor precisa permitir requisições do frontend. Entre em contato com o administrador.');
+      } else {
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      }
     } finally {
       setIsLoading(false);
     }
