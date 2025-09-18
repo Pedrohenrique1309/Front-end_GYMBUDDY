@@ -1,10 +1,15 @@
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useAnimationControls } from 'framer-motion';
 import { FaDumbbell, FaClipboardList, FaRobot, FaFire } from 'react-icons/fa';
-import { useRef } from 'react';
-import styled from 'styled-components';
+import { useRef, useState, useEffect } from 'react';
+import styled, { keyframes } from 'styled-components';
+import SignupPopup from '../SignupPopup';
 
 const AboutUs = () => {
   const containerRef = useRef(null);
+  const [showSignupPopup, setShowSignupPopup] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const controls = useAnimationControls();
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"]
@@ -13,6 +18,24 @@ const AboutUs = () => {
   const imageY = useTransform(scrollYProgress, [0, 1], [100, -100]);
   const imageRotate = useTransform(scrollYProgress, [0, 1], [-5, 5]);
   const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.1, 0.8]);
+  const floatY = useTransform(scrollYProgress, [0, 1], [0, -50]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20
+      });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const handleSwitchToLogin = () => {
+    // This would need to be implemented if you want to switch to login
+    setShowSignupPopup(false);
+  };
 
   const textItems = [
     {
@@ -76,6 +99,7 @@ const AboutUs = () => {
     <AboutUsContainer ref={containerRef}>
       {/* Hero Section */}
       <HeroSection>
+        <HeroParticles />
         <motion.div
           variants={heroVariants}
           initial="hidden"
@@ -99,9 +123,15 @@ const AboutUs = () => {
               </motion.span>
             </GradientText>
           </HeroTitle>
-          <HeroSubtitle>
-            Faça parte desse projeto hoje mesmo!
-          </HeroSubtitle>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+          >
+            <HeroSubtitle>
+              Faça parte desse projeto hoje mesmo!
+            </HeroSubtitle>
+          </motion.div>
         </motion.div>
       </HeroSection>
 
@@ -156,10 +186,26 @@ const AboutUs = () => {
                       }}
                       whileHover={{ x: 10, scale: 1.02 }}
                     >
-                      <ModernTextItem>
+                      <ModernTextItem
+                        whileHover={{
+                          boxShadow: "0 20px 40px rgba(227, 6, 19, 0.2)"
+                        }}
+                      >
                         <IconBox gradient={item.gradient}>
-                          <IconComponent />
+                          <motion.div
+                            animate={{ 
+                              rotate: [0, 5, -5, 0]
+                            }}
+                            transition={{
+                              duration: 4,
+                              repeat: Infinity,
+                              delay: index * 0.5
+                            }}
+                          >
+                            <IconComponent />
+                          </motion.div>
                           <IconGlow />
+                          <IconPulse />
                         </IconBox>
                         <ItemContent>
                           <ItemText>{item.text}</ItemText>
@@ -210,10 +256,35 @@ const AboutUs = () => {
         >
           <CTAText>
             Torne-se já um membro! Acesse ou crie sua conta na{' '}
-            <CTAHighlight>GymBuddy</CTAHighlight>
+            <CTAHighlight 
+              onClick={() => setShowSignupPopup(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              GymBuddy
+              <SparkleEffect />
+            </CTAHighlight>
           </CTAText>
         </motion.div>
       </CTASection>
+
+      {/* Signup Popup */}
+      <SignupPopup 
+        isOpen={showSignupPopup} 
+        onClose={() => setShowSignupPopup(false)}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+
+      {/* Animated Background Elements */}
+      <AnimatedBackground>
+        <ParticleField />
+        <GridPattern 
+          style={{
+            x: mousePosition.x,
+            y: mousePosition.y
+          }}
+        />
+      </AnimatedBackground>
     </AboutUsContainer>
   );
 };
@@ -356,7 +427,7 @@ const TextItemsGrid = styled.div`
   max-width: 60rem;
 `;
 
-const ModernTextItem = styled.div`
+const ModernTextItem = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 2.5rem;
@@ -409,6 +480,38 @@ const IconGlow = styled.div`
 
   ${ModernTextItem}:hover & {
     opacity: 1;
+  }
+`;
+
+const pulseRing = keyframes`
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+`;
+
+const IconPulse = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid var(--primary);
+    border-radius: inherit;
+    animation: ${pulseRing} 3s ease-out infinite;
   }
 `;
 
@@ -476,7 +579,7 @@ const CTAText = styled.h2`
   margin: 0;
 `;
 
-const CTAHighlight = styled.span`
+const CTAHighlight = styled(motion.span)`
   color: var(--primary);
   background: linear-gradient(135deg, var(--primary), #ff0000);
   -webkit-background-clip: text;
@@ -484,6 +587,13 @@ const CTAHighlight = styled.span`
   background-clip: text;
   font-weight: 800;
   position: relative;
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    filter: brightness(1.2);
+  }
   
   &::after {
     content: '';
@@ -506,6 +616,171 @@ const CTAHighlight = styled.span`
       opacity: 0.7;
       transform: scaleX(1.05);
     }
+  }
+`;
+
+const sparkleAnimation = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(360deg);
+  }
+`;
+
+const SparkleEffect = styled.div`
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 20px;
+  height: 20px;
+  
+  &::before,
+  &::after {
+    content: '✨';
+    position: absolute;
+    animation: ${sparkleAnimation} 3s ease-in-out infinite;
+  }
+  
+  &::after {
+    animation-delay: 1.5s;
+    left: 15px;
+  }
+`;
+
+const floatingAnimation = keyframes`
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  33% {
+    transform: translateY(-30px) translateX(20px);
+  }
+  66% {
+    transform: translateY(30px) translateX(-20px);
+  }
+`;
+
+const AnimatedBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+`;
+
+const particleAnimation = keyframes`
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) scale(1);
+    opacity: 0;
+  }
+`;
+
+const ParticleField = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: ${particleAnimation} 20s linear infinite;
+  }
+  
+  &::before {
+    left: 10%;
+    animation-delay: 0s;
+  }
+  
+  &::after {
+    left: 70%;
+    animation-delay: 10s;
+  }
+`;
+
+const GridPattern = styled(motion.div)`
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background-image: 
+    linear-gradient(rgba(227, 6, 19, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(227, 6, 19, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  transform-origin: center;
+  animation: ${floatingAnimation} 30s ease-in-out infinite;
+`;
+
+const heroParticleAnimation = keyframes`
+  0% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(-80px) scale(1);
+  }
+  100% {
+    transform: translateY(-100px) scale(0);
+    opacity: 0;
+  }
+`;
+
+const HeroParticles = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  
+  &::before,
+  &::after {
+    content: '💪';
+    position: absolute;
+    font-size: 2rem;
+    animation: ${heroParticleAnimation} 6s ease-out infinite;
+  }
+  
+  &::before {
+    left: 20%;
+    bottom: 0;
+    animation-delay: 0s;
+  }
+  
+  &::after {
+    content: '🔥';
+    left: 80%;
+    bottom: 0;
+    animation-delay: 3s;
   }
 `;
 
