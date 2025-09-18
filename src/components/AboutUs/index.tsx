@@ -593,29 +593,7 @@ const CTAHighlight = styled(motion.span)`
   
   &:hover {
     filter: brightness(1.2);
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -0.5rem;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(135deg, var(--primary), #ff0000);
-    border-radius: 2px;
-    animation: pulse 2s infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-      transform: scaleX(1);
-    }
-    50% {
-      opacity: 0.7;
-      transform: scaleX(1.05);
-    }
+    transform: scale(1.02);
   }
 `;
 
