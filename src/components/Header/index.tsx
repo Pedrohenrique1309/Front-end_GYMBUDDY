@@ -60,18 +60,37 @@ const Header = () => {
                   to={link.path} 
                   className={location.pathname === link.path ? 'active' : ''}
                 >
-                  {link.name}
+                  <motion.span
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    {link.name}
+                  </motion.span>
                   {location.pathname === link.path && (
                     <motion.span 
                       className="underline"
                       layoutId="underline"
+                      initial={{ scaleX: 0, opacity: 0 }}
+                      animate={{ scaleX: 1, opacity: 1 }}
+                      exit={{ scaleX: 0, opacity: 0 }}
                       transition={{
                         type: "spring",
-                        bounce: 0.25,
-                        duration: 0.5
+                        stiffness: 400,
+                        damping: 30,
+                        duration: 0.6
                       }}
                     />
                   )}
+                  <motion.div
+                    className="nav-glow"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ 
+                      opacity: location.pathname === link.path ? 1 : 0,
+                      scale: location.pathname === link.path ? 1 : 0.8
+                    }}
+                    transition={{ duration: 0.4 }}
+                  />
                 </NavLink>
               </NavItem>
             ))}
@@ -166,17 +185,22 @@ const NavLink = styled(Link)`
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--white);
-  transition: color 0.2s ease;
-  padding: 0.4rem 0;
+  transition: all 0.3s ease;
+  padding: 1rem 1.5rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  border-radius: 1rem;
+  overflow: hidden;
   
   &:hover {
     color: var(--primary);
+    background: rgba(227, 6, 19, 0.1);
+    transform: translateY(-2px);
   }
   
   &.active {
     color: var(--primary);
+    background: rgba(227, 6, 19, 0.15);
   }
   
   .underline {
@@ -185,8 +209,25 @@ const NavLink = styled(Link)`
     left: 0;
     right: 0;
     height: 3px;
-    background: var(--primary);
+    background: linear-gradient(90deg, var(--primary), #ff4757);
     border-radius: 2px;
+    transform-origin: left;
+    box-shadow: 0 0 10px rgba(227, 6, 19, 0.5);
+  }
+  
+  .nav-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at center,
+      rgba(227, 6, 19, 0.2) 0%,
+      transparent 70%
+    );
+    border-radius: inherit;
+    pointer-events: none;
   }
 `;
 

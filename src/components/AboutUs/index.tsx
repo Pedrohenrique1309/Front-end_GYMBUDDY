@@ -636,21 +636,27 @@ const sparkleAnimation = keyframes`
 
 const SparkleEffect = styled.div`
   position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 20px;
-  height: 20px;
+  top: -5px;
+  right: -5px;
+  width: 10px;
+  height: 10px;
   
   &::before,
   &::after {
-    content: '✨';
+    content: '';
     position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 50%;
     animation: ${sparkleAnimation} 3s ease-in-out infinite;
+    box-shadow: 0 0 6px var(--primary);
   }
   
   &::after {
     animation-delay: 1.5s;
-    left: 15px;
+    left: 8px;
+    top: 8px;
   }
 `;
 
@@ -764,10 +770,14 @@ const HeroParticles = styled.div`
   
   &::before,
   &::after {
-    content: '💪';
+    content: '';
     position: absolute;
-    font-size: 2rem;
-    animation: ${heroParticleAnimation} 6s ease-out infinite;
+    width: 6px;
+    height: 6px;
+    background: linear-gradient(135deg, var(--primary), #ff4757);
+    border-radius: 50%;
+    animation: ${heroParticleAnimation} 8s ease-out infinite;
+    box-shadow: 0 0 10px rgba(227, 6, 19, 0.5);
   }
   
   &::before {
@@ -777,10 +787,11 @@ const HeroParticles = styled.div`
   }
   
   &::after {
-    content: '🔥';
     left: 80%;
     bottom: 0;
-    animation-delay: 3s;
+    animation-delay: 4s;
+    width: 4px;
+    height: 4px;
   }
 `;
 
