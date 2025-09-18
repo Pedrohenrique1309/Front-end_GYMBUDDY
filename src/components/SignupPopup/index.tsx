@@ -477,7 +477,7 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
     'rgba(255, 255, 255, 0.2)'
   };
   border-radius: 0.8rem;
-  padding: 1.4rem ${props => props.name === 'password' ? '8rem' : '1.6rem'} 1.4rem 1.6rem;
+  padding: 1.4rem ${props => (props.name === 'password' || props.name === 'confirmPassword') ? '4.5rem' : '1.6rem'} 1.4rem 1.6rem;
   color: var(--white);
   font-size: 1.5rem;
   transition: all 0.3s ease;
@@ -503,9 +503,8 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
 
 const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>`
   position: absolute;
-  right: 2.5rem;
-  top: 90%;
-  bottom: 32px;
+  left: -2.6rem;
+  top: 30%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -528,7 +527,6 @@ const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>
   z-index: 2;
   cursor: pointer;
   overflow: visible;
-  position: relative;
 
   &::before {
     content: '';
@@ -566,20 +564,21 @@ const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>
 
 const PasswordToggle = styled.button`
   position: absolute;
-  right: 1.5rem;
+  right: 1.6rem;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
   z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.2rem;
+  width: 2.4rem;
+  height: 2.4rem;
   
   &:hover {
     color: var(--white);
