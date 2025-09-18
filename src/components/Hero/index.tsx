@@ -147,25 +147,30 @@ const HeroSection = styled.section`
 const Content = styled.div`
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  align-items: center;
+  align-items: flex-start; // Muda de center para flex-start para melhor controle
   column-gap: var(--gutter);
-  row-gap: 2rem;
+  row-gap: 0; // Remove o gap entre linhas
   position: relative;
   z-index: 2;
 
   @media (max-width: 1024px) {
     grid-template-columns: repeat(6, 1fr);
     text-align: center;
+    align-items: center;
   }
 `;
 
 const TextArea = styled(motion.div)`
   grid-column: 2 / span 5;
   max-width: 64rem;
+  margin-top: 8rem; // Abaixa o texto
+  position: relative;
+  z-index: 1; // Garante que o texto fique atrás da imagem
 
   @media (max-width: 1024px) {
     grid-column: 1 / -1;
     justify-self: center;
+    margin-top: 4rem;
   }
 
   h1 {
@@ -236,6 +241,12 @@ const ImageContainer = styled.div`
   min-height: 72vh;
   justify-self: center;
   width: 100%;
+  margin-top: -10rem; // Aumenta a sobreposição da imagem sobre o texto
+  z-index: 3; // Garante que a imagem fique sobre o texto
+  
+  @media (max-width: 1024px) {
+    margin-top: -4rem; // Menos sobreposição em mobile
+  }
 
   &::before {
     content: '';
@@ -256,7 +267,8 @@ const ImageContainer = styled.div`
     height: auto;
     max-height: 78vh;
     object-fit: contain;
-    z-index: 1;
+    z-index: 10; // Aumenta o z-index para garantir sobreposição
+    position: relative;
     animation: float 6s ease-in-out infinite;
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.45));
   }
