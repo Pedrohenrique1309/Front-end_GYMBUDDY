@@ -1,10 +1,16 @@
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { FaUsers, FaBrain, FaChartLine } from 'react-icons/fa';
-import { useRef } from 'react';
+import { motion, useScroll, useTransform, useMotionValue, useTransform as useTransformMotion } from 'framer-motion';
+import { FaUsers, FaChartLine } from 'react-icons/fa';
+import { SiOpenai } from 'react-icons/si';
+import { useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 const Resources = () => {
   const containerRef = useRef(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"]
@@ -12,6 +18,20 @@ const Resources = () => {
 
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -100]);
   const cardsY = useTransform(scrollYProgress, [0, 1], [100, -50]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, cardId: number) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const rotateX = useTransformMotion(mouseY, [0, 1], [15, -15]);
+  const rotateY = useTransformMotion(mouseX, [0, 1], [-15, 15]);
+  const shadowX = useTransformMotion(mouseX, [0, 1], [15, -15]);
+  const shadowY = useTransformMotion(mouseY, [0, 1], [15, -15]);
 
   const resources = [
     {
@@ -26,7 +46,7 @@ const Resources = () => {
       id: 2,
       title: "INTELIGÊNCIA ARTIFICIAL INTEGRADA",
       description: "No nosso aplicativo, uma inteligência artificial já treinada pra ajudar as pessoas a montarem seus treinos é contar melhor suas calorias está inclusa! Isso fortalece uma praticidade na criação de treinos para pessoas iniciantes, sem ser preciso mais treinos genéricos.",
-      icon: FaBrain,
+      icon: SiOpenai,
       gradient: "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)"
     },
     {
@@ -129,18 +149,49 @@ const Resources = () => {
             {resources.map((resource, index) => {
               const IconComponent = resource.icon;
               return (
-                <motion.div
+                <Card3DWrapper
                   key={resource.id}
                   variants={cardVariants}
-                  whileHover={{
-                    scale: 1.05,
-                    rotateY: 5,
-                    z: 50
+                  onMouseMove={(e) => handleMouseMove(e, resource.id)}
+                  onMouseEnter={() => setHoveredCard(resource.id)}
+                  onMouseLeave={() => {
+                    setHoveredCard(null);
+                    mouseX.set(0.5);
+                    mouseY.set(0.5);
                   }}
                   whileTap={{ scale: 0.95 }}
+                  style={{
+                    rotateX: hoveredCard === resource.id ? rotateX : 0,
+                    rotateY: hoveredCard === resource.id ? rotateY : 0,
+                    transformStyle: "preserve-3d",
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 30
+                  }}
                 >
-                  <ResourceCard gradient={resource.gradient}>
+                  <ResourceCard 
+                    gradient={resource.gradient}
+                    style={{
+                      transform: hoveredCard === resource.id ? "translateZ(50px)" : "translateZ(0px)",
+                      boxShadow: hoveredCard === resource.id ? 
+                        `${shadowX.get()}px ${shadowY.get()}px 40px rgba(227, 6, 19, 0.5)` : 
+                        "0 20px 40px rgba(0, 0, 0, 0.3)",
+                      transition: "all 0.3s ease"
+                    } as React.CSSProperties}
+                  >
                     <CardGlow />
+                    <MouseLight
+                      style={{
+                        background: `radial-gradient(
+                          600px circle at ${mouseX.get() * 100}% ${mouseY.get() * 100}%,
+                          rgba(255, 255, 255, 0.15),
+                          transparent 40%
+                        )`,
+                        opacity: hoveredCard === resource.id ? 1 : 0
+                      }}
+                    />
                     <CardContent>
                       <IconWrapper>
                         <motion.div
@@ -187,7 +238,7 @@ const Resources = () => {
                     <HoverOverlay />
                     <ParticleEffect className={`particles-${resource.id}`} />
                   </ResourceCard>
-                </motion.div>
+                </Card3DWrapper>
               );
             })}
           </CardsGrid>
@@ -326,7 +377,13 @@ const CardsGrid = styled(motion.div)`
   }
 `;
 
-const ResourceCard = styled.div<{ gradient: string }>`
+const Card3DWrapper = styled(motion.div)`
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  will-change: transform;
+`;
+
+const ResourceCard = styled.div<{ gradient: string; style?: React.CSSProperties }>`
   background: ${props => props.gradient};
   border-radius: 2rem;
   padding: 4rem 3rem;
@@ -367,6 +424,17 @@ const CardGlow = styled.div`
   ${ResourceCard}:hover & {
     opacity: 1;
   }
+`;
+
+const MouseLight = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1;
 `;
 
 const CardContent = styled.div`
