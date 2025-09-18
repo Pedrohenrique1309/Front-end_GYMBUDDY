@@ -21,6 +21,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     confirmPassword: ''
   });
   const [isPasswordValid, setIsPasswordValid] = useState<boolean | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   // Função para resetar o formulário
   const resetForm = () => {
@@ -176,6 +177,8 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                       transition: { duration: 0.2 }
                     }}
                     $isValid={isPasswordValid}
+                    onMouseEnter={() => isPasswordValid === false && setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
                   >
                     <motion.div
                       key={isPasswordValid ? 'check' : 'x'}
@@ -197,6 +200,123 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                     >
                       {isPasswordValid === true ? <FiCheck /> : <FiX />}
                     </motion.div>
+                    
+                    {/* Tooltip para especificações de senha */}
+                    <AnimatePresence>
+                      {showTooltip && isPasswordValid === false && (
+                        <PasswordTooltip
+                          initial={{ 
+                            opacity: 0, 
+                            scale: 0.7, 
+                            y: 15,
+                            filter: "blur(8px)",
+                            rotateX: -15
+                          }}
+                          animate={{ 
+                            opacity: 1, 
+                            scale: 1, 
+                            y: 0,
+                            filter: "blur(0px)",
+                            rotateX: 0
+                          }}
+                          exit={{ 
+                            opacity: 0, 
+                            scale: 0.85, 
+                            y: 8,
+                            filter: "blur(4px)",
+                            rotateX: 10
+                          }}
+                          transition={{ 
+                            duration: 0.4,
+                            ease: [0.25, 0.46, 0.45, 0.94],
+                            opacity: { duration: 0.3 },
+                            filter: { duration: 0.3 },
+                            scale: { 
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 20
+                            }
+                          }}
+                        >
+                          <div className="tooltip-header">
+                            <FiX className="tooltip-icon" />
+                            <span>Senha inválida</span>
+                          </div>
+                          <motion.div 
+                            className="tooltip-content"
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                              hidden: { opacity: 0 },
+                              visible: {
+                                opacity: 1,
+                                transition: {
+                                  staggerChildren: 0.08,
+                                  delayChildren: 0.15
+                                }
+                              }
+                            }}
+                          >
+                            <motion.div 
+                              className="requirement"
+                              variants={{
+                                hidden: { opacity: 0, x: -10 },
+                                visible: { 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: { duration: 0.3, ease: "easeOut" }
+                                }
+                              }}
+                            >
+                              <span className="bullet">•</span>
+                              Mínimo 8 caracteres
+                            </motion.div>
+                            <motion.div 
+                              className="requirement"
+                              variants={{
+                                hidden: { opacity: 0, x: -10 },
+                                visible: { 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: { duration: 0.3, ease: "easeOut" }
+                                }
+                              }}
+                            >
+                              <span className="bullet">•</span>
+                              1 letra maiúscula
+                            </motion.div>
+                            <motion.div 
+                              className="requirement"
+                              variants={{
+                                hidden: { opacity: 0, x: -10 },
+                                visible: { 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: { duration: 0.3, ease: "easeOut" }
+                                }
+                              }}
+                            >
+                              <span className="bullet">•</span>
+                              1 número
+                            </motion.div>
+                            <motion.div 
+                              className="requirement"
+                              variants={{
+                                hidden: { opacity: 0, x: -10 },
+                                visible: { 
+                                  opacity: 1, 
+                                  x: 0,
+                                  transition: { duration: 0.3, ease: "easeOut" }
+                                }
+                              }}
+                            >
+                              <span className="bullet">•</span>
+                              1 caractere especial
+                            </motion.div>
+                          </motion.div>
+                        </PasswordTooltip>
+                      )}
+                    </AnimatePresence>
                   </PasswordValidationIcon>
                   <PasswordToggle
                     type="button"
@@ -407,6 +527,7 @@ const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>
   z-index: 2;
   cursor: pointer;
   overflow: visible;
+  position: relative;
 
   &::before {
     content: '';
@@ -465,6 +586,130 @@ const PasswordToggle = styled.button`
   
   svg {
     display: block;
+  }
+`;
+
+const PasswordTooltip = styled(motion.div)`
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, 
+    rgba(227, 6, 19, 0.15) 0%, 
+    rgba(139, 69, 19, 0.12) 50%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(227, 6, 19, 0.25);
+  border-radius: 1.6rem;
+  padding: 1.4rem 1.6rem;
+  min-width: 24rem;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 12px 40px rgba(0, 0, 0, 0.3),
+    0 6px 20px rgba(227, 6, 19, 0.15);
+  z-index: 1000;
+  pointer-events: none;
+  overflow: hidden;
+
+  /* Liquid glass shine effect */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.1), 
+      transparent
+    );
+    animation: shine 3s ease-in-out infinite;
+  }
+
+  /* Seta do tooltip */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid rgba(227, 6, 19, 0.8);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+
+  @keyframes shine {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+  }
+
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(227, 6, 19, 0.3);
+    background: linear-gradient(90deg, 
+      rgba(227, 6, 19, 0.1) 0%, 
+      rgba(227, 6, 19, 0.05) 100%
+    );
+    border-radius: 0.8rem;
+    padding: 0.8rem 1rem;
+    margin: -0.4rem -0.6rem 1.2rem -0.6rem;
+
+    .tooltip-icon {
+      color: rgba(227, 6, 19, 0.9);
+      font-size: 1.6rem;
+      background: rgba(227, 6, 19, 0.15);
+      padding: 0.4rem;
+      border-radius: 0.6rem;
+      border: 1px solid rgba(227, 6, 19, 0.3);
+    }
+
+    span {
+      color: var(--white);
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .requirement {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.3rem;
+    font-weight: 500;
+    padding: 0.4rem 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: rgba(255, 255, 255, 1);
+      transform: translateX(2px);
+    }
+
+    .bullet {
+      color: rgba(227, 6, 19, 0.8);
+      font-weight: 900;
+      font-size: 1.6rem;
+      line-height: 1;
+      text-shadow: 0 0 4px rgba(227, 6, 19, 0.4);
+    }
   }
 `;
 
