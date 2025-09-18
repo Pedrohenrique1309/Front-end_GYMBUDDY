@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import DevGridOverlay from './components/DevGridOverlay';
 import Home from './pages/Home';
+import AboutUs from './components/AboutUs';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <AnimatePresence mode="wait">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/sobre" element={<AboutUs />} />
           {/* Add more routes as needed */}
         </Routes>
       </AnimatePresence>
