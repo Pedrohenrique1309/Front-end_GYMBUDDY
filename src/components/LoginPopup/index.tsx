@@ -42,26 +42,17 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
     setError(null);
 
     try {
-      // Vamos testar diferentes formatos de endpoint
-      console.log('Testando diferentes endpoints...');
+      // Endpoint da nova API
+      const url = `/api/v1/gymbuddy/usuario/login?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
       
-      // Opção 1: Com query parameters (mais comum para GET)
-      const urlWithQuery = `/api/v1/gymbuddy/usuario/login?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
+      console.log('Fazendo login na nova API:', url);
       
-      console.log('Tentando com query parameters:', urlWithQuery);
-      console.log('Form data:', formData);
-      console.log('Email encoded:', encodeURIComponent(formData.email));
-      console.log('Password encoded:', encodeURIComponent(formData.password));
-      
-      const response = await fetch(urlWithQuery, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
 
       // Verificar se a resposta é JSON antes de tentar fazer parse
       const contentType = response.headers.get('content-type');
@@ -74,36 +65,7 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
         // Se não for JSON, pegar como texto para debug
         const textResponse = await response.text();
         console.log('Response text (não JSON):', textResponse);
-        
-        // Para status 400, vamos tentar outras variações de parâmetros
-        if (response.status === 400) {
-          console.log('Status 400 - testando outras variações...');
-          
-          // Tentar com 'password' em vez de 'senha'
-          const urlWithPassword = `/api/v1/gymbuddy/usuario/login?email=${encodeURIComponent(formData.email)}&password=${encodeURIComponent(formData.password)}`;
-          console.log('Tentando com password:', urlWithPassword);
-          
-          const response2 = await fetch(urlWithPassword, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          console.log('Response2 status:', response2.status);
-          
-          if (response2.ok) {
-            const data2 = await response2.json();
-            console.log('Success with password param:', data2);
-            data = data2;
-          } else {
-            const text2 = await response2.text();
-            console.log('Response2 text:', text2);
-            throw new Error(`Parâmetros incorretos. Status: ${response.status}. Verifique os logs.`);
-          }
-        } else {
-          throw new Error(`Resposta não é JSON. Status: ${response.status}. Endpoint pode estar incorreto.`);
-        }
+        throw new Error(`Erro na API. Status: ${response.status}. Verifique se a nova API está funcionando.`);
       }
 
       // Verificar se o login foi bem-sucedido baseado no campo 'status' da resposta
