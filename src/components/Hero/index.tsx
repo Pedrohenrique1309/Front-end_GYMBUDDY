@@ -3,7 +3,11 @@ import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
 import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward } from 'react-icons/fi';
 
-const Hero = () => {
+interface HeroProps {
+  onOpenSignup?: () => void;
+}
+
+const Hero = ({ onOpenSignup }: HeroProps) => {
   const floatingCards = BRAND.floatingCards;
 
   // Mapeamento de ícones para cada card
@@ -120,6 +124,7 @@ const Hero = () => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
+            onClick={onOpenSignup}
           >
             <span className="label">Vamos começar</span>
             <span className="arrows" aria-hidden="true">
@@ -163,14 +168,14 @@ const Content = styled.div`
 const TextArea = styled(motion.div)`
   grid-column: 2 / span 5;
   max-width: 64rem;
-  margin-top: 8rem; // Abaixa o texto
+  margin-top: 1rem; // Sobe o texto mais ainda
   position: relative;
   z-index: 1; // Garante que o texto fique atrás da imagem
 
   @media (max-width: 1024px) {
     grid-column: 1 / -1;
     justify-self: center;
-    margin-top: 4rem;
+    margin-top: 0.5rem;
   }
 
   h1 {
@@ -529,7 +534,7 @@ export default Hero;
 const FixedCTA = styled(motion.button)`
   position: fixed;
   right: clamp(1.6rem, 2.5vw, 3.2rem);
-  bottom: clamp(1.6rem, 2.5vw, 3.2rem);
+  bottom: clamp(6rem, 8vw, 8rem); // Sobe o botão mais ainda
   z-index: 1500;
   --arrow-size: 18px;
   background: var(--primary);
@@ -547,23 +552,51 @@ const FixedCTA = styled(motion.button)`
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease-in-out;
+  overflow: hidden; /* Para evitar que as setas extrapolem o botão */
   
   .arrows {
     display: inline-block;
     position: relative;
-    width: var(--arrow-size);
+    width: calc(var(--arrow-size) * 2.5); /* Largura maior para acomodar as setas separadas */
     height: var(--arrow-size);
-    margin-left: -4px; /* slight left nudge */
+    margin-left: 8px;
   }
+  
   .arrows .a1,
   .arrows .a2,
   .arrows .a3 {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
     width: var(--arrow-size);
     height: var(--arrow-size);
-    transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  /* Estado inicial: setas unidas com leve animação */
+  .arrows .a1 { 
+    left: 0;
+    opacity: 0.6;
+    animation: pulse-arrow 2s ease-in-out infinite;
+  }
+  .arrows .a2 { 
+    left: 1px; /* Leve deslocamento para criar profundidade */
+    opacity: 0.8;
+    animation: pulse-arrow 2s ease-in-out infinite 0.1s;
+  }
+  .arrows .a3 { 
+    left: 2px; /* Leve deslocamento para criar profundidade */
+    opacity: 1;
+    animation: pulse-arrow 2s ease-in-out infinite 0.2s;
+  }
+  
+  @keyframes pulse-arrow {
+    0%, 100% {
+      transform: translateY(-50%) translateX(0);
+    }
+    50% {
+      transform: translateY(-50%) translateX(2px);
+    }
   }
   
   &:hover {
@@ -572,10 +605,28 @@ const FixedCTA = styled(motion.button)`
     filter: brightness(1.2);
     box-shadow: 0 0 20px rgba(227, 6, 19, 0.6);
     
-    /* staggered separation */
-    .arrows .a1 { transform: translateX(10px); transition-delay: 0s; }
-    .arrows .a2 { transform: translateX(20px); transition-delay: 0.1s; }
-    .arrows .a3 { transform: translateX(30px); transition-delay: 0.2s; }
+    /* Separação das setas no hover com posicionamento correto */
+    .arrows .a1 { 
+      left: 0;
+      opacity: 1;
+      animation: none; /* Para a animação */
+      transform: translateY(-50%); /* Mantém centralizado */
+      transition-delay: 0s;
+    }
+    .arrows .a2 { 
+      left: calc(var(--arrow-size) * 0.7); /* Espaçamento ajustado */
+      opacity: 1;
+      animation: none; /* Para a animação */
+      transform: translateY(-50%); /* Mantém centralizado */
+      transition-delay: 0.05s;
+    }
+    .arrows .a3 { 
+      left: calc(var(--arrow-size) * 1.4); /* Espaçamento ajustado */
+      opacity: 1;
+      animation: none; /* Para a animação */
+      transform: translateY(-50%); /* Mantém centralizado */
+      transition-delay: 0.1s;
+    }
   }
   
   @media (max-width: 480px) {
