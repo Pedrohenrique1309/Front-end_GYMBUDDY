@@ -5,6 +5,7 @@ import DevGridOverlay from './components/DevGridOverlay';
 import Home from './pages/Home';
 import AboutUs from './components/AboutUs';
 import Resources from './components/Resources';
+import AppPage from './pages/App';
 
 const pageVariants = {
   initial: {
@@ -81,7 +82,20 @@ const AnimatedRoutes = () => {
             </motion.div>
           } 
         />
-        {/* Add more routes as needed */}
+        <Route 
+          path="/app" 
+          element={
+            <motion.div
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <AppPage />
+            </motion.div>
+          } 
+        />
       </Routes>
     </AnimatePresence>
   );
