@@ -43,7 +43,7 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
 
     try {
       // Endpoint da nova API
-      const url = `/api/v1/gymbuddy/usuario/login?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
+      const url = `http://10.107.144.31:8080/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
       
       console.log('Fazendo login na nova API:', url);
       

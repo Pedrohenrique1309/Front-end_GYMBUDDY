@@ -8,10 +8,10 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'https://back-end-gymbuddy-4rg5.onrender.com',
+        target: 'http://10.107.144.31:8080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
-        secure: true,
+        secure: false,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('proxy error', err);
