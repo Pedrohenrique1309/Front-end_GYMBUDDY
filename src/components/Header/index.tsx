@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
-import LoginPopup from '../LoginPopup';
+import PopupLogin from '../LoginPopup';
 import SignupPopup from '../SignupPopup';
 
 const Header = () => {
@@ -163,10 +163,10 @@ const Header = () => {
         </ThemeToggle>
       </div>
       
-      <LoginPopup 
-        isOpen={showLoginPopup} 
-        onClose={() => setShowLoginPopup(false)}
-        onSwitchToSignup={handleSwitchToSignup}
+      <PopupLogin 
+        estaAberto={showLoginPopup} 
+        aoFechar={() => setShowLoginPopup(false)}
+        aoTrocarParaCadastro={handleSwitchToSignup}
       />
       
       <SignupPopup 

@@ -12,7 +12,7 @@ const DevGridOverlay = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'g') setVisible((v) => !v);
+      if (e.key && e.key.toLowerCase() === 'g') setVisible((v) => !v);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

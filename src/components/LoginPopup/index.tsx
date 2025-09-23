@@ -42,15 +42,22 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
     setErro(null)
 
     try {
-      // Usar proxy do Vite pra evitar problemas de CORS e conectividade
+      // Usando proxy do Vite para evitar CORS
       const url = `/api/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(dadosFormulario.email)}&senha=${encodeURIComponent(dadosFormulario.senha)}`
       
-      console.log('Fazendo login via proxy:', url)
+      // URL direta (funciona no Postman mas dá CORS no browser):
+      // const url = `http://localhost:8080/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(dadosFormulario.email)}&senha=${encodeURIComponent(dadosFormulario.senha)}`
+      
+      console.log('Fazendo login via proxy Vite:', url)
+      console.log('Email:', dadosFormulario.email)
+      console.log('Senha:', dadosFormulario.senha)
       
       const resposta = await fetch(url, {
         method: 'GET',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
