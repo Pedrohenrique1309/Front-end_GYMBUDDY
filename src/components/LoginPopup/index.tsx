@@ -42,10 +42,10 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
     setError(null);
 
     try {
-      // Endpoint da nova API
-      const url = `http://10.107.144.31:8080/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
+      // Usar proxy do Vite para evitar problemas de CORS e conectividade
+      const url = `/api/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
       
-      console.log('Fazendo login na nova API:', url);
+      console.log('Fazendo login via proxy:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -104,11 +104,17 @@ const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
     } catch (error) {
       console.error('Login error:', error);
       
-      // Verificar se é erro de CORS
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        setError('Erro de CORS: O servidor precisa permitir requisições do frontend. Entre em contato com o administrador.');
+      // Tratamento específico para diferentes tipos de erro
+      if (error instanceof TypeError) {
+        if (error.message.includes('Failed to fetch')) {
+          setError('Erro de conectividade: Não foi possível conectar ao servidor. Verifique se o servidor está rodando no IP 10.107.144.31:8080');
+        } else if (error.message.includes('NetworkError')) {
+          setError('Erro de rede: Verifique sua conexão com a internet e se o servidor está acessível.');
+        } else {
+          setError('Erro de requisição: ' + error.message);
+        }
       } else {
-        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+        setError('Erro inesperado: ' + (error as Error).message);
       }
     } finally {
       setIsLoading(false);
