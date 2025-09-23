@@ -20,6 +20,26 @@ export const GlobalStyle = createGlobalStyle`
     --gutter: 2.4rem;       /* 24px */
   }
 
+  /* Tema claro */
+  [data-theme="light"] {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8F9FA;
+    --text-primary: #1A1A1A;
+    --text-secondary: #6C757D;
+    --border-color: #E9ECEF;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Tema escuro (padrão) */
+  [data-theme="dark"] {
+    --bg-primary: #0A0A0A;
+    --bg-secondary: #1A1A1A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B8B8B8;
+    --border-color: #333333;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+  }
+
   html {
     scroll-behavior: smooth;
     font-size: 62.5%;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
 import { FiSun, FiMoon } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
@@ -10,7 +10,10 @@ import SignupPopup from '../SignupPopup';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
   const location = useLocation();
@@ -36,6 +39,16 @@ const Header = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
+
+  useEffect(() => {
+    // Aplicar o tema ao documento
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -103,11 +116,50 @@ const Header = () => {
         </AuthButtons>
         
         <ThemeToggle 
-          onClick={() => setIsDarkMode(!isDarkMode)}
+          onClick={toggleTheme}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          $isDarkMode={isDarkMode}
         >
-          <FiSun className="theme-icon sun" />
+          <div className="icon-container">
+            <AnimatePresence mode="wait">
+              <motion.div
+                className="icon-wrapper"
+                key={isDarkMode ? 'moon' : 'sun'}
+                initial={{ 
+                  opacity: 0, 
+                  scale: 0.3, 
+                  y: 10,
+                  filter: "blur(4px)"
+                }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1, 
+                  y: 0,
+                  filter: "blur(0px)"
+                }}
+                exit={{ 
+                  opacity: 0, 
+                  scale: 0.3, 
+                  y: -10,
+                  filter: "blur(4px)"
+                }}
+                transition={{ 
+                  duration: 0.6, 
+                  ease: [0.25, 0.46, 0.45, 0.94],
+                  opacity: { duration: 0.4 },
+                  scale: { duration: 0.5, ease: "backOut" },
+                  filter: { duration: 0.3 }
+                }}
+              >
+                {isDarkMode ? (
+                  <FiMoon className="theme-icon moon" />
+                ) : (
+                  <FiSun className="theme-icon sun" />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </ThemeToggle>
       </div>
       
@@ -231,52 +283,119 @@ const NavLink = styled(Link)`
   }
 `;
 
-const ThemeToggle = styled(motion.button)`
-  background: transparent;
-  border: none;
+const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
+  background: ${({ $isDarkMode }) => 
+    $isDarkMode 
+      ? 'linear-gradient(135deg, rgba(30, 30, 50, 0.8), rgba(50, 50, 80, 0.6))' 
+      : 'transparent'
+  };
+  border: ${({ $isDarkMode }) => 
+    $isDarkMode 
+      ? '1px solid rgba(255, 255, 255, 0.2)' 
+      : '1px solid transparent'
+  };
   cursor: pointer;
-  padding: 0.8rem;
+  padding: 1rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
   margin-left: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  width: 4.8rem;
+  height: 4.8rem;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${({ $isDarkMode }) => 
+      $isDarkMode 
+        ? 'radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%)' 
+        : 'radial-gradient(circle at center, rgba(255, 165, 0, 0.1) 0%, transparent 70%)'
+    };
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
+  
+  .icon-container {
+    position: relative;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .icon-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   
   .theme-icon {
-    width: 2.2rem;
-    height: 2.2rem;
-    transition: all 0.4s ease;
+    width: 2.4rem;
+    height: 2.4rem;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
   }
   
   .sun {
     color: #FFA500;
-    animation: sun-glow 2s ease-in-out infinite alternate;
     filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.4));
     
     &:hover {
-      transform: rotate(90deg);
       filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.6));
     }
   }
   
   .moon {
-    color: #E6E6FA;
-    filter: drop-shadow(0 0 6px rgba(230, 230, 250, 0.3));
+    color: #FFFFFF;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
+    animation: moon-glow 3s ease-in-out infinite alternate;
+    
+    &:hover {
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
+      transform: scale(1.1);
+    }
   }
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ $isDarkMode }) => 
+      $isDarkMode 
+        ? 'linear-gradient(135deg, rgba(40, 40, 70, 0.9), rgba(60, 60, 100, 0.7))' 
+        : 'rgba(255, 165, 0, 0.1)'
+    };
+    transform: translateY(-2px);
+    box-shadow: ${({ $isDarkMode }) => 
+      $isDarkMode 
+        ? '0 8px 25px rgba(255, 255, 255, 0.15)' 
+        : '0 8px 25px rgba(255, 165, 0, 0.25)'
+    };
   }
   
-  @keyframes sun-glow {
+  @keyframes moon-glow {
     0% { 
-      filter: drop-shadow(0 0 8px rgba(255, 165, 0, 0.4));
-      transform: rotate(0deg);
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
     }
     100% { 
-      filter: drop-shadow(0 0 12px rgba(255, 165, 0, 0.6));
-      transform: rotate(15deg);
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
     }
   }
   
