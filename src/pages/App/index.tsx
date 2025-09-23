@@ -58,41 +58,6 @@ const App = () => {
               </DownloadButton>
             </motion.div>
           </DownloadButtons>
-          
-          <Features>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <FeatureItem>
-                <FeatureIcon>🏋️</FeatureIcon>
-                <FeatureText>Treinos Personalizados</FeatureText>
-              </FeatureItem>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-            >
-              <FeatureItem>
-                <FeatureIcon>📊</FeatureIcon>
-                <FeatureText>Acompanhamento de Progresso</FeatureText>
-              </FeatureItem>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-            >
-              <FeatureItem>
-                <FeatureIcon>🎯</FeatureIcon>
-                <FeatureText>Metas e Objetivos</FeatureText>
-              </FeatureItem>
-            </motion.div>
-          </Features>
         </motion.div>
       </ContentWrapper>
     </AppContainer>
@@ -169,13 +134,11 @@ const DownloadButtons = styled.div`
   display: flex;
   gap: 3rem;
   justify-content: center;
-  margin-bottom: 8rem;
   
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: center;
     gap: 2rem;
-    margin-bottom: 6rem;
   }
 `;
 
@@ -231,45 +194,6 @@ const DownloadButton = styled(motion.a)`
   &.app-store:hover .icon {
     color: #007AFF;
   }
-`;
-
-const Features = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
-  gap: 3rem;
-  max-width: 80rem;
-  margin: 0 auto;
-`;
-
-const FeatureItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 3rem 2rem;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(227, 6, 19, 0.3);
-    transform: translateY(-5px);
-  }
-`;
-
-const FeatureIcon = styled.div`
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-`;
-
-const FeatureText = styled.h3`
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--white);
-  line-height: 1.4;
 `;
 
 export default App;
