@@ -1,231 +1,231 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiEye, FiEyeOff, FiX } from 'react-icons/fi';
-import { FaDumbbell } from 'react-icons/fa';
-import styled from 'styled-components';
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
+import { FaDumbbell } from 'react-icons/fa'
+import styled from 'styled-components'
 
-interface LoginPopupProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSwitchToSignup: () => void;
+interface PropsPopupLogin {
+  estaAberto: boolean
+  aoFechar: () => void
+  aoTrocarParaCadastro: () => void
 }
 
-const LoginPopup = ({ isOpen, onClose, onSwitchToSignup }: LoginPopupProps) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLogin) => {
+  const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [estaCarregando, setEstaCarregando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const [dadosFormulario, setDadosFormulario] = useState({
     email: '',
-    password: ''
-  });
+    senha: ''
+  })
 
-  // Função para resetar o formulário
-  const resetForm = () => {
-    setFormData({
+  // Função pra limpar o formulário
+  const limparFormulario = () => {
+    setDadosFormulario({
       email: '',
-      password: ''
-    });
-    setShowPassword(false);
-    setError(null);
-    setIsLoading(false);
-  };
+      senha: ''
+    })
+    setMostrarSenha(false)
+    setErro(null)
+    setEstaCarregando(false)
+  }
 
-  // Função personalizada para fechar o popup
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
+  // Função pra fechar o popup
+  const aoFecharPopup = () => {
+    limparFormulario()
+    aoFechar()
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  const aoEnviarFormulario = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEstaCarregando(true)
+    setErro(null)
 
     try {
-      // Usar proxy do Vite para evitar problemas de CORS e conectividade
-      const url = `/api/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(formData.email)}&senha=${encodeURIComponent(formData.password)}`;
+      // Usar proxy do Vite pra evitar problemas de CORS e conectividade
+      const url = `/api/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(dadosFormulario.email)}&senha=${encodeURIComponent(dadosFormulario.senha)}`
       
-      console.log('Fazendo login via proxy:', url);
+      console.log('Fazendo login via proxy:', url)
       
-      const response = await fetch(url, {
+      const resposta = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-      });
+      })
 
       // Verificar se a resposta é JSON antes de tentar fazer parse
-      const contentType = response.headers.get('content-type');
-      let data;
+      const tipoConteudo = resposta.headers.get('content-type')
+      let dados
       
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-        console.log('Response data:', data);
+      if (tipoConteudo && tipoConteudo.includes('application/json')) {
+        dados = await resposta.json()
+        console.log('Dados da resposta:', dados)
       } else {
-        // Se não for JSON, pegar como texto para debug
-        const textResponse = await response.text();
-        console.log('Response text (não JSON):', textResponse);
-        throw new Error(`Erro na API. Status: ${response.status}. Verifique se a nova API está funcionando.`);
+        // Se não for JSON, pegar como texto pra debug
+        const respostaTexto = await resposta.text()
+        console.log('Resposta em texto (não JSON):', respostaTexto)
+        throw new Error(`Deu ruim na API. Status: ${resposta.status}. Verifica se a API tá funcionando.`)
       }
 
-      // Verificar se o login foi bem-sucedido baseado no campo 'status' da resposta
-      if (data && data.status === true) {
-        // Login bem-sucedido
-        console.log('Login successful:', data);
+      // Verificar se o login deu certo baseado no campo 'status' da resposta
+      if (dados && dados.status === true) {
+        // Login deu certo
+        console.log('Login deu bom:', dados)
         
-        // Salvar token no localStorage se fornecido
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
+        // Salvar token no localStorage se tiver
+        if (dados.token) {
+          localStorage.setItem('authToken', dados.token)
         }
         
-        // Salvar dados do usuário se fornecidos
-        if (data.user || data.data) {
-          localStorage.setItem('userData', JSON.stringify(data.user || data.data));
+        // Salvar dados do usuário se tiver
+        if (dados.user || dados.data) {
+          localStorage.setItem('userData', JSON.stringify(dados.user || dados.data))
         }
 
-        // Fechar popup e resetar formulário
-        handleClose();
+        // Fechar popup e limpar formulário
+        aoFecharPopup()
         
         // Aqui você pode adicionar redirecionamento ou atualização de estado global
-        alert('Login realizado com sucesso!');
+        alert('Login feito com sucesso!')
         
       } else {
         // Erro de login - usar a mensagem da API
-        let errorMessage = data?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+        let mensagemErro = dados?.message || 'Deu ruim no login. Verifica tuas credenciais.'
         
         // Melhorar mensagens de erro específicas
-        if (errorMessage.includes('campos com preenchimento obrigatórios')) {
-          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais e tente novamente.';
+        if (mensagemErro.includes('campos com preenchimento obrigatórios')) {
+          mensagemErro = 'Email ou senha tão errados. Verifica aí e tenta de novo.'
         }
         
-        console.log('Login error from API:', errorMessage);
-        setError(errorMessage);
+        console.log('Erro de login da API:', mensagemErro)
+        setErro(mensagemErro)
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (erro) {
+      console.error('Erro no login:', erro)
       
-      // Tratamento específico para diferentes tipos de erro
-      if (error instanceof TypeError) {
-        if (error.message.includes('Failed to fetch')) {
-          setError('Erro de conectividade: Não foi possível conectar ao servidor. Verifique se o servidor está rodando no IP 10.107.144.31:8080');
-        } else if (error.message.includes('NetworkError')) {
-          setError('Erro de rede: Verifique sua conexão com a internet e se o servidor está acessível.');
+      // Tratamento específico pra diferentes tipos de erro
+      if (erro instanceof TypeError) {
+        if (erro.message.includes('Failed to fetch')) {
+          setErro('Erro de conectividade: Não rolou conectar no servidor. Verifica se o servidor tá rodando no IP 10.107.144.31:8080')
+        } else if (erro.message.includes('NetworkError')) {
+          setErro('Erro de rede: Verifica tua conexão com a internet e se o servidor tá acessível.')
         } else {
-          setError('Erro de requisição: ' + error.message);
+          setErro('Erro de requisição: ' + erro.message)
         }
       } else {
-        setError('Erro inesperado: ' + (error as Error).message);
+        setErro('Erro inesperado: ' + (erro as Error).message)
       }
     } finally {
-      setIsLoading(false);
+      setEstaCarregando(false)
     }
-  };
+  }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
+  const aoMudarCampo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDadosFormulario({
+      ...dadosFormulario,
       [e.target.name]: e.target.value
-    });
-  };
+    })
+  }
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {estaAberto && (
         <>
-          <Overlay
+          <FundoEscuro
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            onClick={handleClose}
+            onClick={aoFecharPopup}
           />
-          <PopupContainer
+          <ContainerPopup
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <PopupContent>
-              <CloseButton onClick={handleClose}>
+            <ConteudoPopup>
+              <BotaoFechar onClick={aoFecharPopup}>
                 <FiX />
-              </CloseButton>
+              </BotaoFechar>
             
-            <LogoSection>
-              <FaDumbbell className="logo-icon" />
+            <SecaoLogo>
+              <FaDumbbell className="icone-logo" />
               <h2>GYM BUDDY</h2>
-              <div className="divider" />
-            </LogoSection>
+              <div className="divisor" />
+            </SecaoLogo>
 
-            <Title>FAZER LOGIN</Title>
+            <Titulo>ENTRAR NA CONTA</Titulo>
 
-            <LoginForm onSubmit={handleSubmit}>
-              <InputGroup>
-                <Input
+            <FormularioLogin onSubmit={aoEnviarFormulario}>
+              <GrupoCampo>
+                <Campo
                   type="email"
                   name="email"
                   placeholder="Email ou Usuário"
-                  value={formData.email}
-                  onChange={handleInputChange}
+                  value={dadosFormulario.email}
+                  onChange={aoMudarCampo}
                   required
                 />
-              </InputGroup>
+              </GrupoCampo>
 
-              <InputGroup>
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
+              <GrupoCampo>
+                <Campo
+                  type={mostrarSenha ? 'text' : 'password'}
+                  name="senha"
                   placeholder="Senha"
-                  value={formData.password}
-                  onChange={handleInputChange}
+                  value={dadosFormulario.senha}
+                  onChange={aoMudarCampo}
                   required
                 />
-                <PasswordToggle
+                <BotaoMostrarSenha
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
                 >
-                  {showPassword ? <FiEyeOff /> : <FiEye />}
-                </PasswordToggle>
-              </InputGroup>
+                  {mostrarSenha ? <FiEyeOff /> : <FiEye />}
+                </BotaoMostrarSenha>
+              </GrupoCampo>
 
-              <ForgotPassword href="#" onClick={(e) => e.preventDefault()}>
+              <LinkEsqueciSenha href="#" onClick={(e) => e.preventDefault()}>
                 Esqueci minha senha
-              </ForgotPassword>
+              </LinkEsqueciSenha>
 
-              {error && (
-                <ErrorMessage
+              {erro && (
+                <MensagemErro
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                 >
-                  {error}
-                </ErrorMessage>
+                  {erro}
+                </MensagemErro>
               )}
 
-              <SubmitButton
+              <BotaoEnviar
                 type="submit"
-                disabled={isLoading}
-                whileHover={!isLoading ? { scale: 1.02 } : {}}
-                whileTap={!isLoading ? { scale: 0.98 } : {}}
+                disabled={estaCarregando}
+                whileHover={!estaCarregando ? { scale: 1.02 } : {}}
+                whileTap={!estaCarregando ? { scale: 0.98 } : {}}
               >
-                {isLoading ? 'Entrando...' : 'Fazer Login'}
-              </SubmitButton>
-            </LoginForm>
+                {estaCarregando ? 'Entrando...' : 'Entrar'}
+              </BotaoEnviar>
+            </FormularioLogin>
 
-            <SignupPrompt>
-              Não possui uma conta? <SignupLink href="#" onClick={(e) => {
-                e.preventDefault();
-                onSwitchToSignup();
-              }}>Criar conta</SignupLink>
-            </SignupPrompt>
-            </PopupContent>
-          </PopupContainer>
+            <TextoCadastro>
+              Não tem conta ainda? <LinkCadastro href="#" onClick={(e) => {
+                e.preventDefault()
+                aoTrocarParaCadastro()
+              }}>Criar conta</LinkCadastro>
+            </TextoCadastro>
+            </ConteudoPopup>
+          </ContainerPopup>
         </>
       )}
     </AnimatePresence>
-  );
-};
+  )
+}
 
-const Overlay = styled(motion.div)`
+const FundoEscuro = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
@@ -234,9 +234,9 @@ const Overlay = styled(motion.div)`
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   z-index: 9998;
-`;
+`
 
-const PopupContainer = styled(motion.div)`
+const ContainerPopup = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
@@ -247,9 +247,9 @@ const PopupContainer = styled(motion.div)`
   justify-content: center;
   z-index: 9999;
   pointer-events: none;
-`;
+`
 
-const PopupContent = styled.div`
+const ConteudoPopup = styled.div`
   position: relative;
   background: #0A0A0A;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -259,9 +259,9 @@ const PopupContent = styled.div`
   max-width: 42rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
-`;
+`
 
-const CloseButton = styled.button`
+const BotaoFechar = styled.button`
   position: absolute;
   top: 1.5rem;
   right: 1.5rem;
@@ -278,15 +278,15 @@ const CloseButton = styled.button`
     background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
   }
-`;
+`
 
-const LogoSection = styled.div`
+const SecaoLogo = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 2rem;
   
-  .logo-icon {
+  .icone-logo {
     color: var(--primary);
     font-size: 3.5rem;
     margin-bottom: 1rem;
@@ -300,33 +300,33 @@ const LogoSection = styled.div`
     margin-bottom: 1rem;
   }
   
-  .divider {
+  .divisor {
     width: 4rem;
     height: 2px;
     background: var(--primary);
   }
-`;
+`
 
-const Title = styled.h1`
+const Titulo = styled.h1`
   color: var(--white);
   font-size: 2.4rem;
   font-weight: 800;
   text-align: center;
   margin-bottom: 3rem;
   letter-spacing: 0.05em;
-`;
+`
 
-const LoginForm = styled.form`
+const FormularioLogin = styled.form`
   display: flex;
   flex-direction: column;
   gap: 2rem;
-`;
+`
 
-const InputGroup = styled.div`
+const GrupoCampo = styled.div`
   position: relative;
-`;
+`
 
-const Input = styled.input`
+const Campo = styled.input`
   width: 100%;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -345,9 +345,9 @@ const Input = styled.input`
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
   }
-`;
+`
 
-const PasswordToggle = styled.button`
+const BotaoMostrarSenha = styled.button`
   position: absolute;
   right: 1.6rem;
   top: 50%;
@@ -362,9 +362,9 @@ const PasswordToggle = styled.button`
   &:hover {
     color: var(--white);
   }
-`;
+`
 
-const ForgotPassword = styled.a`
+const LinkEsqueciSenha = styled.a`
   color: var(--primary);
   font-size: 1.3rem;
   text-align: center;
@@ -375,9 +375,9 @@ const ForgotPassword = styled.a`
     color: var(--primary-dark);
     text-decoration: underline;
   }
-`;
+`
 
-const ErrorMessage = styled(motion.div)`
+const MensagemErro = styled(motion.div)`
   background: rgba(220, 38, 38, 0.1);
   border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: 0.8rem;
@@ -386,9 +386,9 @@ const ErrorMessage = styled(motion.div)`
   font-size: 1.4rem;
   text-align: center;
   margin: 1rem 0;
-`;
+`
 
-const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
+const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
   color: var(--white);
   border: none;
@@ -405,16 +405,16 @@ const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
     background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary-dark)'};
     box-shadow: ${props => props.disabled ? 'none' : '0 8px 24px rgba(227, 6, 19, 0.4)'};
   }
-`;
+`
 
-const SignupPrompt = styled.p`
+const TextoCadastro = styled.p`
   color: rgba(255, 255, 255, 0.7);
   font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;
-`;
+`
 
-const SignupLink = styled.a`
+const LinkCadastro = styled.a`
   color: var(--primary);
   text-decoration: none;
   font-weight: 600;
@@ -422,6 +422,6 @@ const SignupLink = styled.a`
   &:hover {
     text-decoration: underline;
   }
-`;
+`
 
-export default LoginPopup;
+export default PopupLogin
