@@ -248,11 +248,13 @@ const Resources = () => {
   );
 };
 
-const ResourcesContainer = styled.div`
+const ResourcesContainer = styled.section`
   min-height: 100vh;
-  background: var(--background);
-  color: var(--white);
+  background: var(--bg-primary);
+  position: relative;
+  overflow: hidden;
   padding-top: 8rem;
+  transition: background 0.3s ease;
   position: relative;
   overflow: hidden;
 `;
@@ -344,7 +346,7 @@ const HeroTitle = styled.h1`
   font-weight: 900;
   line-height: 1;
   margin: 0;
-  color: var(--white);
+  color: var(--text-primary);
   letter-spacing: -0.02em;
   text-transform: uppercase;
 `;
@@ -393,11 +395,13 @@ const ResourceCard = styled.div<{ gradient: string; style?: React.CSSProperties 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px var(--shadow-color);
   transition: all 0.3s ease;
   transform-style: preserve-3d;
+  
+  [data-theme="light"] & {
+    box-shadow: 0 10px 30px rgba(227, 6, 19, 0.2);
+  }
   
   &:hover {
     box-shadow: 
@@ -486,28 +490,28 @@ const IconRipple = styled.div`
   animation: ${rippleEffect} 3s ease-out infinite;
 `;
 
-const CardTitle = styled.h2`
+const CardTitle = styled.h3`
   font-size: 2.2rem;
   font-weight: 800;
   color: var(--white);
   margin-bottom: 2rem;
-  line-height: 1.2;
-  text-transform: uppercase;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.5px;
 `;
 
 const CardDescription = styled.p`
-  font-size: 1.6rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.4rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.95);
   margin-bottom: 2rem;
-  flex-grow: 1;
+  flex: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 `;
 
 const AdditionalText = styled.p`
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--white);
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 2rem;
   text-align: center;
   font-style: italic;
