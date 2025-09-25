@@ -17,6 +17,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
+    nickname: '',
     email: '',
     confirmEmail: '',
     password: '',
@@ -33,6 +34,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
   const resetForm = () => {
     setFormData({
       username: '',
+      nickname: '',
       email: '',
       confirmEmail: '',
       password: '',
@@ -61,6 +63,10 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
       // Validações locais
       if (!formData.username.trim()) {
         throw new Error('Nome de usuário é obrigatório.');
+      }
+      
+      if (!formData.nickname.trim()) {
+        throw new Error('Nickname é obrigatório.');
       }
       
       if (formData.email !== formData.confirmEmail) {
@@ -180,6 +186,17 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                     name="username"
                     placeholder="Crie um nome de usuário"
                     value={formData.username}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </InputGroup>
+
+                <InputGroup>
+                  <Input
+                    type="text"
+                    name="nickname"
+                    placeholder="Crie um nickname"
+                    value={formData.nickname}
                     onChange={handleInputChange}
                     required
                   />

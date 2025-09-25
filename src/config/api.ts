@@ -26,6 +26,7 @@ export interface UserData {
 // Interface para dados de cadastro
 export interface SignupData {
   username: string
+  nickname: string
   email: string
   confirmEmail: string
   password: string
@@ -115,11 +116,16 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
     // Preparar dados para envio (apenas os campos necessários para a API)
     const payload = {
       username: userData.username,
+      nickname: userData.nickname,
       email: userData.email,
       senha: userData.password // A API espera 'senha', não 'password'
     }
     
-    console.log('Realizando cadastro:', { url, payload: { ...payload, senha: '[REDACTED]' } })
+    console.log('🚀 Realizando cadastro:', { 
+      url, 
+      payload: { ...payload, senha: '[REDACTED]' },
+      baseUrl: API_BASE_URL 
+    })
     
     const response = await fetch(url, {
       method: 'POST',
@@ -131,22 +137,37 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
       body: JSON.stringify(payload)
     })
 
+    console.log('📡 Resposta de cadastro recebida:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    })
+
     // Verificar se a resposta é JSON
     const contentType = response.headers.get('content-type')
     let data: SignupResponse
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
-      console.log('Resposta de cadastro:', data)
+      console.log('✅ Resposta JSON de cadastro:', data)
     } else {
       const responseText = await response.text()
-      console.error('Resposta não é JSON:', responseText)
-      throw new Error(`Erro na API. Status: ${response.status}. Verifique se a API está funcionando.`)
+      console.error('❌ Resposta de cadastro não é JSON:', {
+        status: response.status,
+        contentType,
+        responseText: responseText.substring(0, 500)
+      })
+      
+      if (response.status === 500) {
+        throw new Error(`Erro interno do servidor (500). O backend pode estar com problemas. Verifique se está rodando em 10.107.144.9:8080`)
+      }
+      
+      throw new Error(`Erro na API. Status: ${response.status}. Resposta: ${responseText.substring(0, 100)}`)
     }
 
     return data
   } catch (error) {
-    console.error('Erro no cadastro:', error)
+    console.error('💥 Erro no cadastro:', error)
     throw error
   }
 }
