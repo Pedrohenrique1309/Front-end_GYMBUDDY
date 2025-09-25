@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
-import { FiSun, FiMoon } from 'react-icons/fi';
+import { FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
 import PopupLogin from '../LoginPopup';
 import SignupPopup from '../SignupPopup';
+import { useUser } from '../../contexts/UserContext';
+import DefaultAvatar from '../../assets/default-avatar';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -16,7 +18,10 @@ const Header = () => {
   });
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const location = useLocation();
+  
+  const { user, isLoggedIn, logout } = useUser();
 
   const handleSwitchToSignup = () => {
     setShowLoginPopup(false);
@@ -48,6 +53,12 @@ const Header = () => {
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
+  };
+  
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+    console.log('Usuário deslogado');
   };
 
   const navLinks = [
@@ -110,10 +121,53 @@ const Header = () => {
           </NavList>
         </Nav>
         
-        <AuthButtons>
-          <LoginButton onClick={() => setShowLoginPopup(true)}>Login</LoginButton>
-          <SignUpButton onClick={() => setShowSignupPopup(true)}>Cadastro</SignUpButton>
-        </AuthButtons>
+        {isLoggedIn ? (
+          <UserSection>
+            <UserProfile
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {user?.foto ? (
+                <UserAvatar src={user.foto} alt={user.nome || 'Usuário'} />
+              ) : (
+                <DefaultAvatar size={40} />
+              )}
+              <UserInfo>
+                <UserName>{user?.nome || user?.username || 'Usuário'}</UserName>
+              </UserInfo>
+            </UserProfile>
+            
+            <AnimatePresence>
+              {showUserMenu && (
+                <UserMenu
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <MenuHeader>
+                    <span>Olá, {user?.nome || user?.username || 'Usuário'}!</span>
+                  </MenuHeader>
+                  <MenuDivider />
+                  <LogoutButton
+                    onClick={handleLogout}
+                    whileHover={{ backgroundColor: 'rgba(220, 38, 38, 0.1)' }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiLogOut />
+                    <span>Sair</span>
+                  </LogoutButton>
+                </UserMenu>
+              )}
+            </AnimatePresence>
+          </UserSection>
+        ) : (
+          <AuthButtons>
+            <LoginButton onClick={() => setShowLoginPopup(true)}>Login</LoginButton>
+            <SignUpButton onClick={() => setShowSignupPopup(true)}>Cadastro</SignUpButton>
+          </AuthButtons>
+        )}
         
         <ThemeToggle 
           onClick={toggleTheme}
@@ -443,6 +497,114 @@ const SignUpButton = styled(Button)`
     border-color: var(--primary-dark);
     box-shadow: 0 10px 28px rgba(255,0,0,0.32);
     transform: translateY(-1px);
+  }
+`;
+
+// Estilos do perfil do usuário
+const UserSection = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const UserProfile = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.8rem 1.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const UserAvatar = styled.img`
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+`;
+
+const UserName = styled.span`
+  color: var(--white);
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.2;
+`;
+
+const UserMenu = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 1rem);
+  right: 0;
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.2rem;
+  padding: 1rem 0;
+  min-width: 20rem;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+`;
+
+const MenuHeader = styled.div`
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.5rem;
+  
+  span {
+    color: var(--white);
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+`;
+
+const MenuDivider = styled.div`
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0.5rem 0;
+`;
+
+const LogoutButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(220, 38, 38, 0.1);
+  }
+  
+  svg {
+    font-size: 1.6rem;
   }
 `;
 

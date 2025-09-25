@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import AboutUs from './components/AboutUs';
 import Resources from './components/Resources';
 import AppPage from './pages/App';
+import { UserProvider } from './contexts/UserContext';
 
 const pageVariants = {
   initial: {
@@ -103,11 +104,13 @@ const AnimatedRoutes = () => {
 
 function App() {
   return (
-    <Router>
-      <Header />
-      <DevGridOverlay />
-      <AnimatedRoutes />
-    </Router>
+    <UserProvider>
+      <Router>
+        <Header />
+        <DevGridOverlay />
+        <AnimatedRoutes />
+      </Router>
+    </UserProvider>
   );
 }
 

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
 import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
+import { loginUser, LoginResponse } from '../../config/api'
+import { useUser } from '../../contexts/UserContext'
 
 interface PropsPopupLogin {
   estaAberto: boolean
@@ -18,6 +20,8 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
     email: '',
     senha: ''
   })
+  
+  const { login } = useUser()
 
   // Função pra limpar o formulário
   const limparFormulario = () => {
@@ -42,87 +46,47 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
     setErro(null)
 
     try {
-      // Usando proxy do Vite para evitar CORS
-      const url = `/api/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(dadosFormulario.email)}&senha=${encodeURIComponent(dadosFormulario.senha)}`
-      
-      // URL direta (funciona no Postman mas dá CORS no browser):
-      // const url = `http://localhost:8080/v1/gymbuddy/usuario/login/email/senha?email=${encodeURIComponent(dadosFormulario.email)}&senha=${encodeURIComponent(dadosFormulario.senha)}`
-      
-      console.log('Fazendo login via proxy Vite:', url)
-      console.log('Email:', dadosFormulario.email)
-      console.log('Senha:', dadosFormulario.senha)
-      
-      const resposta = await fetch(url, {
-        method: 'GET',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      })
+      const resposta: LoginResponse = await loginUser(dadosFormulario.email, dadosFormulario.senha)
 
-      // Verificar se a resposta é JSON antes de tentar fazer parse
-      const tipoConteudo = resposta.headers.get('content-type')
-      let dados
-      
-      if (tipoConteudo && tipoConteudo.includes('application/json')) {
-        dados = await resposta.json()
-        console.log('Dados da resposta:', dados)
-      } else {
-        // Se não for JSON, pegar como texto pra debug
-        const respostaTexto = await resposta.text()
-        console.log('Resposta em texto (não JSON):', respostaTexto)
-        throw new Error(`Deu ruim na API. Status: ${resposta.status}. Verifica se a API tá funcionando.`)
-      }
-
-      // Verificar se o login deu certo baseado no campo 'status' da resposta
-      if (dados && dados.status === true) {
-        // Login deu certo
-        console.log('Login deu bom:', dados)
+      if (resposta && resposta.status === true) {
+        // Login bem-sucedido
+        const userData = resposta.usuario?.[0] || resposta.user || resposta.data
         
-        // Salvar token no localStorage se tiver
-        if (dados.token) {
-          localStorage.setItem('authToken', dados.token)
+        console.log('🎯 Dados do usuário extraídos:', userData)
+        
+        if (userData) {
+          // Atualizar contexto do usuário
+          login(userData, resposta.token)
+          
+          // Fechar popup e limpar formulário
+          aoFecharPopup()
+          
+          console.log('✅ Login realizado com sucesso!', userData)
+        } else {
+          console.error('❌ Estrutura da resposta:', resposta)
+          throw new Error('Dados do usuário não encontrados na resposta.')
         }
-        
-        // Salvar dados do usuário se tiver
-        if (dados.user || dados.data) {
-          localStorage.setItem('userData', JSON.stringify(dados.user || dados.data))
-        }
-
-        // Fechar popup e limpar formulário
-        aoFecharPopup()
-        
-        // Aqui você pode adicionar redirecionamento ou atualização de estado global
-        alert('Login feito com sucesso!')
-        
       } else {
         // Erro de login - usar a mensagem da API
-        let mensagemErro = dados?.message || 'Deu ruim no login. Verifica tuas credenciais.'
+        let mensagemErro = resposta?.message || 'Credenciais inválidas. Verifique seu email e senha.'
         
         // Melhorar mensagens de erro específicas
         if (mensagemErro.includes('campos com preenchimento obrigatórios')) {
-          mensagemErro = 'Email ou senha tão errados. Verifica aí e tenta de novo.'
+          mensagemErro = 'Email e senha são obrigatórios.'
         }
         
-        console.log('Erro de login da API:', mensagemErro)
         setErro(mensagemErro)
       }
     } catch (erro) {
       console.error('Erro no login:', erro)
       
-      // Tratamento específico pra diferentes tipos de erro
-      if (erro instanceof TypeError) {
-        if (erro.message.includes('Failed to fetch')) {
-          setErro('Erro de conectividade: Não rolou conectar no servidor. Verifica se o servidor tá rodando no IP 10.107.144.31:8080')
-        } else if (erro.message.includes('NetworkError')) {
-          setErro('Erro de rede: Verifica tua conexão com a internet e se o servidor tá acessível.')
-        } else {
-          setErro('Erro de requisição: ' + erro.message)
-        }
-      } else {
-        setErro('Erro inesperado: ' + (erro as Error).message)
+      let mensagemErro = 'Erro de conexão. Verifique sua internet ou se a API está funcionando.'
+      
+      if (erro instanceof Error) {
+        mensagemErro = erro.message
       }
+      
+      setErro(mensagemErro)
     } finally {
       setEstaCarregando(false)
     }

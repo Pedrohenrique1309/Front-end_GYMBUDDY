@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { FaDumbbell } from 'react-icons/fa';
 import styled from 'styled-components';
+import { signupUser, SignupResponse } from '../../config/api';
+import { useUser } from '../../contexts/UserContext';
 
 interface SignupPopupProps {
   isOpen: boolean;
@@ -22,6 +24,10 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
   });
   const [isPasswordValid, setIsPasswordValid] = useState<boolean | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const { login } = useUser();
 
   // Função para resetar o formulário
   const resetForm = () => {
@@ -35,6 +41,9 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     setShowPassword(false);
     setShowConfirmPassword(false);
     setIsPasswordValid(null);
+    setIsLoading(false);
+    setError(null);
+    setShowTooltip(false);
   };
 
   // Função personalizada para fechar o popup
@@ -43,10 +52,64 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic here
-    console.log('Signup attempt:', formData);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Validações locais
+      if (!formData.username.trim()) {
+        throw new Error('Nome de usuário é obrigatório.');
+      }
+      
+      if (formData.email !== formData.confirmEmail) {
+        throw new Error('Os emails não coincidem.');
+      }
+      
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error('As senhas não coincidem.');
+      }
+      
+      if (!validatePassword(formData.password)) {
+        throw new Error('A senha deve ter pelo menos 8 caracteres, incluindo maiúscula, número e caractere especial.');
+      }
+
+      const response: SignupResponse = await signupUser(formData);
+
+      if (response && response.status === true) {
+        // Cadastro bem-sucedido
+        const userData = response.user || response.data;
+        
+        if (userData) {
+          // Fazer login automático após cadastro
+          login(userData);
+          
+          // Fechar popup e limpar formulário
+          handleClose();
+          
+          console.log('Cadastro realizado com sucesso!');
+        } else {
+          throw new Error('Dados do usuário não encontrados na resposta.');
+        }
+      } else {
+        // Erro de cadastro - usar a mensagem da API
+        const errorMessage = response?.message || 'Erro ao realizar cadastro. Tente novamente.';
+        setError(errorMessage);
+      }
+    } catch (error) {
+      console.error('Erro no cadastro:', error);
+      
+      let errorMessage = 'Erro de conexão. Verifique sua internet ou se a API está funcionando.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Função para validar senha
@@ -343,12 +406,23 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                   </PasswordToggle>
                 </InputGroup>
 
+                {error && (
+                  <ErrorMessage
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    {error}
+                  </ErrorMessage>
+                )}
+
                 <SubmitButton
                   type="submit"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={isLoading}
+                  whileHover={!isLoading ? { scale: 1.02 } : {}}
+                  whileTap={!isLoading ? { scale: 0.98 } : {}}
                 >
-                  Cadastrar
+                  {isLoading ? 'Cadastrando...' : 'Cadastrar'}
                 </SubmitButton>
               </SignupForm>
 
@@ -713,21 +787,33 @@ const PasswordTooltip = styled(motion.div)`
   }
 `;
 
-const SubmitButton = styled(motion.button)`
-  background: var(--primary);
+const ErrorMessage = styled(motion.div)`
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 0.8rem;
+  padding: 1rem 1.5rem;
+  color: #ef4444;
+  font-size: 1.4rem;
+  text-align: center;
+  margin: 1rem 0;
+`;
+
+const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
+  background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
   color: var(--white);
   border: none;
   border-radius: 2.5rem;
   padding: 1.4rem 2rem;
   font-size: 1.6rem;
   font-weight: 700;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s ease;
   margin-top: 1rem;
+  opacity: ${props => props.disabled ? 0.7 : 1};
   
   &:hover {
-    background: var(--primary-dark);
-    box-shadow: 0 8px 24px rgba(227, 6, 19, 0.4);
+    background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary-dark)'};
+    box-shadow: ${props => props.disabled ? 'none' : '0 8px 24px rgba(227, 6, 19, 0.4)'};
   }
 `;
 
