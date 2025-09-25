@@ -278,7 +278,7 @@ const Header = () => {
             <AnimatePresence mode="wait">
               <motion.div
                 className="icon-wrapper"
-                key={isDarkMode ? 'sun' : 'moon'}
+                key={isDarkMode ? 'moon' : 'sun'}
                 initial={{ 
                   opacity: 0, 
                   scale: 0.3, 
@@ -306,9 +306,9 @@ const Header = () => {
                 }}
               >
                 {isDarkMode ? (
-                  <FiSun className="theme-icon sun" />
-                ) : (
                   <FiMoon className="theme-icon moon" />
+                ) : (
+                  <FiSun className="theme-icon sun" />
                 )}
               </motion.div>
             </AnimatePresence>
@@ -339,27 +339,13 @@ const HeaderContainer = styled.header<{ $scrolled: boolean }>`
   z-index: 1000;
   height: ${({ $scrolled }) => ($scrolled ? '6.4rem' : '8rem')};
   transition: height 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
-  
-  /* Dark theme */
-  [data-theme="dark"] & {
-    background: ${({ $scrolled }) =>
-      $scrolled
-        ? 'rgba(10, 10, 10, 0.7)'
-        : 'linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0) 100%)'};
-    border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent')};
-  }
-  
-  /* Light theme */
-  [data-theme="light"] & {
-    background: ${({ $scrolled }) =>
-      $scrolled
-        ? 'rgba(255, 255, 255, 0.95)'
-        : 'linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%)'};
-    border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid rgba(0,0,0,0.08)' : '1px solid transparent')};
-  }
-  
+  background: ${({ $scrolled }) =>
+    $scrolled
+      ? 'rgba(10, 10, 10, 0.7)'
+      : 'linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0) 100%)'};
   backdrop-filter: ${({ $scrolled }) => ($scrolled ? 'saturate(120%) blur(6px)' : 'none')};
-  box-shadow: ${({ $scrolled }) => ($scrolled ? '0 4px 20px var(--shadow-color)' : 'none')};
+  border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent')};
+  box-shadow: ${({ $scrolled }) => ($scrolled ? '0 4px 20px rgba(0,0,0,0.25)' : 'none')};
   
   .container {
     display: flex;
@@ -376,7 +362,7 @@ const Logo = styled.div`
   gap: 1rem;
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--white);
   margin-left: 0;
   
   .icon {
@@ -403,7 +389,7 @@ const NavLink = styled(Link)`
   position: relative;
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--white);
   transition: all 0.3s ease;
   padding: 1rem 1.5rem;
   letter-spacing: 0.02em;
@@ -591,7 +577,7 @@ const Button = styled.button`
 
 const LoginButton = styled(Button)`
   background: transparent;
-  color: var(--text-primary);
+  color: var(--white);
   border: 1px solid var(--primary);
   
   &:hover {
@@ -603,7 +589,7 @@ const SignUpButton = styled(Button)`
   background: var(--primary);
   color: var(--white);
   border: 1px solid var(--primary);
-  box-shadow: 0 8px 24px rgba(227,6,19,0.25);
+  box-shadow: 0 8px 24px rgba(255,0,0,0.25);
   
   &:hover {
     background: var(--primary-dark);
@@ -629,35 +615,17 @@ const UserProfile = styled(motion.button)`
   align-items: center;
   gap: 1.2rem;
   padding: 0.8rem 1.6rem;
-  background: var(--card-overlay);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 2.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   
-  [data-theme="light"] & {
-    background: rgba(0, 0, 0, 0.03);
-    border-color: rgba(0, 0, 0, 0.1);
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.06);
-      border-color: rgba(0, 0, 0, 0.15);
-    }
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-  }
-  
   &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px var(--shadow-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -676,7 +644,7 @@ const UserInfo = styled.div`
 `;
 
 const UserName = styled.span`
-  color: var(--text-primary);
+  color: var(--white);
   font-size: 1.4rem;
   font-weight: 600;
   line-height: 1.2;
@@ -686,14 +654,14 @@ const UserMenu = styled(motion.div)`
   position: absolute;
   top: calc(100% + 1rem);
   right: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.2rem;
   padding: 1rem 0;
   min-width: 20rem;
   box-shadow: 
-    0 20px 60px var(--shadow-color),
-    0 0 0 1px var(--border-light);
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(20px);
   z-index: 1000;
 `;

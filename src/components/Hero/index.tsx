@@ -146,8 +146,7 @@ const HeroSection = styled.section`
   padding: 12rem 0 6rem;
   position: relative;
   overflow: hidden;
-  background: var(--bg-primary);
-  transition: background 0.3s ease;
+  background: linear-gradient(180deg, #0A0A0A 0%, #1A1A1A 100%);
 `;
 
 const Content = styled.div`
@@ -180,18 +179,18 @@ const TextArea = styled(motion.div)`
   }
 
   h1 {
-    font-size: clamp(2.8rem, 5.4vw, 6.4rem);
-    font-weight: 900;
-    color: var(--text-primary);
-    line-height: 1.1;
+    font-size: clamp(3.2rem, 5vw, 6.4rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
     margin-bottom: 3.2rem;
-    letter-spacing: -0.03em;
-    z-index: 10; 
-    position: relative;
-    
+    color: var(--white);
+
     .highlight {
       color: var(--primary);
       position: relative;
+      display: inline-block;
       
       &::after {
         content: '';
@@ -247,11 +246,11 @@ const ImageContainer = styled.div`
   min-height: 72vh;
   justify-self: center;
   width: 100%;
-  margin-top: -10rem; 
-  z-index: 3; 
+  margin-top: -10rem; // Aumenta a sobreposição da imagem sobre o texto
+  z-index: 3; // Garante que a imagem fique sobre o texto
   
   @media (max-width: 1024px) {
-    margin-top: -4rem; 
+    margin-top: -4rem; // Menos sobreposição em mobile
   }
 
   &::before {
@@ -273,7 +272,7 @@ const ImageContainer = styled.div`
     height: auto;
     max-height: 78vh;
     object-fit: contain;
-    z-index: 10; 
+    z-index: 10; // Aumenta o z-index para garantir sobreposição
     position: relative;
     animation: float 6s ease-in-out infinite;
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.45));
@@ -301,33 +300,20 @@ const FloatingCardWrap = styled(motion.div)`
   cursor: pointer;
 
   /* Liquid Glass Design */
-  [data-theme="dark"] & {
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.1) 0%, 
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(227, 6, 19, 0.1) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    color: var(--white);
-  }
-  
-  [data-theme="light"] & {
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.95) 0%, 
-      rgba(255, 255, 255, 0.85) 50%,
-      rgba(227, 6, 19, 0.08) 100%
-    );
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    color: var(--text-primary);
-  }
-  
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(227, 6, 19, 0.1) 100%
+  );
   backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 1.6rem;
   padding: 1.6rem 1.4rem;
   min-width: 16rem;
   min-height: 18rem;
   font-size: 1.2rem;
   font-weight: 600;
+  color: var(--white);
   text-align: left;
   pointer-events: auto;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);

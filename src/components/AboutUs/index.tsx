@@ -307,11 +307,10 @@ const HeroSection = styled.section`
 `;
 
 const HeroTitle = styled.h1`
-  font-size: clamp(3rem, 5vw, 5rem);
-  font-weight: 900;
-  line-height: 1.2;
-  color: var(--text-primary);
-  margin: 0 auto 2rem;
+  font-size: clamp(3rem, 5vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 2rem;
   color: var(--white);
   letter-spacing: -0.02em;
 `;
@@ -325,9 +324,8 @@ const GradientText = styled.span`
 `;
 
 const HeroSubtitle = styled.p`
-  font-size: 1.6rem;
-  color: var(--text-secondary);
-  margin: 0;
+  font-size: clamp(1.6rem, 2.5vw, 2rem);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 400;
   max-width: 60rem;
   margin: 0 auto;
@@ -345,23 +343,16 @@ const ContentContainer = styled.div`
 `;
 
 const ModernCard = styled(motion.div)`
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: 2.4rem;
-  overflow: hidden;
   position: relative;
-  box-shadow: 0 25px 50px var(--shadow-color);
-  
-  [data-theme="light"] & {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(26, 26, 26, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
+  background: rgba(17, 17, 17, 0.95);
+  backdrop-filter: blur(30px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3rem;
+  overflow: hidden;
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 80px rgba(227, 6, 19, 0.1);
 `;
 
 const CardImageBackground = styled(motion.div)`
@@ -425,7 +416,7 @@ const HeaderLabel = styled.div`
 const HeaderTitle = styled.h2`
   font-size: clamp(2.5rem, 4vw, 3.5rem);
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--white);
   line-height: 1.2;
   margin: 0;
 `;
@@ -441,33 +432,17 @@ const ModernTextItem = styled(motion.div)`
   align-items: center;
   gap: 2.5rem;
   padding: 2rem;
-  background: var(--card-overlay);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 1.5rem;
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 
-  [data-theme="light"] & {
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.05);
-      border-color: rgba(227, 6, 19, 0.3);
-      box-shadow: 0 10px 30px rgba(227, 6, 19, 0.1);
-    }
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    
-    &:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(227, 6, 19, 0.3);
-      box-shadow: 0 10px 30px rgba(227, 6, 19, 0.1);
-    }
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(227, 6, 19, 0.3);
+    box-shadow: 0 10px 30px rgba(227, 6, 19, 0.1);
   }
 `;
 
@@ -547,7 +522,7 @@ const ItemContent = styled.div`
 const ItemText = styled.p`
   font-size: 1.7rem;
   line-height: 1.6;
-  color: var(--text-primary);
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   margin: 0;
 `;
@@ -600,7 +575,7 @@ const CTAText = styled.h2`
   font-size: clamp(2.4rem, 4vw, 3.6rem);
   font-weight: 700;
   line-height: 1.3;
-  color: var(--text-primary);
+  color: var(--white);
   margin: 0;
 `;
 

@@ -281,102 +281,16 @@ const Profile = () => {
             ))}
           </PhotoGrid>
         </PhotosSection>
-
-      <ActionButtons>
-        {isEditing ? (
-          <>
-            <SaveButton
-              onClick={handleSave}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiCheck /> Salvar
-            </SaveButton>
-            <CancelButton
-              onClick={handleCancel}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiX /> Cancelar
-            </CancelButton>
-          </>
-        ) : (
-          <EditButton
-            onClick={handleEdit}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiEdit3 /> Editar Perfil
-          </EditButton>
-        )}
-      </ActionButtons>
-    </ProfileHeader>
-
-    <PhotosSection>
-      <SectionTitle>Fotos</SectionTitle>
-      <PhotoGrid>
-        <AnimatePresence>
-          {photos.map((photo, index) => (
-            <PhotoCard
-              key={index}
-              layoutId={`photo-${index}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileHover={{ scale: 1.05, zIndex: 10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <PhotoImage src={photo} alt={`Foto ${index + 1}`} />
-              <PhotoOverlay>
-                <DeletePhotoButton
-                  onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <FiX />
-                </DeletePhotoButton>
-              </PhotoOverlay>
-            </PhotoCard>
-          ))}
-        </AnimatePresence>
-        
-        <AddPhotoCard>
-          <input
-            type="file"
-            id="photo-upload"
-            accept="image/*"
-            onChange={handlePhotoUpload}
-            style={{ display: 'none' }}
-          />
-          <label htmlFor="photo-upload">
-            <AddPhotoButton
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiPlus />
-              <span>Adicionar Foto</span>
-            </AddPhotoButton>
-          </label>
-        </AddPhotoCard>
-        
-        {/* Placeholder cards para manter o grid */}
-        {Array.from({ length: Math.max(0, 5 - photos.length) }).map((_, index) => (
-          <PlaceholderCard key={`placeholder-${index}`} />
-        ))}
-      </PhotoGrid>
-    </PhotosSection>
-  </ProfileContent>
-</ProfileContainer>
-);
+      </ProfileContent>
+    </ProfileContainer>
+  );
 };
 
 const ProfileContainer = styled(motion.div)`
   min-height: 100vh;
-  background: var(--bg-primary);
-  padding: 12rem 2rem 4rem;
-  display: flex;
-  justify-content: center;
-  transition: background 0.3s ease;
+  background: #0A0A0A;
+  padding-top: 10rem;
+  padding-bottom: 4rem;
 `;
 
 const ProfileContent = styled.div`
@@ -408,7 +322,7 @@ const Avatar = styled.img`
   border-radius: 50%;
   object-fit: cover;
   border: 4px solid rgba(227, 6, 19, 0.3);
-  box-shadow: 0 10px 40px var(--shadow-color);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 `;
 
 const DefaultAvatarWrapper = styled.div`
@@ -417,17 +331,9 @@ const DefaultAvatarWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--card-overlay);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 50%;
   border: 4px solid rgba(227, 6, 19, 0.3);
-  
-  [data-theme="light"] & {
-    background: rgba(0, 0, 0, 0.05);
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(255, 255, 255, 0.05);
-  }
 `;
 
 const AvatarOverlay = styled.div`
@@ -461,7 +367,7 @@ const UserInfoSection = styled.div`
 const UserName = styled.h1`
   font-size: 3rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--white);
   margin-bottom: 0.5rem;
 `;
 
@@ -485,7 +391,7 @@ const DetailsSection = styled.div`
 
 const DetailText = styled.p`
   font-size: 1.6rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2rem;
   max-width: 60rem;
 `;
@@ -506,12 +412,12 @@ const DetailInfo = styled.div`
 const DetailValue = styled.span`
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--white);
 `;
 
 const DetailUnit = styled.span`
   font-size: 1.8rem;
-  color: var(--text-tertiary);
+  color: rgba(255, 255, 255, 0.5);
 `;
 
 const EditableDetails = styled.div`
@@ -529,36 +435,18 @@ const DetailItem = styled.div`
 
 const DetailLabel = styled.label`
   font-size: 1.4rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   min-width: 8rem;
   text-align: right;
 `;
 
 const EditInput = styled.input`
-  background: var(--card-overlay);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.8rem;
   padding: 1rem 1.5rem;
   font-size: 1.6rem;
-  color: var(--text-primary);
-  
-  [data-theme="light"] & {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    
-    &::placeholder {
-      color: rgba(0, 0, 0, 0.5);
-    }
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-  }
+  color: var(--white);
   transition: all 0.3s ease;
   
   &:focus {
@@ -569,32 +457,14 @@ const EditInput = styled.input`
 `;
 
 const EditTextarea = styled.textarea`
-  background: var(--card-overlay);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.8rem;
   padding: 1rem 1.5rem;
   font-size: 1.6rem;
-  color: var(--text-primary);
-  resize: vertical;
-  min-height: 8rem;
-  
-  [data-theme="light"] & {
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    
-    &::placeholder {
-      color: rgba(0, 0, 0, 0.5);
-    }
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-  }
+  color: var(--white);
+  transition: all 0.3s ease;
+  min-width: 40rem;
   min-height: 8rem;
   resize: vertical;
   

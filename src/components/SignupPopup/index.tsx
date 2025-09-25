@@ -625,12 +625,12 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                 </SubmitButton>
               </SignupForm>
 
-              <SwitchText>
-                Já tem uma conta? <button onClick={(e: React.MouseEvent) => {
+              <LoginPrompt>
+                Já possui uma conta? <LoginLink href="#" onClick={(e) => {
                   e.preventDefault();
-                  onSwitchToLogin?.();
-                }}>Entrar</button>
-              </SwitchText>
+                  onSwitchToLogin();
+                }}>Fazer Login</LoginLink>
+              </LoginPrompt>
             </div>
           </PopupContainer>
         </>
@@ -643,71 +643,232 @@ const Overlay = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--shadow-color);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 2rem;
-  
-  [data-theme="light"] & {
-    background: rgba(0, 0, 0, 0.6);
-  }
-  
-  [data-theme="dark"] & {
-    background: rgba(0, 0, 0, 0.8);
-  }
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
 `;
 
 const PopupContainer = styled(motion.div)`
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 2rem;
-  padding: 4rem 3rem;
-  width: 100%;
-  max-width: 48rem;
-  position: relative;
-  box-shadow: 0 25px 50px var(--shadow-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
   
-  [data-theme="light"] & {
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-  }
-  
-  [data-theme="dark"] & {
-    background: linear-gradient(135deg, #1A1A1A 0%, #0F0F10 100%);
+  > div {
+    background: #0A0A0A;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 
-      0 25px 50px rgba(0, 0, 0, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-radius: 1.6rem;
+    padding: 3rem;
+    width: 90%;
+    max-width: 42rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    position: relative;
   }
 `;
 
 const CloseButton = styled.button`
   position: absolute;
-  top: 2rem;
-  right: 2rem;
+  top: 1.5rem;
+  right: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--white);
   font-size: 2rem;
   cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 10;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+`;
+
+const LogoSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+  
+  .logo-icon {
+    color: var(--primary);
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    color: var(--white);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  
+  .divider {
+    width: 4rem;
+    height: 2px;
+    background: var(--primary);
+  }
+`;
+
+const Title = styled.h1`
+  color: var(--white);
+  font-size: 2.4rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 3rem;
+  letter-spacing: 0.05em;
+`;
+
+const SignupForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+`;
+
+const InputGroup = styled.div`
+  position: relative;
+`;
+
+const ValidationMessage = styled.div`
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const Input = styled.input<{ $isValid?: boolean | null }>`
+  width: 100%;
+  background: transparent;
+  border: 1px solid ${props => 
+    props.$isValid === true ? '#10B981' : 
+    props.$isValid === false ? '#EF4444' : 
+    'rgba(255, 255, 255, 0.2)'
+  };
+  border-radius: 0.8rem;
+  padding: 1.4rem ${props => (props.name === 'password' || props.name === 'confirmPassword') ? '4.5rem' : '1.6rem'} 1.4rem 1.6rem;
+  color: var(--white);
+  font-size: 1.5rem;
   transition: all 0.3s ease;
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: ${props => 
+      props.$isValid === true ? '#10B981' : 
+      props.$isValid === false ? '#EF4444' : 
+      'var(--primary)'
+    };
+    box-shadow: 0 0 0 2px ${props => 
+      props.$isValid === true ? 'rgba(16, 185, 129, 0.2)' : 
+      props.$isValid === false ? 'rgba(239, 68, 68, 0.2)' : 
+      'rgba(227, 6, 19, 0.2)'
+    };
+  }
+`;
+
+const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>`
+  position: absolute;
+  left: -2.6rem;
+  top: 30%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
+  background: ${props => 
+    props.$isValid === true ? 'rgba(16, 185, 129, 0.15)' : 
+    props.$isValid === false ? 'rgba(239, 68, 68, 0.15)' : 
+    'transparent'
+  };
+  color: ${props => 
+    props.$isValid === true ? '#10B981' : 
+    props.$isValid === false ? '#EF4444' : 
+    'transparent'
+  };
+  font-size: 1.2rem;
+  font-weight: 700;
+  z-index: 2;
+  cursor: pointer;
+  overflow: visible;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: ${props => 
+      props.$isValid === true ? '#10B981' : 
+      props.$isValid === false ? '#EF4444' : 
+      'transparent'
+    };
+    opacity: 0;
+    animation: ${props => props.$isValid !== null ? 'pulse 2s infinite' : 'none'};
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 0.3;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+  }
+`;
+
+const PasswordToggle = styled.button`
+  position: absolute;
+  right: 1.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
   
   &:hover {
-    color: var(--text-primary);
-    background: var(--card-overlay);
-    transform: scale(1.1);
+    color: var(--white);
+  }
+  
+  svg {
+    display: block;
   }
 `;
 
@@ -846,243 +1007,39 @@ const ErrorMessage = styled(motion.div)`
   margin: 1rem 0;
 `;
 
-const SubmitButton = styled(motion.button)`
-  width: 100%;
-  background: var(--primary);
+const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
+  background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
   color: var(--white);
   border: none;
-  border-radius: 0.8rem;
-  padding: 1.6rem;
+  border-radius: 2.5rem;
+  padding: 1.4rem 2rem;
   font-size: 1.6rem;
   font-weight: 700;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.3s ease;
   margin-top: 1rem;
+  opacity: ${props => props.disabled ? 0.7 : 1};
   
   &:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(227, 6, 19, 0.4);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary-dark)'};
+    box-shadow: ${props => props.disabled ? 'none' : '0 8px 24px rgba(227, 6, 19, 0.4)'};
   }
 `;
 
-const LogoSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 2rem;
-  
-  .logo-icon {
-    color: var(--primary);
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-  }
-  
-  h2 {
-    color: var(--text-primary);
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    margin-bottom: 1rem;
-  }
-  
-  .divider {
-    width: 4rem;
-    height: 2px;
-    background: var(--primary);
-  }
-`;
-
-const Title = styled.h1`
-  color: var(--text-primary);
-  font-size: 2.4rem;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 3rem;
-  letter-spacing: 0.05em;
-`;
-
-const SignupForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-`;
-
-const InputGroup = styled.div`
-  position: relative;
-`;
-
-const ValidationMessage = styled.div`
-  font-size: 1.2rem;
-  margin-top: 0.5rem;
-  padding: 0.3rem 0;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const Input = styled.input<{ $isValid?: boolean | null }>`
-  width: 100%;
-  background: transparent;
-  border: 1px solid ${props => 
-    props.$isValid === true ? '#10B981' : 
-    props.$isValid === false ? '#EF4444' : 
-    'var(--border-color)'
-  };
-  border-radius: 0.8rem;
-  padding: 1.4rem ${props => (props.name === 'password' || props.name === 'confirmPassword') ? '4.5rem' : '1.6rem'} 1.4rem 1.6rem;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  transition: all 0.3s ease;
-  
-  [data-theme="light"] & {
-    border-color: ${props => 
-      props.$isValid === true ? '#10B981' : 
-      props.$isValid === false ? '#EF4444' : 
-      'rgba(0, 0, 0, 0.2)'
-    };
-    
-    &::placeholder {
-      color: rgba(0, 0, 0, 0.5);
-    }
-  }
-  
-  [data-theme="dark"] & {
-    border-color: ${props => 
-      props.$isValid === true ? '#10B981' : 
-      props.$isValid === false ? '#EF4444' : 
-      'rgba(255, 255, 255, 0.2)'
-    };
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-  }
-  
-  &:focus {
-    outline: none;
-    border-color: ${props => 
-      props.$isValid === true ? '#10B981' : 
-      props.$isValid === false ? '#EF4444' : 
-      'var(--primary)'
-    };
-    box-shadow: 0 0 0 2px ${props => 
-      props.$isValid === true ? 'rgba(16, 185, 129, 0.2)' : 
-      props.$isValid === false ? 'rgba(239, 68, 68, 0.2)' : 
-      'rgba(227, 6, 19, 0.2)'
-    };
-  }
-`;
-
-const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>`
-  position: absolute;
-  left: -2.6rem;
-  top: 30%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: ${props => 
-    props.$isValid === true ? 'rgba(16, 185, 129, 0.15)' : 
-    props.$isValid === false ? 'rgba(239, 68, 68, 0.15)' : 
-    'transparent'
-  };
-  color: ${props => 
-    props.$isValid === true ? '#10B981' : 
-    props.$isValid === false ? '#EF4444' : 
-    'transparent'
-  };
-  font-size: 1.2rem;
-  font-weight: 700;
-  z-index: 2;
-  cursor: pointer;
-  overflow: visible;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: ${props => 
-      props.$isValid === true ? '#10B981' : 
-      props.$isValid === false ? '#EF4444' : 
-      'transparent'
-    };
-    opacity: 0;
-    animation: ${props => props.$isValid !== null ? 'pulse 2s infinite' : 'none'};
-  }
-
-  @keyframes pulse {
-    0% {
-      opacity: 0.3;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(1.5);
-    }
-    100% {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(1.5);
-    }
-  }
-`;
-
-const PasswordToggle = styled.button`
-  position: absolute;
-  right: 1.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.8rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  
-  &:hover {
-    color: var(--text-primary);
-    background: var(--card-overlay);
-  }
-`;
-
-const SwitchText = styled.p`
+const LoginPrompt = styled.p`
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;
-  color: var(--text-secondary);
-  font-size: 1.4rem;
+`;
+
+const LoginLink = styled.a`
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
   
-  button {
-    color: var(--primary);
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
+  &:hover {
     text-decoration: underline;
-    
-    &:hover {
-      color: var(--primary-dark);
-    }
   }
 `;
 

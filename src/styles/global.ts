@@ -24,34 +24,20 @@ export const GlobalStyle = createGlobalStyle`
   [data-theme="light"] {
     --bg-primary: #FFFFFF;
     --bg-secondary: #F8F9FA;
-    --bg-tertiary: #F5F5F5;
-    --bg-card: #FFFFFF;
     --text-primary: #1A1A1A;
     --text-secondary: #6C757D;
-    --text-tertiary: #495057;
     --border-color: #E9ECEF;
-    --border-light: #DEE2E6;
     --shadow-color: rgba(0, 0, 0, 0.1);
-    --shadow-light: rgba(0, 0, 0, 0.05);
-    --header-bg: rgba(255, 255, 255, 0.9);
-    --card-overlay: rgba(0, 0, 0, 0.03);
   }
 
   /* Tema escuro (padrão) */
   [data-theme="dark"] {
     --bg-primary: #0A0A0A;
     --bg-secondary: #1A1A1A;
-    --bg-tertiary: #0F0F10;
-    --bg-card: #1A1A1A;
     --text-primary: #FFFFFF;
     --text-secondary: #B8B8B8;
-    --text-tertiary: #808080;
     --border-color: #333333;
-    --border-light: #2A2A2A;
     --shadow-color: rgba(0, 0, 0, 0.3);
-    --shadow-light: rgba(0, 0, 0, 0.2);
-    --header-bg: rgba(10, 10, 10, 0.7);
-    --card-overlay: rgba(255, 255, 255, 0.03);
   }
 
   html {
@@ -61,10 +47,9 @@ export const GlobalStyle = createGlobalStyle`
 
   body {
     font-family: 'Poppins', sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: var(--dark-bg);
+    color: var(--white);
     overflow-x: hidden;
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   button {
