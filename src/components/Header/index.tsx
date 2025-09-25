@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
-import { FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
+import { FiSun, FiMoon, FiLogOut, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
@@ -712,13 +712,6 @@ const UserAvatarGlow = styled.div`
   }
 `;
 
-const UserStatus = styled.span`
-  color: #10B981;
-  font-size: 1.1rem;
-  font-weight: 500;
-  opacity: 0.8;
-`;
-
 const MenuOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -766,25 +759,6 @@ const UserGreeting = styled.div`
   }
 `;
 
-const UserBadge = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: linear-gradient(135deg, #E30613, #FF4655);
-  border-radius: 1rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: white;
-  margin-top: 0.5rem;
-  
-  div {
-    display: flex;
-    align-items: center;
-    font-size: 1.2rem;
-  }
-`;
-
 const MenuContent = styled.div`
   padding: 0.5rem 0;
 `;
@@ -795,6 +769,44 @@ const LogoutArrow = styled.span`
   transform: translateX(-10px);
   transition: all 0.2s ease;
   font-size: 1.2rem;
+`;
+
+const ProfileArrow = styled.span`
+  margin-left: auto;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+`;
+
+const ProfileButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: #E30613;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
+  
+  &:hover {
+    background: rgba(227, 6, 19, 0.1);
+    
+    ${ProfileArrow} {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  svg {
+    font-size: 1.6rem;
+  }
 `;
 
 const LogoutButton = styled(motion.button)`
