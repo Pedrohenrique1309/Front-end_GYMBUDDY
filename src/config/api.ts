@@ -113,13 +113,22 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
       throw new Error('As senhas não coincidem.')
     }
 
-    // Preparar dados para envio - testando diferentes combinacões
+    // Testando payload abrangente com possíveis campos obrigatórios
     const payload = {
-      nome: userData.username, // Tentativa 1: nome em vez de username
-      username: userData.username, // Mantendo ambos para teste
+      // Campos básicos
+      nome: userData.username,
+      username: userData.username, // Ambos por garantia
       nickname: userData.nickname,
       email: userData.email,
-      senha: userData.password // A API espera 'senha', não 'password'
+      senha: userData.password,
+      
+      // Possíveis campos obrigatórios adicionais
+      cpf: "000.000.000-00", // CPF fake para teste
+      telefone: "(11) 99999-9999", // Telefone fake
+      data_nascimento: "1990-01-01", // Data fake
+      genero: "M", // Gênero
+      ativo: true, // Status ativo
+      tipo_usuario: "CLIENTE" // Tipo de usuário
     }
     
     console.log('🚀 Realizando cadastro:', { 
