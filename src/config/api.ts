@@ -113,9 +113,10 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
       throw new Error('As senhas não coincidem.')
     }
 
-    // Preparar dados para envio (apenas os campos necessários para a API)
+    // Preparar dados para envio - testando diferentes combinacões
     const payload = {
-      username: userData.username,
+      nome: userData.username, // Tentativa 1: nome em vez de username
+      username: userData.username, // Mantendo ambos para teste
       nickname: userData.nickname,
       email: userData.email,
       senha: userData.password // A API espera 'senha', não 'password'
@@ -123,7 +124,9 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
     
     console.log('🚀 Realizando cadastro:', { 
       url, 
+      originalUserData: { ...userData, password: '[REDACTED]', confirmPassword: '[REDACTED]' },
       payload: { ...payload, senha: '[REDACTED]' },
+      payloadComplete: payload,
       baseUrl: API_BASE_URL 
     })
     
