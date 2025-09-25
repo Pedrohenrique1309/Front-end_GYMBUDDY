@@ -19,6 +19,9 @@ export interface UserData {
   username?: string
   email: string
   foto?: string
+  descricao?: string
+  peso?: string
+  altura?: string
   created_at?: string
   updated_at?: string
 }

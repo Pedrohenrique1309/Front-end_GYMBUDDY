@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import AboutUs from './components/AboutUs';
 import Resources from './components/Resources';
 import AppPage from './pages/App';
+import Profile from './pages/Profile';
 import { UserProvider } from './contexts/UserContext';
 
 const pageVariants = {
@@ -94,6 +95,20 @@ const AnimatedRoutes = () => {
               transition={pageTransition}
             >
               <AppPage />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/perfil" 
+          element={
+            <motion.div
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <Profile />
             </motion.div>
           } 
         />
