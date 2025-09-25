@@ -36,8 +36,10 @@ export interface SignupData {
 export interface SignupResponse {
   status: boolean
   message: string
+  status_code?: number
   user?: UserData
   data?: UserData
+  usuario?: UserData[] // Campo retornado pela API atual
 }
 
 // Função de login

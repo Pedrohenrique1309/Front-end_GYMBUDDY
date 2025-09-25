@@ -79,7 +79,9 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
 
       if (response && response.status === true) {
         // Cadastro bem-sucedido
-        const userData = response.user || response.data;
+        const userData = response.usuario?.[0] || response.user || response.data;
+        
+        console.log('🎯 Dados do usuário do cadastro:', userData)
         
         if (userData) {
           // Fazer login automático após cadastro
@@ -88,8 +90,9 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
           // Fechar popup e limpar formulário
           handleClose();
           
-          console.log('Cadastro realizado com sucesso!');
+          console.log('✅ Cadastro realizado com sucesso!', userData);
         } else {
+          console.error('❌ Estrutura da resposta de cadastro:', response)
           throw new Error('Dados do usuário não encontrados na resposta.');
         }
       } else {
