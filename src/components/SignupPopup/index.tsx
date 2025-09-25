@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { FaDumbbell } from 'react-icons/fa';
 import styled from 'styled-components';
-import { signupUser, SignupResponse } from '../../config/api';
+import { signupUser, SignupResponse, checkEmailExists, checkUsernameExists } from '../../config/api';
 import { useUser } from '../../contexts/UserContext';
 
 interface SignupPopupProps {
@@ -27,6 +27,10 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
   const [showTooltip, setShowTooltip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isValidatingEmail, setIsValidatingEmail] = useState(false);
+  const [isValidatingUsername, setIsValidatingUsername] = useState(false);
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
   
   const { login } = useUser();
 
@@ -46,6 +50,10 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     setIsLoading(false);
     setError(null);
     setShowTooltip(false);
+    setIsValidatingEmail(false);
+    setIsValidatingUsername(false);
+    setEmailExists(null);
+    setUsernameExists(null);
   };
 
   // Função personalizada para fechar o popup
@@ -69,6 +77,15 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
         throw new Error('Nickname é obrigatório.');
       }
       
+      // Verificar se email ou username já existem
+      if (emailExists === true) {
+        throw new Error('Este email já está cadastrado. Use outro email.');
+      }
+      
+      if (usernameExists === true) {
+        throw new Error('Este nome de usuário já está em uso. Escolha outro.');
+      }
+      
       if (formData.email !== formData.confirmEmail) {
         throw new Error('Os emails não coincidem.');
       }
@@ -82,40 +99,106 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
       }
 
       const response: SignupResponse = await signupUser(formData);
+      
+      console.log('📋 Resposta completa da API:', response);
+      console.log('🔍 Status da resposta:', response?.status);
+      console.log('🔍 Status Code da resposta:', response?.status_code);
+      console.log('🔍 Tipo do status:', typeof response?.status);
+      console.log('🔍 Tipo do status_code:', typeof response?.status_code);
 
-      if (response && response.status === true) {
-        // Cadastro bem-sucedido
-        const userData = response.usuario?.[0] || response.user || response.data;
+      // Verificar se a resposta tem status verdadeiro
+      // A API retorna status_code: 200 para sucesso
+      const isSuccessStatus = response && (
+        response.status === true || 
+        (typeof response.status === 'string' && response.status === 'true') || 
+        (typeof response.status === 'number' && response.status === 1) ||
+        (response.status_code === 200) || // API retorna status_code: 200
+        (response.status_code === '200')
+      );
+      
+      if (isSuccessStatus) {
+        console.log('✅ Cadastro bem-sucedido detectado!');
+        console.log('🔍 Critério de sucesso usado:', {
+          'response.status': response.status,
+          'response.status_code': response.status_code,
+          'typeof status': typeof response.status,
+          'typeof status_code': typeof response.status_code
+        });
         
-        console.log('🎯 Dados do usuário do cadastro:', userData)
+        // Tentar extrair dados do usuário de diferentes formas
+        let userData = null;
+        
+        if (response.usuario && Array.isArray(response.usuario) && response.usuario.length > 0) {
+          userData = response.usuario[0];
+          console.log('👤 Dados extraídos de response.usuario[0]:', userData);
+        } else if (response.user) {
+          userData = response.user;
+          console.log('👤 Dados extraídos de response.user:', userData);
+        } else if (response.data) {
+          userData = response.data;
+          console.log('👤 Dados extraídos de response.data:', userData);
+        } else {
+          // Fallback: usar os dados do formulário
+          userData = {
+            nome: formData.username,
+            username: formData.username,
+            email: formData.email,
+            foto: null // Sem foto inicialmente
+          } as any; // Usar as any temporariamente para evitar erro de tipo
+          console.log('👤 Usando dados do formulário como fallback:', userData);
+        }
         
         if (userData) {
+          console.log('🚀 Fazendo login automático com:', userData);
+          
           // Fazer login automático após cadastro
           login(userData);
           
-          // Fechar popup e limpar formulário
-          handleClose();
+          // Aguardar um pouco para garantir que o contexto foi atualizado
+          setTimeout(() => {
+            console.log('🔒 Fechando popup de cadastro');
+            handleClose();
+            console.log('✅ Fluxo de cadastro concluído com sucesso!');
+          }, 100);
           
-          console.log('✅ Cadastro realizado com sucesso!', userData);
         } else {
-          console.error('❌ Estrutura da resposta de cadastro:', response)
-          throw new Error('Dados do usuário não encontrados na resposta.');
+          console.error('❌ Não foi possível extrair dados do usuário');
+          console.error('📋 Estrutura da resposta completa:', JSON.stringify(response, null, 2));
+          throw new Error('Dados do usuário não encontrados na resposta do cadastro.');
         }
       } else {
-        // Erro de cadastro - usar a mensagem da API
-        const errorMessage = response?.message || 'Erro ao realizar cadastro. Tente novamente.';
+        console.error('❌ Cadastro falhou ou status inválido');
+        console.error('📋 Detalhes completos da resposta:', {
+          status: response?.status,
+          status_code: response?.status_code,
+          message: response?.message,
+          usuario: response?.usuario,
+          fullResponse: response
+        });
+        
+        // Erro de cadastro - verificar se é erro de duplicação
+        let errorMessage = response?.message || 'Erro ao realizar cadastro. Tente novamente.';
+        
+        // Tratar mensagens específicas de duplicação
+        if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('já')) {
+          errorMessage = 'Este email já está cadastrado. Use outro email.';
+        } else if (errorMessage.toLowerCase().includes('usuário') && errorMessage.toLowerCase().includes('já')) {
+          errorMessage = 'Este nome de usuário já está em uso. Escolha outro.';
+        } else if (errorMessage.toLowerCase().includes('duplicate') || errorMessage.toLowerCase().includes('duplicado')) {
+          errorMessage = 'Email ou nome de usuário já cadastrado. Verifique os dados.';
+        }
+        
         setError(errorMessage);
       }
     } catch (error) {
-      console.error('Erro no cadastro:', error);
+      console.error('💥 Erro no fluxo de cadastro:', error);
+      console.error('📋 Detalhes do erro:', {
+        message: error instanceof Error ? error.message : 'Erro desconhecido',
+        stack: error instanceof Error ? error.stack : null,
+        formData: { ...formData, password: '***', confirmPassword: '***' }
+      });
       
-      let errorMessage = 'Erro de conexão. Verifique sua internet ou se a API está funcionando.';
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
+      setError(error instanceof Error ? error.message : 'Erro inesperado ao realizar cadastro.');
     } finally {
       setIsLoading(false);
     }
@@ -129,6 +212,54 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
     
     return minLength && hasUpperCase && hasNumber && hasSpecialChar;
+  };
+
+  // Função para validar email com debounce
+  const validateEmailAvailability = async (email: string) => {
+    if (!email || !email.includes('@')) return;
+    
+    setIsValidatingEmail(true);
+    setEmailExists(null);
+    
+    try {
+      const result = await checkEmailExists(email);
+      setEmailExists(result.exists);
+      
+      if (result.exists) {
+        console.log('❌ Email já cadastrado:', email);
+      } else {
+        console.log('✅ Email disponível:', email);
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro na validação de email:', error);
+      setEmailExists(null); // Em caso de erro, não bloqueia
+    } finally {
+      setIsValidatingEmail(false);
+    }
+  };
+  
+  // Função para validar username com debounce
+  const validateUsernameAvailability = async (username: string) => {
+    if (!username || username.length < 3) return;
+    
+    setIsValidatingUsername(true);
+    setUsernameExists(null);
+    
+    try {
+      const result = await checkUsernameExists(username);
+      setUsernameExists(result.exists);
+      
+      if (result.exists) {
+        console.log('❌ Username já cadastrado:', username);
+      } else {
+        console.log('✅ Username disponível:', username);
+      }
+    } catch (error) {
+      console.warn('⚠️ Erro na validação de username:', error);
+      setUsernameExists(null); // Em caso de erro, não bloqueia
+    } finally {
+      setIsValidatingUsername(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,6 +277,28 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
       } else {
         setIsPasswordValid(validatePassword(value));
       }
+    }
+    
+    // Validar email com debounce
+    if (name === 'email') {
+      setEmailExists(null); // Reset estado
+      // Debounce de 1 segundo
+      setTimeout(() => {
+        if (formData.email === value) { // Só valida se ainda é o mesmo valor
+          validateEmailAvailability(value);
+        }
+      }, 1000);
+    }
+    
+    // Validar username com debounce  
+    if (name === 'username') {
+      setUsernameExists(null); // Reset estado
+      // Debounce de 1 segundo
+      setTimeout(() => {
+        if (formData.username === value) { // Só valida se ainda é o mesmo valor
+          validateUsernameAvailability(value);
+        }
+      }, 1000);
     }
   };
 
@@ -188,7 +341,20 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                     value={formData.username}
                     onChange={handleInputChange}
                     required
+                    style={{
+                      borderColor: usernameExists === true ? '#ff4444' : 
+                                  usernameExists === false ? '#44ff44' : undefined
+                    }}
                   />
+                  {isValidatingUsername && (
+                    <ValidationMessage style={{ color: '#888' }}>🔍 Verificando disponibilidade...</ValidationMessage>
+                  )}
+                  {usernameExists === true && (
+                    <ValidationMessage style={{ color: '#ff4444' }}>❌ Nome de usuário já está em uso</ValidationMessage>
+                  )}
+                  {usernameExists === false && (
+                    <ValidationMessage style={{ color: '#44ff44' }}>✅ Nome de usuário disponível</ValidationMessage>
+                  )}
                 </InputGroup>
 
                 <InputGroup>
@@ -210,7 +376,20 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    style={{
+                      borderColor: emailExists === true ? '#ff4444' : 
+                                  emailExists === false ? '#44ff44' : undefined
+                    }}
                   />
+                  {isValidatingEmail && (
+                    <ValidationMessage style={{ color: '#888' }}>🔍 Verificando disponibilidade...</ValidationMessage>
+                  )}
+                  {emailExists === true && (
+                    <ValidationMessage style={{ color: '#ff4444' }}>❌ Email já está cadastrado</ValidationMessage>
+                  )}
+                  {emailExists === false && (
+                    <ValidationMessage style={{ color: '#44ff44' }}>✅ Email disponível</ValidationMessage>
+                  )}
                 </InputGroup>
 
                 <InputGroup>
@@ -560,6 +739,16 @@ const SignupForm = styled.form`
 
 const InputGroup = styled.div`
   position: relative;
+`;
+
+const ValidationMessage = styled.div`
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const Input = styled.input<{ $isValid?: boolean | null }>`

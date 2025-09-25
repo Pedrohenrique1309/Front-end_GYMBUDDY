@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
 import { FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,6 +19,7 @@ const Header = () => {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   
   const { user, isLoggedIn, logout } = useUser();
@@ -60,6 +61,20 @@ const Header = () => {
     setShowUserMenu(false);
     console.log('Usuário deslogado');
   };
+
+  // Hook para fechar menu ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showUserMenu])
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -122,17 +137,27 @@ const Header = () => {
         </Nav>
         
         {isLoggedIn ? (
-          <UserSection>
+          <UserSection ref={userMenuRef}>
             <UserProfile
               onClick={() => setShowUserMenu(!showUserMenu)}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ 
+                scale: 1.05,
+                boxShadow: '0 0 20px rgba(227, 6, 19, 0.3)'
+              }}
               whileTap={{ scale: 0.95 }}
+              transition={{ 
+                duration: 0.3,
+                ease: 'easeOut'
+              }}
             >
-              {user?.foto ? (
-                <UserAvatar src={user.foto} alt={user.nome || 'Usuário'} />
-              ) : (
-                <DefaultAvatar size={40} />
-              )}
+              <UserAvatarContainer>
+                {user?.foto ? (
+                  <UserAvatar src={user.foto} alt={user.nome || 'Usuário'} />
+                ) : (
+                  <DefaultAvatar size={40} />
+                )}
+                <UserAvatarGlow />
+              </UserAvatarContainer>
               <UserInfo>
                 <UserName>{user?.nome || user?.username || 'Usuário'}</UserName>
               </UserInfo>
@@ -140,25 +165,99 @@ const Header = () => {
             
             <AnimatePresence>
               {showUserMenu && (
-                <UserMenu
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <MenuHeader>
-                    <span>Olá, {user?.nome || user?.username || 'Usuário'}!</span>
-                  </MenuHeader>
-                  <MenuDivider />
-                  <LogoutButton
-                    onClick={handleLogout}
-                    whileHover={{ backgroundColor: 'rgba(220, 38, 38, 0.1)' }}
-                    whileTap={{ scale: 0.95 }}
+                <>
+                  <MenuOverlay
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  <UserMenu
+                    initial={{ 
+                      opacity: 0, 
+                      y: -20, 
+                      scale: 0.9,
+                      rotateX: -15,
+                      filter: 'blur(10px)'
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0, 
+                      scale: 1,
+                      rotateX: 0,
+                      filter: 'blur(0px)'
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      y: -15, 
+                      scale: 0.95,
+                      rotateX: -10,
+                      filter: 'blur(8px)'
+                    }}
+                    transition={{ 
+                      duration: 0.4,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                      filter: { duration: 0.3 }
+                    }}
                   >
-                    <FiLogOut />
-                    <span>Sair</span>
-                  </LogoutButton>
-                </UserMenu>
+                    <MenuShine />
+                    <MenuHeader>
+                      <UserGreeting>
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          Olá, {user?.nome || user?.username || 'Usuário'}!
+                        </motion.span>
+                      </UserGreeting>
+                    </MenuHeader>
+                    <MenuDivider />
+                    <MenuContent>
+                      <ProfileButton
+                        as={Link}
+                        to="/perfil"
+                        whileHover={{ 
+                          backgroundColor: 'rgba(227, 6, 19, 0.15)',
+                          x: 5,
+                          scale: 1.02
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <motion.div
+                          whileHover={{ rotate: 15 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <FiUser />
+                        </motion.div>
+                        <span>Ver perfil</span>
+                        <ProfileArrow>→</ProfileArrow>
+                      </ProfileButton>
+                      <LogoutButton
+                        onClick={handleLogout}
+                        whileHover={{ 
+                          backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                          x: 5,
+                          scale: 1.02
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <motion.div
+                          whileHover={{ rotate: 15 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <FiLogOut />
+                        </motion.div>
+                        <span>Sair</span>
+                        <LogoutArrow>→</LogoutArrow>
+                      </LogoutButton>
+                    </MenuContent>
+                  </UserMenu>
+                </>
               )}
             </AnimatePresence>
           </UserSection>
@@ -585,6 +684,119 @@ const MenuDivider = styled.div`
   margin: 0.5rem 0;
 `;
 
+
+
+const UserAvatarContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const UserAvatarGlow = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E30613, #FF4655);
+  opacity: 0.3;
+  filter: blur(8px);
+  z-index: -1;
+  animation: pulse 2s ease-in-out infinite alternate;
+  
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.2; }
+    100% { transform: scale(1.05); opacity: 0.4; }
+  }
+`;
+
+const UserStatus = styled.span`
+  color: #10B981;
+  font-size: 1.1rem;
+  font-weight: 500;
+  opacity: 0.8;
+`;
+
+const MenuOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+`;
+
+const MenuShine = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(227, 6, 19, 0.6) 20%, 
+    rgba(255, 70, 85, 0.8) 50%, 
+    rgba(227, 6, 19, 0.6) 80%, 
+    transparent 100%
+  );
+  animation: shine 3s ease-in-out infinite;
+  
+  @keyframes shine {
+    0%, 100% { opacity: 0.5; transform: translateX(-100%); }
+    50% { opacity: 1; transform: translateX(100%); }
+  }
+`;
+
+const UserGreeting = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  
+  span {
+    background: linear-gradient(135deg, #E30613, #FF4655);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+`;
+
+const UserBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #E30613, #FF4655);
+  border-radius: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin-top: 0.5rem;
+  
+  div {
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+  }
+`;
+
+const MenuContent = styled.div`
+  padding: 0.5rem 0;
+`;
+
+const LogoutArrow = styled.span`
+  margin-left: auto;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+`;
+
 const LogoutButton = styled(motion.button)`
   display: flex;
   align-items: center;
@@ -598,9 +810,15 @@ const LogoutButton = styled(motion.button)`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
   
   &:hover {
     background: rgba(220, 38, 38, 0.1);
+    
+    ${LogoutArrow} {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
   
   svg {

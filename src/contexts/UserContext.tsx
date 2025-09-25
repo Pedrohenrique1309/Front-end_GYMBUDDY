@@ -30,15 +30,24 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   }, [])
 
   const login = (userData: UserData, token?: string) => {
-    setUser(userData)
+    console.log('🔐 UserContext.login() chamado com:', {
+      userData,
+      token: token ? 'presente' : 'ausente',
+      timestamp: new Date().toISOString()
+    });
+    
+    setUser(userData);
     
     // Salvar no localStorage
     if (token) {
-      localStorage.setItem('authToken', token)
+      localStorage.setItem('authToken', token);
+      console.log('💾 Token salvo no localStorage');
     }
-    localStorage.setItem('userData', JSON.stringify(userData))
+    localStorage.setItem('userData', JSON.stringify(userData));
+    console.log('💾 Dados do usuário salvos no localStorage');
     
-    console.log('Usuário logado:', userData)
+    console.log('✅ Login realizado com sucesso no UserContext');
+    console.log('👤 Estado do usuário atualizado para:', userData);
   }
 
   const logout = () => {

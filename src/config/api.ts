@@ -14,10 +14,10 @@ export interface LoginResponse {
 
 // Interface para dados do usuário
 export interface UserData {
-  id: number
+  id?: number
   nome: string
-  email: string
   username?: string
+  email: string
   foto?: string
   created_at?: string
   updated_at?: string
@@ -28,19 +28,26 @@ export interface SignupData {
   username: string
   nickname: string
   email: string
-  confirmEmail: string
   password: string
-  confirmPassword: string
+  confirmPassword?: string
 }
 
 // Interface para resposta de cadastro
 export interface SignupResponse {
+  status?: boolean;
+  status_code?: number | string; // API pode retornar status_code: 200
+  message?: string;
+  usuario?: UserData[];
+  user?: UserData;
+  data?: UserData;
+}
+
+// Interface para resposta de validação
+export interface ValidationResponse {
   status: boolean
-  message: string
-  status_code?: number
-  user?: UserData
-  data?: UserData
-  usuario?: UserData[] // Campo retornado pela API atual
+  exists: boolean
+  message?: string
+  field?: 'email' | 'username'
 }
 
 // Função de login
@@ -98,20 +105,94 @@ export const loginUser = async (email: string, senha: string): Promise<LoginResp
   }
 }
 
+// Função para verificar se email já existe
+export const checkEmailExists = async (email: string): Promise<ValidationResponse> => {
+  const url = `${API_BASE_URL}/usuario/check-email`
+  
+  try {
+    console.log('🔍 Verificando se email já existe:', email)
+    
+    const response = await fetch(`${url}?email=${encodeURIComponent(email)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      // Se a API não tem esse endpoint, assume que não existe
+      if (response.status === 404) {
+        return { status: true, exists: false, message: 'Email disponível' }
+      }
+      throw new Error(`Erro ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    console.log('📧 Resultado da verificação de email:', data)
+    
+    return {
+      status: true,
+      exists: data.exists || false,
+      message: data.message || (data.exists ? 'Email já cadastrado' : 'Email disponível'),
+      field: 'email'
+    }
+  } catch (error) {
+    console.warn('⚠️ Erro ao verificar email (continuando):', error)
+    // Se der erro, assume que o email não existe para não bloquear o cadastro
+    return { status: true, exists: false, message: 'Verificação indisponível' }
+  }
+}
+
+// Função para verificar se username já existe
+export const checkUsernameExists = async (username: string): Promise<ValidationResponse> => {
+  const url = `${API_BASE_URL}/usuario/check-username`
+  
+  try {
+    console.log('🔍 Verificando se username já existe:', username)
+    
+    const response = await fetch(`${url}?username=${encodeURIComponent(username)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      // Se a API não tem esse endpoint, assume que não existe
+      if (response.status === 404) {
+        return { status: true, exists: false, message: 'Username disponível' }
+      }
+      throw new Error(`Erro ${response.status}: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    console.log('👤 Resultado da verificação de username:', data)
+    
+    return {
+      status: true,
+      exists: data.exists || false,
+      message: data.message || (data.exists ? 'Username já cadastrado' : 'Username disponível'),
+      field: 'username'
+    }
+  } catch (error) {
+    console.warn('⚠️ Erro ao verificar username (continuando):', error)
+    // Se der erro, assume que o username não existe para não bloquear o cadastro
+    return { status: true, exists: false, message: 'Verificação indisponível' }
+  }
+}
+
 // Função de cadastro
 export const signupUser = async (userData: SignupData): Promise<SignupResponse> => {
   try {
     const url = `${API_BASE_URL}/usuario`
     
-    // Validar se emails coincidem
-    if (userData.email !== userData.confirmEmail) {
-      throw new Error('Os emails não coincidem.')
+    // Validação básica
+    if (!userData.email || !userData.password || !userData.username) {
+      throw new Error('Email, senha e nome de usuário são obrigatórios.')
     }
-
-    // Validar se senhas coincidem
-    if (userData.password !== userData.confirmPassword) {
-      throw new Error('As senhas não coincidem.')
-    }
+    
+    // Nota: A validação de confirmação de senha é feita no frontend
+    // A interface SignupData não inclui confirmPassword para a API
 
     // Testando payload abrangente com possíveis campos obrigatórios
     const payload = {
