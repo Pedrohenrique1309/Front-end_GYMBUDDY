@@ -1,13 +1,13 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import Header from './components/Header';
-import DevGridOverlay from './components/DevGridOverlay';
-import Home from './pages/Home';
-import AboutUs from './components/AboutUs';
-import Resources from './components/Resources';
-import AppPage from './pages/App';
-import Profile from './pages/Profile';
-import { UserProvider } from './contexts/UserContext';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import Header from './components/Header'
+import DevGridOverlay from './components/DevGridOverlay'
+import Home from './pages/Home'
+import AboutUs from './components/AboutUs'
+import Resources from './components/Resources'
+import AppPage from './pages/App'
+import Profile from './pages/Profile'
+import { UserProvider } from './contexts/UserContext'
 
 const pageVariants = {
   initial: {
@@ -28,16 +28,16 @@ const pageVariants = {
     y: -20,
     filter: "blur(10px)"
   }
-};
+}
 
 const pageTransition = {
   type: "tween",
   ease: [0.25, 0.46, 0.45, 0.94],
   duration: 0.6
-};
+}
 
 const AnimatedRoutes = () => {
-  const location = useLocation();
+  const location = useLocation()
   
   return (
     <AnimatePresence mode="wait">
@@ -114,8 +114,8 @@ const AnimatedRoutes = () => {
         />
       </Routes>
     </AnimatePresence>
-  );
-};
+  )
+}
 
 function App() {
   return (
@@ -126,7 +126,7 @@ function App() {
         <AnimatedRoutes />
       </Router>
     </UserProvider>
-  );
+  )
 }
 
-export default App;
+export default App
