@@ -1,8 +1,8 @@
-import { motion, useScroll, useTransform, useAnimationControls } from 'framer-motion';
-import { FaDumbbell, FaClipboardList, FaRobot, FaFire } from 'react-icons/fa';
-import { useRef, useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import SignupPopup from '../SignupPopup';
+import { motion, useScroll, useTransform, useAnimationControls } from 'framer-motion'
+import { FaDumbbell, FaClipboardList, FaRobot, FaFire } from 'react-icons/fa'
+import { useRef, useState, useEffect } from 'react'
+import styled, { keyframes } from 'styled-components'
+import SignupPopup from '../SignupPopup'
 
 const AboutUs = () => {
   const containerRef = useRef(null);
@@ -286,8 +286,8 @@ const AboutUs = () => {
         />
       </AnimatedBackground>
     </AboutUsContainer>
-  );
-};
+  )
+}
 
 const AboutUsContainer = styled.div`
   min-height: 100vh;
@@ -296,7 +296,7 @@ const AboutUsContainer = styled.div`
   padding-top: 8rem;
   position: relative;
   overflow: hidden;
-`;
+`
 
 const HeroSection = styled.section`
   text-align: center;
@@ -304,7 +304,7 @@ const HeroSection = styled.section`
   max-width: 120rem;
   margin: 0 auto;
   position: relative;
-`;
+`
 
 const HeroTitle = styled.h1`
   font-size: clamp(3rem, 5vw, 5.5rem);
@@ -313,7 +313,7 @@ const HeroTitle = styled.h1`
   margin-bottom: 2rem;
   color: var(--white);
   letter-spacing: -0.02em;
-`;
+`
 
 const GradientText = styled.span`
   background: linear-gradient(135deg, #E30613 0%, #ff4757 50%, #ff6348 100%);
@@ -321,7 +321,7 @@ const GradientText = styled.span`
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
-`;
+`
 
 const HeroSubtitle = styled.p`
   font-size: clamp(1.6rem, 2.5vw, 2rem);
@@ -329,18 +329,18 @@ const HeroSubtitle = styled.p`
   font-weight: 400;
   max-width: 60rem;
   margin: 0 auto;
-`;
+`
 
 const ContentSection = styled.section`
   padding: 6rem 2rem;
   position: relative;
   z-index: 1;
-`;
+`
 
 const ContentContainer = styled.div`
   max-width: 120rem;
   margin: 0 auto;
-`;
+`
 
 const ModernCard = styled(motion.div)`
   position: relative;
@@ -353,7 +353,7 @@ const ModernCard = styled(motion.div)`
     0 30px 60px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 80px rgba(227, 6, 19, 0.1);
-`;
+`
 
 const CardImageBackground = styled(motion.div)`
   position: absolute;
@@ -773,4 +773,4 @@ const HeroParticles = styled.div`
   }
 `;
 
-export default AboutUs;
+export default AboutUs

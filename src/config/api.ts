@@ -1,7 +1,7 @@
-// Configurações da API
+// url da api base/cadastro
 const API_BASE_URL = '/api/v1/gymbuddy'
 
-// Interface para resposta de login
+// resosta de login
 export interface LoginResponse {
   status: boolean
   message: string
@@ -9,10 +9,10 @@ export interface LoginResponse {
   token?: string
   user?: UserData
   data?: UserData
-  usuario?: UserData[] // Campo retornado pela API atual
+  usuario?: UserData[] // campo que a api pode retornar 
 }
 
-// Interface para dados do usuário
+// interface de dados do usuário
 export interface UserData {
   id?: number
   nome: string
@@ -26,7 +26,7 @@ export interface UserData {
   updated_at?: string
 }
 
-// Interface para dados de cadastro
+// dados para cadastro
 export interface SignupData {
   username: string
   nickname: string
@@ -35,7 +35,7 @@ export interface SignupData {
   confirmPassword?: string
 }
 
-// Interface para resposta de cadastro
+// interface para resposta do cadastro
 export interface SignupResponse {
   status?: boolean;
   status_code?: number | string; // API pode retornar status_code: 200
@@ -45,7 +45,7 @@ export interface SignupResponse {
   data?: UserData;
 }
 
-// Interface para resposta de validação
+// interface para resposta de validação
 export interface ValidationResponse {
   status: boolean
   exists: boolean
@@ -53,12 +53,12 @@ export interface ValidationResponse {
   field?: 'email' | 'username'
 }
 
-// Função de login
+// função de login
 export const loginUser = async (email: string, senha: string): Promise<LoginResponse> => {
   try {
     const url = `${API_BASE_URL}/usuario/login/email/senha?email=${encodeURIComponent(email)}&senha=${encodeURIComponent(senha)}`
     
-    console.log('🚀 Realizando login:', { 
+    console.log(' Realizando login:', { 
       email, 
       url,
       baseUrl: API_BASE_URL
@@ -73,29 +73,29 @@ export const loginUser = async (email: string, senha: string): Promise<LoginResp
       },
     })
 
-    console.log('📡 Resposta recebida:', {
+    console.log(' Resposta recebida:', {
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries())
     })
 
-    // Verificar se a resposta é JSON
+    // verifica se a resposta é json
     const contentType = response.headers.get('content-type')
     let data: LoginResponse
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
-      console.log('✅ Resposta JSON:', data)
+      console.log(' Resposta JSON:', data)
     } else {
       const responseText = await response.text()
-      console.error('❌ Resposta não é JSON:', {
+      console.error(' Resposta não é json:', {
         status: response.status,
         contentType,
         responseText: responseText.substring(0, 500)
       })
       
       if (response.status === 500) {
-        throw new Error(`Erro interno do servidor (500). O backend pode estar com problemas. Verifique se está rodando em 10.107.144.9:8080`)
+        throw new Error(`Erro interno do servidor. O backend pode estar com problemas. Verifique se está rodando em 10.107.144.9:8080`)
       }
       
       throw new Error(`Erro na API. Status: ${response.status}. Resposta: ${responseText.substring(0, 100)}`)
@@ -103,17 +103,17 @@ export const loginUser = async (email: string, senha: string): Promise<LoginResp
 
     return data
   } catch (error) {
-    console.error('💥 Erro no login:', error)
+    console.error(' Erro no login:', error)
     throw error
   }
 }
 
-// Função para verificar se email já existe
+// função para verificar se email já existe no bd
 export const checkEmailExists = async (email: string): Promise<ValidationResponse> => {
   const url = `${API_BASE_URL}/usuario/check-email`
   
   try {
-    console.log('🔍 Verificando se email já existe:', email)
+    console.log(' Verificando se email já existe:', email)
     
     const response = await fetch(`${url}?email=${encodeURIComponent(email)}`, {
       method: 'GET',
@@ -123,7 +123,7 @@ export const checkEmailExists = async (email: string): Promise<ValidationRespons
     })
     
     if (!response.ok) {
-      // Se a API não tem esse endpoint, assume que não existe
+      // se a API não tem esse endpoint, da erro pq n existe
       if (response.status === 404) {
         return { status: true, exists: false, message: 'Email disponível' }
       }
@@ -131,7 +131,7 @@ export const checkEmailExists = async (email: string): Promise<ValidationRespons
     }
     
     const data = await response.json()
-    console.log('📧 Resultado da verificação de email:', data)
+    console.log(' Resultado da verificação de email:', data)
     
     return {
       status: true,
@@ -140,18 +140,18 @@ export const checkEmailExists = async (email: string): Promise<ValidationRespons
       field: 'email'
     }
   } catch (error) {
-    console.warn('⚠️ Erro ao verificar email (continuando):', error)
-    // Se der erro, assume que o email não existe para não bloquear o cadastro
+    console.warn(' Erro ao verificar email (continuando):', error)
+    // se der erro, considera que o email não existe para não bloquear o cadastro
     return { status: true, exists: false, message: 'Verificação indisponível' }
   }
 }
 
-// Função para verificar se username já existe
+// função para verificar se username já existe
 export const checkUsernameExists = async (username: string): Promise<ValidationResponse> => {
   const url = `${API_BASE_URL}/usuario/check-username`
   
   try {
-    console.log('🔍 Verificando se username já existe:', username)
+    console.log(' Verificando se username já existe:', username)
     
     const response = await fetch(`${url}?username=${encodeURIComponent(username)}`, {
       method: 'GET',
@@ -161,7 +161,7 @@ export const checkUsernameExists = async (username: string): Promise<ValidationR
     })
     
     if (!response.ok) {
-      // Se a API não tem esse endpoint, assume que não existe
+      // se a API não tem esse endpoint, da erro pq n existe
       if (response.status === 404) {
         return { status: true, exists: false, message: 'Username disponível' }
       }
@@ -169,7 +169,7 @@ export const checkUsernameExists = async (username: string): Promise<ValidationR
     }
     
     const data = await response.json()
-    console.log('👤 Resultado da verificação de username:', data)
+    console.log(' Resultado da verificação de username:', data)
     
     return {
       status: true,
@@ -178,13 +178,13 @@ export const checkUsernameExists = async (username: string): Promise<ValidationR
       field: 'username'
     }
   } catch (error) {
-    console.warn('⚠️ Erro ao verificar username (continuando):', error)
-    // Se der erro, assume que o username não existe para não bloquear o cadastro
+    console.warn(' Erro ao verificar username (continuando):', error)
+    // se der erro, considera que o username não existe para não bloquear o cadastro
     return { status: true, exists: false, message: 'Verificação indisponível' }
   }
 }
 
-// Função de cadastro
+// função de cadastro
 export const signupUser = async (userData: SignupData): Promise<SignupResponse> => {
   try {
     const url = `${API_BASE_URL}/usuario`
@@ -194,28 +194,23 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
       throw new Error('Email, senha e nome de usuário são obrigatórios.')
     }
     
-    // Nota: A validação de confirmação de senha é feita no frontend
-    // A interface SignupData não inclui confirmPassword para a API
+    // validacao feita no front
 
-    // Testando payload abrangente com possíveis campos obrigatórios
+    //teste payload
     const payload = {
-      // Campos básicos
+      
       nome: userData.username,
-      username: userData.username, // Ambos por garantia
+      username: userData.username, 
       nickname: userData.nickname,
       email: userData.email,
       senha: userData.password,
       
-      // Possíveis campos obrigatórios adicionais
-      cpf: "000.000.000-00", // CPF fake para teste
-      telefone: "(11) 99999-9999", // Telefone fake
-      data_nascimento: "1990-01-01", // Data fake
-      genero: "M", // Gênero
-      ativo: true, // Status ativo
-      tipo_usuario: "CLIENTE" // Tipo de usuário
+      // dado de teste
+      data_nascimento: "1990-01-01" //exemplo
+      
     }
     
-    console.log('🚀 Realizando cadastro:', { 
+    console.log(' Realizando cadastro:', { 
       url, 
       originalUserData: { ...userData, password: '[REDACTED]', confirmPassword: '[REDACTED]' },
       payload: { ...payload, senha: '[REDACTED]' },
@@ -233,22 +228,22 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
       body: JSON.stringify(payload)
     })
 
-    console.log('📡 Resposta de cadastro recebida:', {
+    console.log(' Resposta de cadastro recebida:', {
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries())
     })
 
-    // Verificar se a resposta é JSON
+    // verifica se a resposta é json
     const contentType = response.headers.get('content-type')
     let data: SignupResponse
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
-      console.log('✅ Resposta JSON de cadastro:', data)
+      console.log(' Resposta json de cadastro:', data)
     } else {
       const responseText = await response.text()
-      console.error('❌ Resposta de cadastro não é JSON:', {
+      console.error(' Resposta de cadastro não é json:', {
         status: response.status,
         contentType,
         responseText: responseText.substring(0, 500)
@@ -263,12 +258,12 @@ export const signupUser = async (userData: SignupData): Promise<SignupResponse> 
 
     return data
   } catch (error) {
-    console.error('💥 Erro no cadastro:', error)
+    console.error(' Erro no cadastro:', error)
     throw error
   }
 }
 
-// Função para obter dados do usuário do localStorage
+// função para obter dados do usuário do localstorage
 export const getUserFromStorage = (): UserData | null => {
   try {
     const userData = localStorage.getItem('userData')
@@ -279,18 +274,18 @@ export const getUserFromStorage = (): UserData | null => {
   }
 }
 
-// Função para obter token do localStorage
+// token do localstorage
 export const getTokenFromStorage = (): string | null => {
   return localStorage.getItem('authToken')
 }
 
-// Função para limpar dados de autenticação
+// limpa dados de autenticação 
 export const clearAuthData = (): void => {
   localStorage.removeItem('authToken')
   localStorage.removeItem('userData')
 }
 
-// Função para salvar dados de autenticação
+// salva dados de autenticação
 export const saveAuthData = (token?: string, userData?: UserData): void => {
   if (token) {
     localStorage.setItem('authToken', token)

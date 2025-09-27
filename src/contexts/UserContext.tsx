@@ -18,7 +18,7 @@ interface UserProviderProps {
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<UserData | null>(null)
 
-  // Verificar se há usuário logado ao inicializar
+  // se o usuario tiver logado recupera do localstorage
   useEffect(() => {
     const savedUser = getUserFromStorage()
     const token = getTokenFromStorage()
@@ -30,7 +30,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   }, [])
 
   const login = (userData: UserData, token?: string) => {
-    console.log('🔐 UserContext.login() chamado com:', {
+    console.log(' UserContext.login() chamado com:', {
       userData,
       token: token ? 'presente' : 'ausente',
       timestamp: new Date().toISOString()
@@ -38,16 +38,16 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     
     setUser(userData);
     
-    // Salvar no localStorage
+    // salvar no localstorage
     if (token) {
       localStorage.setItem('authToken', token);
-      console.log('💾 Token salvo no localStorage');
+      console.log(' Token salvo no localStorage');
     }
     localStorage.setItem('userData', JSON.stringify(userData));
-    console.log('💾 Dados do usuário salvos no localStorage');
+    console.log(' Dados do usuário salvos no localStorage');
     
-    console.log('✅ Login realizado com sucesso no UserContext');
-    console.log('👤 Estado do usuário atualizado para:', userData);
+    console.log(' Login realizado com sucesso no UserContext');
+    console.log(' Estado do usuário atualizado para:', userData);
   }
 
   const logout = () => {

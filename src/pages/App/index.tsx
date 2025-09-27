@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
-import styled from 'styled-components';
-import { FaGooglePlay, FaApple } from 'react-icons/fa';
+import { motion } from 'framer-motion'
+import styled from 'styled-components'
+import { FaGooglePlay, FaApple } from 'react-icons/fa'
 
 const App = () => {
   return (
@@ -61,8 +61,8 @@ const App = () => {
         </motion.div>
       </ContentWrapper>
     </AppContainer>
-  );
-};
+  )
+}
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -87,14 +87,14 @@ const AppContainer = styled.div`
     );
     pointer-events: none;
   }
-`;
+`
 
 const ContentWrapper = styled.div`
   max-width: 120rem;
   margin: 0 auto;
   padding: 0 2.4rem;
   text-align: center;
-`;
+`
 
 const Title = styled.h1`
   font-size: 5.6rem;
@@ -113,7 +113,7 @@ const Title = styled.h1`
   @media (max-width: 768px) {
     font-size: 4rem;
   }
-`;
+`
 
 const Subtitle = styled.p`
   font-size: 2rem;
@@ -128,7 +128,7 @@ const Subtitle = styled.p`
     font-size: 1.8rem;
     margin-bottom: 4rem;
   }
-`;
+`
 
 const DownloadButtons = styled.div`
   display: flex;
@@ -140,7 +140,7 @@ const DownloadButtons = styled.div`
     align-items: center;
     gap: 2rem;
   }
-`;
+`
 
 const DownloadButton = styled(motion.a)`
   display: flex;
@@ -196,4 +196,4 @@ const DownloadButton = styled(motion.a)`
   }
 `;
 
-export default App;
+export default App

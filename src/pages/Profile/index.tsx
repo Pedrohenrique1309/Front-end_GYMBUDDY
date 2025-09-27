@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiEdit3, FiCamera, FiPlus, FiX, FiCheck } from 'react-icons/fi';
-import { useUser } from '../../contexts/UserContext';
-import { useNavigate } from 'react-router-dom';
-import DefaultAvatar from '../../assets/default-avatar';
+import { useState, useEffect } from 'react'
+import styled from 'styled-components'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FiEdit3, FiCamera, FiPlus, FiX, FiCheck } from 'react-icons/fi'
+import { useUser } from '../../contexts/UserContext'
+import { useNavigate } from 'react-router-dom'
+import DefaultAvatar from '../../assets/default-avatar'
 
 const Profile = () => {
-  const { user, isLoggedIn, updateUser } = useUser();
-  const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
+  const { user, isLoggedIn, updateUser } = useUser()
+  const navigate = useNavigate()
+  const [isEditing, setIsEditing] = useState(false)
   const [editedData, setEditedData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
@@ -17,13 +17,13 @@ const Profile = () => {
     peso: user?.peso || '',
     altura: user?.altura || ''
   });
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<string[]>([])
 
   useEffect(() => {
     if (!isLoggedIn) {
-      navigate('/');
+      navigate('/')
     }
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, navigate])
 
   useEffect(() => {
     if (user) {
@@ -39,12 +39,12 @@ const Profile = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
-  };
+  }
 
   const handleSave = () => {
-    updateUser(editedData);
-    setIsEditing(false);
-  };
+    updateUser(editedData)
+    setIsEditing(false)
+  }
 
   const handleCancel = () => {
     setEditedData({
@@ -53,36 +53,36 @@ const Profile = () => {
       descricao: user?.descricao || '',
       peso: user?.peso || '',
       altura: user?.altura || ''
-    });
-    setIsEditing(false);
+    })
+    setIsEditing(false)
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onloadend = () => {
         const newPhoto = reader.result as string;
-        setPhotos([...photos, newPhoto]);
-      };
-      reader.readAsDataURL(file);
+        setPhotos([...photos, newPhoto])
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file && user) {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onloadend = () => {
-        const avatarUrl = reader.result as string;
-        updateUser({ ...user, foto: avatarUrl });
-      };
-      reader.readAsDataURL(file);
+        const avatarUrl = reader.result as string
+        updateUser({ ...user, foto: avatarUrl })
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   if (!user) {
-    return null;
+    return null
   }
 
   return (
@@ -283,38 +283,38 @@ const Profile = () => {
         </PhotosSection>
       </ProfileContent>
     </ProfileContainer>
-  );
-};
+  )
+}
 
 const ProfileContainer = styled(motion.div)`
   min-height: 100vh;
   background: #0A0A0A;
   padding-top: 10rem;
   padding-bottom: 4rem;
-`;
+`
 
 const ProfileContent = styled.div`
   max-width: 120rem;
   margin: 0 auto;
   padding: 0 2rem;
-`;
+`
 
 const ProfileHeader = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-bottom: 6rem;
-`;
+`
 
 const AvatarSection = styled.div`
   margin-bottom: 3rem;
-`;
+`
 
 const AvatarContainer = styled.div`
   position: relative;
   width: 18rem;
   height: 18rem;
-`;
+`
 
 const Avatar = styled.img`
   width: 100%;
@@ -323,7 +323,7 @@ const Avatar = styled.img`
   object-fit: cover;
   border: 4px solid rgba(227, 6, 19, 0.3);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-`;
+`
 
 const DefaultAvatarWrapper = styled.div`
   width: 100%;
@@ -334,13 +334,13 @@ const DefaultAvatarWrapper = styled.div`
   background: rgba(255, 255, 255, 0.05);
   border-radius: 50%;
   border: 4px solid rgba(227, 6, 19, 0.3);
-`;
+`
 
 const AvatarOverlay = styled.div`
   position: absolute;
   bottom: 1rem;
   right: 1rem;
-`;
+`
 
 const CameraButton = styled(motion.div)`
   width: 4rem;
@@ -357,88 +357,88 @@ const CameraButton = styled(motion.div)`
     color: white;
     font-size: 2rem;
   }
-`;
+`
 
 const UserInfoSection = styled.div`
   text-align: center;
   margin-bottom: 2rem;
-`;
+`
 
 const UserName = styled.h1`
   font-size: 3rem;
   font-weight: 700;
   color: var(--white);
   margin-bottom: 0.5rem;
-`;
+`
 
 const UserEmail = styled.p`
   font-size: 1.6rem;
   color: var(--primary);
   font-weight: 500;
-`;
+`
 
 const EditableUserInfo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
   align-items: center;
-`;
+`
 
 const DetailsSection = styled.div`
   text-align: center;
   margin-bottom: 3rem;
-`;
+`
 
 const DetailText = styled.p`
   font-size: 1.6rem;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2rem;
   max-width: 60rem;
-`;
+`
 
 const DetailsRow = styled.div`
   display: flex;
   justify-content: center;
   gap: 4rem;
   margin-top: 2rem;
-`;
+`
 
 const DetailInfo = styled.div`
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-`;
+`
 
 const DetailValue = styled.span`
   font-size: 2.4rem;
   font-weight: 700;
   color: var(--white);
-`;
+`
 
 const DetailUnit = styled.span`
   font-size: 1.8rem;
   color: rgba(255, 255, 255, 0.5);
-`;
+`
 
 const EditableDetails = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
   align-items: center;
-`;
+`
 
 const DetailItem = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-`;
+`
 
 const DetailLabel = styled.label`
   font-size: 1.4rem;
   color: rgba(255, 255, 255, 0.7);
   min-width: 8rem;
   text-align: right;
-`;
+`
 
 const EditInput = styled.input`
   background: rgba(255, 255, 255, 0.05);
@@ -454,7 +454,7 @@ const EditInput = styled.input`
     border-color: var(--primary);
     background: rgba(255, 255, 255, 0.08);
   }
-`;
+`
 
 const EditTextarea = styled.textarea`
   background: rgba(255, 255, 255, 0.05);
@@ -473,12 +473,12 @@ const EditTextarea = styled.textarea`
     border-color: var(--primary);
     background: rgba(255, 255, 255, 0.08);
   }
-`;
+`
 
 const ActionButtons = styled.div`
   display: flex;
   gap: 1.5rem;
-`;
+`
 
 const EditButton = styled(motion.button)`
   display: flex;
@@ -499,7 +499,7 @@ const EditButton = styled(motion.button)`
     background: var(--primary-dark);
     box-shadow: 0 10px 30px rgba(227, 6, 19, 0.4);
   }
-`;
+`
 
 const SaveButton = styled(EditButton)`
   background: #10B981;
@@ -509,7 +509,7 @@ const SaveButton = styled(EditButton)`
     background: #059669;
     box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
   }
-`;
+`
 
 const CancelButton = styled(EditButton)`
   background: rgba(255, 255, 255, 0.1);
@@ -518,11 +518,11 @@ const CancelButton = styled(EditButton)`
   &:hover {
     background: rgba(255, 255, 255, 0.15);
   }
-`;
+`
 
 const PhotosSection = styled.div`
   margin-top: 6rem;
-`;
+`
 
 const SectionTitle = styled.h2`
   font-size: 2.4rem;
@@ -530,14 +530,14 @@ const SectionTitle = styled.h2`
   color: var(--primary);
   margin-bottom: 3rem;
   text-align: center;
-`;
+`
 
 const PhotoGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
   gap: 2rem;
   max-width: 100%;
-`;
+`
 
 const PhotoCard = styled(motion.div)`
   position: relative;
@@ -547,13 +547,13 @@ const PhotoCard = styled(motion.div)`
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-`;
+`
 
 const PhotoImage = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
-`;
+`
 
 const PhotoOverlay = styled.div`
   position: absolute;
@@ -571,7 +571,7 @@ const PhotoOverlay = styled.div`
   ${PhotoCard}:hover & {
     opacity: 1;
   }
-`;
+`
 
 const DeletePhotoButton = styled(motion.button)`
   width: 4rem;
@@ -588,7 +588,7 @@ const DeletePhotoButton = styled(motion.button)`
     color: white;
     font-size: 2rem;
   }
-`;
+`
 
 const AddPhotoCard = styled.div`
   aspect-ratio: 1;
@@ -604,7 +604,7 @@ const AddPhotoCard = styled.div`
     background: rgba(255, 255, 255, 0.05);
     border-color: var(--primary);
   }
-`;
+`
 
 const AddPhotoButton = styled(motion.div)`
   display: flex;
@@ -626,13 +626,13 @@ const AddPhotoButton = styled(motion.div)`
   &:hover {
     color: var(--primary);
   }
-`;
+`
 
 const PlaceholderCard = styled.div`
   aspect-ratio: 1;
   border-radius: 1.2rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
-`;
+`
 
-export default Profile;
+export default Profile

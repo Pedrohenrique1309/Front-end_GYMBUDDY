@@ -1,10 +1,8 @@
 export const BRAND = {
   name: 'GYM BUDDY',
-  // Coloque sua logo em /public/logo.png (ou ajuste o caminho abaixo)
   logoSrc: '/icon-hand-dumbbell-red.png',
-  // Imagem do herói: coloque em /public e ajuste aqui se necessário
   heroSrc: '/hero-image.png',
-  // Cards informativos com dados ficticios
+  //cards do home 
   floatingCards: [
     {
       id: 'progress',
@@ -47,6 +45,6 @@ export const BRAND = {
       category: 'Tecnologia'
     },
   ],
-} as const;
+} as const
 
 export type FloatingCardItem = (typeof BRAND)['floatingCards'][number];

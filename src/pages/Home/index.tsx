@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Hero from '../../components/Hero';
-import SignupPopup from '../../components/SignupPopup';
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import Hero from '../../components/Hero'
+import SignupPopup from '../../components/SignupPopup'
 
 const Home = () => {
-  const [showSignupPopup, setShowSignupPopup] = useState(false);
+  const [showSignupPopup, setShowSignupPopup] = useState(false)
 
   const handleOpenSignup = () => {
-    setShowSignupPopup(true);
-  };
+    setShowSignupPopup(true)
+  }
 
   const handleCloseSignup = () => {
-    setShowSignupPopup(false);
-  };
+    setShowSignupPopup(false)
+  }
 
   return (
     <>
@@ -32,7 +32,7 @@ const Home = () => {
         onSwitchToLogin={() => {}} // Pode implementar depois se necessário
       />
     </>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home
