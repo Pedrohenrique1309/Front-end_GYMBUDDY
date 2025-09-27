@@ -1,4 +1,4 @@
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle } from 'styled-components'
 
 export const GlobalStyle = createGlobalStyle`
   * {
@@ -16,8 +16,8 @@ export const GlobalStyle = createGlobalStyle`
     --gray-100: #F5F5F5;
     --gray-900: #0F0F10;
     --dark-bg: #0A0A0A;
-    --container-max: 120rem; /* 1200px */
-    --gutter: 2.4rem;       /* 24px */
+    --container-max: 120rem; 
+    --gutter: 2.4rem;       
   }
 
   /* Tema claro */
@@ -74,4 +74,4 @@ export const GlobalStyle = createGlobalStyle`
     margin: 0 auto;
     padding: 0 var(--gutter);
   }
-`;
+`
