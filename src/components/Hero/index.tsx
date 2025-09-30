@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
@@ -10,16 +10,100 @@ interface HeroProps {
 }
 
 // Componente interno para cada card com scramble text
-const CardWithScramble = ({ card, icon: IconComponent, index }: { card: any; icon: any; index: number }) => {
+const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { card: any; icon: any; index: number; totalCards: number }) => {
   const [hasStarted, setHasStarted] = useState(false);
+  const [triggerRescrample, setTriggerRescramble] = useState(0);
   
-  const { displayText } = useScrambleText({
+  // Scramble para estatística
+  const statScramble = useScrambleText({
     text: card.stat,
-    speed: 60,
-    scrambleSpeed: 40,
-    delay: hasStarted ? index * 200 + 500 : 9999999, // Inicia após o card aparecer
+    speed: 50,
+    scrambleSpeed: 30,
+    delay: hasStarted ? 400 : 9999999,
     characters: '0123456789%+kK/'
   });
+  
+  // Scramble para título
+  const titleScramble = useScrambleText({
+    text: card.title,
+    speed: 40,
+    scrambleSpeed: 25,
+    delay: hasStarted ? 500 : 9999999,
+    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '
+  });
+  
+  // Scramble para categoria
+  const categoryScramble = useScrambleText({
+    text: card.category,
+    speed: 35,
+    scrambleSpeed: 20,
+    delay: hasStarted ? 600 : 9999999,
+    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  });
+  
+  // Re-scramble aleatório após carregamento inicial
+  useEffect(() => {
+    if (!hasStarted) return;
+    
+    const scheduleNextRescramble = () => {
+      // Tempo aleatório entre 8-20 segundos
+      const randomDelay = Math.random() * 12000 + 8000;
+      
+      const timeout = setTimeout(() => {
+        // Só faz rescramble se for a "vez" deste card (baseado em sorteio)
+        const shouldRescramble = Math.random() < (1 / totalCards);
+        
+        if (shouldRescramble) {
+          setTriggerRescramble(prev => prev + 1);
+        }
+        
+        scheduleNextRescramble();
+      }, randomDelay);
+      
+      return timeout;
+    };
+    
+    const timeout = scheduleNextRescramble();
+    return () => clearTimeout(timeout);
+  }, [hasStarted, totalCards]);
+  
+  // Re-scramble quando triggerRescrample muda
+  const statRescramble = useScrambleText({
+    text: card.stat,
+    speed: 50,
+    scrambleSpeed: 30,
+    delay: 0,
+    characters: '0123456789%+kK/'
+  });
+  
+  const titleRescramble = useScrambleText({
+    text: card.title,
+    speed: 40,
+    scrambleSpeed: 25,
+    delay: 100,
+    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '
+  });
+  
+  const categoryRescramble = useScrambleText({
+    text: card.category,
+    speed: 35,
+    scrambleSpeed: 20,
+    delay: 200,
+    characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  });
+  
+  // Decide qual texto usar
+  const displayStat = triggerRescrample > 0 && !statRescramble.isComplete
+    ? statRescramble.displayText
+    : statScramble.displayText || card.stat;
+    
+  const displayTitle = triggerRescrample > 0 && !titleRescramble.isComplete
+    ? titleRescramble.displayText
+    : titleScramble.displayText || card.title;
+    
+  const displayCategory = triggerRescrample > 0 && !categoryRescramble.isComplete
+    ? categoryRescramble.displayText
+    : categoryScramble.displayText || card.category;
 
   return (
     <FloatingCardWrap
@@ -62,10 +146,22 @@ const CardWithScramble = ({ card, icon: IconComponent, index }: { card: any; ico
     >
       <FloatingCard>
         <div className="card-header">
-          <div className="card-icon">
+          <motion.div 
+            className="card-icon"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.2 + 0.2, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
+          >
             <IconComponent />
-          </div>
-          <span className="category">{card.category}</span>
+          </motion.div>
+          <motion.span 
+            className="category"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.2 + 0.4, duration: 0.3 }}
+          >
+            {displayCategory}
+          </motion.span>
         </div>
         <div className="card-main">
           <motion.div 
@@ -74,9 +170,16 @@ const CardWithScramble = ({ card, icon: IconComponent, index }: { card: any; ico
             animate={{ opacity: 1 }}
             transition={{ delay: index * 0.2 + 0.3, duration: 0.3 }}
           >
-            {displayText || card.stat}
+            {displayStat}
           </motion.div>
-          <h3 className="card-title">{card.title}</h3>
+          <motion.h3 
+            className="card-title"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.2 + 0.35, duration: 0.3 }}
+          >
+            {displayTitle}
+          </motion.h3>
         </div>
         <div className="card-footer">
           <div className="card-indicators">
@@ -148,6 +251,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
                       card={card}
                       icon={IconComponent}
                       index={index}
+                      totalCards={floatingCards.length}
                     />
                   );
                 })}
