@@ -141,13 +141,13 @@ const Header = () => {
             <UserProfile
               onClick={() => setShowUserMenu(!showUserMenu)}
               whileHover={{ 
-                scale: 1.05,
-                boxShadow: '0 0 20px rgba(227, 6, 19, 0.3)'
+                scale: 1.03,
+                y: -3,
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.97 }}
               transition={{ 
                 duration: 0.3,
-                ease: 'easeOut'
+                ease: [0.4, 0, 0.2, 1]
               }}
             >
               <UserAvatarContainer>
@@ -613,28 +613,143 @@ const UserSection = styled.div`
 const UserProfile = styled(motion.button)`
   display: flex;
   align-items: center;
-  gap: 1.2rem;
-  padding: 0.8rem 1.6rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2.5rem;
+  gap: 1.4rem;
+  padding: 0.6rem 2rem 0.6rem 0.6rem;
+  position: relative;
   cursor: pointer;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  
+  /* Glassmorphism elegante */
+  background: linear-gradient(135deg, 
+    rgba(30, 30, 35, 0.8) 0%,
+    rgba(20, 20, 25, 0.6) 100%
+  );
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10rem;
+  
+  /* Sombras em camadas */
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Shine effect sutil */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.1), 
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, 
+      rgba(35, 35, 40, 0.85) 0%,
+      rgba(25, 25, 30, 0.7) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.35);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 12px 32px rgba(0, 0, 0, 0.3),
+      0 6px 16px rgba(227, 6, 19, 0.15),
+      0 0 0 1px rgba(227, 6, 19, 0.2);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+`;
+
+const UserAvatarContainer = styled.div`
+  position: relative;
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Borda gradiente animada */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    padding: 2px;
+    background: linear-gradient(135deg, 
+      rgba(227, 6, 19, 0.5) 0%, 
+      rgba(255, 100, 100, 0.3) 50%,
+      rgba(255, 255, 255, 0.2) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  ${UserProfile}:hover &::before {
+    opacity: 1;
+    animation: rotate-border 3s linear infinite;
+  }
+  
+  @keyframes rotate-border {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 `;
 
 const UserAvatar = styled.img`
-  width: 4rem;
-  height: 4rem;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+  
+  ${UserProfile}:hover & {
+    border-color: rgba(227, 6, 19, 0.4);
+    transform: scale(1.05);
+  }
+`;
+
+const UserAvatarGlow = styled.div`
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(227, 6, 19, 0.4) 0%, transparent 70%);
+  opacity: 0;
+  filter: blur(16px);
+  transition: all 0.4s ease;
+  z-index: -1;
+  
+  ${UserProfile}:hover & {
+    opacity: 0.8;
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 0.6;
+      filter: blur(16px);
+    }
+    50% {
+      opacity: 1;
+      filter: blur(20px);
+    }
+  }
 `;
 
 const UserInfo = styled.div`
@@ -644,10 +759,19 @@ const UserInfo = styled.div`
 `;
 
 const UserName = styled.span`
-  color: var(--white);
-  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  
+  ${UserProfile}:hover & {
+    color: rgba(255, 255, 255, 1);
+    text-shadow: 0 2px 12px rgba(227, 6, 19, 0.3);
+    transform: translateX(2px);
+  }
 `;
 
 const UserMenu = styled(motion.div)`
@@ -682,29 +806,6 @@ const MenuDivider = styled.div`
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
   margin: 0.5rem 0;
-`;
-
-
-
-const UserAvatarContainer = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const UserAvatarGlow = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #E30613, #FF4655);
-  opacity: 0.3;
-  filter: blur(8px);
-  z-index: -1;
-  animation: pulse 2s ease-in-out infinite alternate;
   
   @keyframes pulse {
     0% { transform: scale(0.95); opacity: 0.2; }

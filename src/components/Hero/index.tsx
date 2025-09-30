@@ -284,7 +284,57 @@ const HeroSection = styled.section`
   padding: 12rem 0 6rem;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #0A0A0A 0%, #1A1A1A 100%);
+  
+  /* Modern mesh gradient background */
+  background: 
+    radial-gradient(at 0% 0%, rgba(227, 6, 19, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(20, 20, 25, 1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(227, 6, 19, 0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(15, 15, 20, 1) 0px, transparent 50%),
+    linear-gradient(180deg, #080808 0%, #0D0D0D 50%, #121212 100%);
+  
+  /* Camada de grid sutil para efeito tech */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(227, 6, 19, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(227, 6, 19, 0.03) 1px, transparent 1px);
+    background-size: 100px 100px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 1;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
+  }
+  
+  /* Glow effect sutil no centro */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(227, 6, 19, 0.08) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 1;
+    animation: pulse-glow 8s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.4;
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: translateX(-50%) scale(1.1);
+    }
+  }
 `;
 
 const Content = styled.div`
