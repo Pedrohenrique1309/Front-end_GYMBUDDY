@@ -1,11 +1,93 @@
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
 import { BRAND } from '../../config/branding';
 import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward } from 'react-icons/fi';
+import { useScrambleText } from '../../hooks/useScrambleText';
 
 interface HeroProps {
   onOpenSignup?: () => void;
 }
+
+// Componente interno para cada card com scramble text
+const CardWithScramble = ({ card, icon: IconComponent, index }: { card: any; icon: any; index: number }) => {
+  const [hasStarted, setHasStarted] = useState(false);
+  
+  const { displayText } = useScrambleText({
+    text: card.stat,
+    speed: 60,
+    scrambleSpeed: 40,
+    delay: hasStarted ? index * 200 + 500 : 9999999, // Inicia após o card aparecer
+    characters: '0123456789%+kK/'
+  });
+
+  return (
+    <FloatingCardWrap
+      className={card.position}
+      style={{ 
+        ['--rot' as any]: `${card.rotate || 0}deg`, 
+        ['--dur' as any]: `${6 + (index % 5) * 0.3}s`,
+        zIndex: card.zIndex
+      }}
+      initial={{ 
+        opacity: 0, 
+        y: 60,
+        scale: 0.7,
+        rotateX: -20,
+        rotateY: 10
+      }}
+      animate={{ 
+        opacity: 1, 
+        y: 0,
+        scale: 1,
+        rotateX: 0,
+        rotateY: 0
+      }}
+      transition={{
+        duration: 0.8,
+        delay: index * 0.2,
+        ease: [0.34, 1.56, 0.64, 1],
+      }}
+      onAnimationComplete={() => setHasStarted(true)}
+      whileHover={{ 
+        scale: 1.15,
+        rotate: 0,
+        z: 50,
+        transition: { 
+          duration: 0.5,
+          ease: [0.34, 1.56, 0.64, 1],
+        }
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <FloatingCard>
+        <div className="card-header">
+          <div className="card-icon">
+            <IconComponent />
+          </div>
+          <span className="category">{card.category}</span>
+        </div>
+        <div className="card-main">
+          <motion.div 
+            className="card-stat"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.2 + 0.3, duration: 0.3 }}
+          >
+            {displayText || card.stat}
+          </motion.div>
+          <h3 className="card-title">{card.title}</h3>
+        </div>
+        <div className="card-footer">
+          <div className="card-indicators">
+            <FiTarget className="indicator-icon" />
+            <FiAward className="indicator-icon" />
+          </div>
+        </div>
+      </FloatingCard>
+    </FloatingCardWrap>
+  );
+};
 
 const Hero = ({ onOpenSignup }: HeroProps) => {
   const floatingCards = BRAND.floatingCards;
@@ -18,28 +100,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
     'ai': FiZap
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-      },
-    },
-  };
 
-  const itemVariants = {
-    hidden: { y: 30, opacity: 0, scale: 0.8 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.8,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      },
-    },
-  };
 
   return (
     <HeroSection>
@@ -77,51 +138,20 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
               }}
             />
             
-            <FloatingCards variants={containerVariants} initial="hidden" animate="visible">
-              {floatingCards.map((card, index) => {
-                const IconComponent = cardIcons[card.id as keyof typeof cardIcons];
-                return (
-                  <FloatingCardWrap
-                    key={card.id}
-                    className={card.position}
-                    style={{ 
-                      ['--rot' as any]: `${card.rotate || 0}deg`, 
-                      ['--dur' as any]: `${6 + (index % 5) * 0.3}s`,
-                      zIndex: card.zIndex
-                    }}
-                    variants={itemVariants}
-                    whileHover={{ 
-                      scale: 1.15,
-                      rotate: 0,
-                      z: 50,
-                      transition: { 
-                        duration: 0.5,
-                        ease: [0.34, 1.56, 0.64, 1], // easeOutBack para bounce suave
-                      }
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <FloatingCard>
-                      <div className="card-header">
-                        <div className="card-icon">
-                          <IconComponent />
-                        </div>
-                        <span className="category">{card.category}</span>
-                      </div>
-                      <div className="card-main">
-                        <div className="card-stat">{card.stat}</div>
-                        <h3 className="card-title">{card.title}</h3>
-                      </div>
-                      <div className="card-footer">
-                        <div className="card-indicators">
-                          <FiTarget className="indicator-icon" />
-                          <FiAward className="indicator-icon" />
-                        </div>
-                      </div>
-                    </FloatingCard>
-                  </FloatingCardWrap>
-                );
-              })}
+            <FloatingCards>
+              <AnimatePresence>
+                {floatingCards.map((card, index) => {
+                  const IconComponent = cardIcons[card.id as keyof typeof cardIcons];
+                  return (
+                    <CardWithScramble
+                      key={card.id}
+                      card={card}
+                      icon={IconComponent}
+                      index={index}
+                    />
+                  );
+                })}
+              </AnimatePresence>
             </FloatingCards>
           </ImageContainer>
           <FixedCTA
