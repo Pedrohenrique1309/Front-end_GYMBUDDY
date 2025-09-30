@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
-import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity } from 'react-icons/fi';
+import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity, FiShare2 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
@@ -357,7 +357,7 @@ const Header = () => {
                           whileHover={{ rotate: 15 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <FiUsers />
+                          <FiShare2 />
                         </motion.div>
                         <span>Acessar Rede GymBuddy</span>
                         <NetworkArrow>→</NetworkArrow>

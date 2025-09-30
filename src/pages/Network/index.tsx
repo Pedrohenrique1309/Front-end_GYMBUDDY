@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiUsers, FiActivity, FiTrendingUp } from 'react-icons/fi';
+import { FiUsers, FiActivity, FiTrendingUp, FiShare2 } from 'react-icons/fi';
 
 const Network = () => {
   return (
@@ -19,7 +19,7 @@ const Network = () => {
             delay: 0.2
           }}
         >
-          <FiUsers />
+          <FiShare2 />
         </IconWrapper>
         
         <Title
