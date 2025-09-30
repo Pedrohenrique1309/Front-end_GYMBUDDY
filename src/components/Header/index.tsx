@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaDumbbell } from 'react-icons/fa';
-import { FiSun, FiMoon, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
@@ -19,6 +19,8 @@ const Header = () => {
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfileCard, setShowProfileCard] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   
@@ -60,6 +62,19 @@ const Header = () => {
     logout();
     setShowUserMenu(false);
     console.log('Usuário deslogado');
+  };
+  
+  const handleMouseEnterProfile = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setShowProfileCard(true);
+    }, 2500);
+  };
+  
+  const handleMouseLeaveProfile = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setShowProfileCard(false);
   };
 
   // Hook para fechar menu ao clicar fora
@@ -137,7 +152,11 @@ const Header = () => {
         </Nav>
         
         {isLoggedIn ? (
-          <UserSection ref={userMenuRef}>
+          <UserSection 
+            ref={userMenuRef}
+            onMouseEnter={handleMouseEnterProfile}
+            onMouseLeave={handleMouseLeaveProfile}
+          >
             <UserProfile
               onClick={() => setShowUserMenu(!showUserMenu)}
               whileHover={{ 
@@ -162,6 +181,80 @@ const Header = () => {
                 <UserName>{user?.nome || user?.username || 'Usuário'}</UserName>
               </UserInfo>
             </UserProfile>
+            
+            <AnimatePresence>
+              {showProfileCard && (
+                <ProfileHoverCard
+                  initial={{ 
+                    opacity: 0,
+                    y: 20,
+                    scale: 0.9,
+                    filter: 'blur(10px)'
+                  }}
+                  animate={{ 
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    filter: 'blur(0px)'
+                  }}
+                  exit={{ 
+                    opacity: 0,
+                    y: 10,
+                    scale: 0.95,
+                    filter: 'blur(8px)'
+                  }}
+                  transition={{
+                    duration: 0.4,
+                    ease: [0.34, 1.56, 0.64, 1]
+                  }}
+                >
+                  <ProfileCardImageContainer>
+                    {user?.foto ? (
+                      <ProfileCardImage src={user.foto} alt={user.nome || 'Usuário'} />
+                    ) : (
+                      <ProfileCardImagePlaceholder>
+                        <DefaultAvatar size={120} />
+                      </ProfileCardImagePlaceholder>
+                    )}
+                    <ProfileCardImageOverlay />
+                    
+                    <ProfileCardInfo>
+                      <ProfileCardName>
+                        {user?.nome || user?.username || 'Usuário'}
+                        <VerifiedBadge>✓</VerifiedBadge>
+                      </ProfileCardName>
+                      <ProfileCardBio>
+                        {user?.email || 'Membro ativo do GYM BUDDY focado em resultados.'}
+                      </ProfileCardBio>
+                      
+                      <ProfileCardStatsInline>
+                        <StatInlineItem>
+                          <FiUsers style={{ fontSize: '1.6rem' }} />
+                          <span>312</span>
+                        </StatInlineItem>
+                        <StatInlineItem>
+                          <FiActivity style={{ fontSize: '1.6rem' }} />
+                          <span>48</span>
+                        </StatInlineItem>
+                      </ProfileCardStatsInline>
+                    </ProfileCardInfo>
+                  </ProfileCardImageContainer>
+                  
+                  <ProfileCardFooter>
+                    <ProfileCardButton
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setShowProfileCard(false);
+                        // Navegar para perfil
+                      }}
+                    >
+                      Seguir <span style={{ marginLeft: '0.4rem' }}>+</span>
+                    </ProfileCardButton>
+                  </ProfileCardFooter>
+                </ProfileHoverCard>
+              )}
+            </AnimatePresence>
             
             <AnimatePresence>
               {showUserMenu && (
@@ -809,7 +902,7 @@ const MenuDivider = styled.div`
   
   @keyframes pulse {
     0% { transform: scale(0.95); opacity: 0.2; }
-    100% { transform: scale(1.05); opacity: 0.4; }
+    100% { transform: scale(1); opacity: 0.4; }
   }
 `;
 
@@ -936,6 +1029,161 @@ const LogoutButton = styled(motion.button)`
   
   svg {
     font-size: 1.6rem;
+  }
+`;
+
+// Profile Hover Card Styles
+const ProfileHoverCard = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 1.5rem);
+  right: 0;
+  width: 34rem;
+  border-radius: 3rem;
+  overflow: hidden;
+  z-index: 1001;
+  
+  /* Background escuro */
+  background: rgba(20, 20, 25, 0.98);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 2px solid rgba(40, 40, 45, 0.8);
+  
+  /* Sombras profundas */
+  box-shadow: 
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 12px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+`;
+
+const ProfileCardImageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 42rem;
+  overflow: hidden;
+`;
+
+const ProfileCardImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+`;
+
+const ProfileCardImagePlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2a2a2f, #1a1a1f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ProfileCardImageOverlay = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70%;
+  background: linear-gradient(to top, 
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.7) 40%,
+    rgba(0, 0, 0, 0.3) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+`;
+
+const ProfileCardInfo = styled.div`
+  position: absolute;
+  bottom: 2.4rem;
+  left: 2.4rem;
+  right: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  z-index: 1;
+`;
+
+const ProfileCardName = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 1);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+`;
+
+const VerifiedBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  animation: badge-pop 2s ease-in-out infinite;
+  
+  @keyframes badge-pop {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+`;
+
+const ProfileCardBio = styled.p`
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+`;
+
+const ProfileCardStatsInline = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+`;
+
+const StatInlineItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  
+  svg {
+    opacity: 0.9;
+  }
+`;
+
+const ProfileCardFooter = styled.div`
+  padding: 2rem 2.4rem;
+  background: rgba(0, 0, 0, 0.3);
+`;
+
+const ProfileCardButton = styled(motion.button)`
+  width: 100%;
+  padding: 1.4rem 2rem;
+  background: rgba(230, 230, 235, 0.95);
+  border: none;
+  border-radius: 5rem;
+  color: rgba(20, 20, 25, 1);
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
 `;
 
