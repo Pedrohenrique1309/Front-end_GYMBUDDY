@@ -91,11 +91,15 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
                     }}
                     variants={itemVariants}
                     whileHover={{ 
-                      scale: 1.08,
+                      scale: 1.15,
                       rotate: 0,
-                      transition: { duration: 0.3, ease: "easeOut" }
+                      z: 50,
+                      transition: { 
+                        duration: 0.5,
+                        ease: [0.34, 1.56, 0.64, 1], // easeOutBack para bounce suave
+                      }
                     }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     <FloatingCard>
                       <div className="card-header">
@@ -298,6 +302,8 @@ const FloatingCardWrap = styled(motion.div)`
   animation: card-bob var(--dur, 6s) ease-in-out infinite;
   will-change: transform;
   cursor: pointer;
+  perspective: 1000px;
+  transform-style: preserve-3d;
 
   /* Liquid Glass Design */
   background: linear-gradient(135deg, 
@@ -307,16 +313,17 @@ const FloatingCardWrap = styled(motion.div)`
   );
   backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 1.6rem;
-  padding: 1.6rem 1.4rem;
-  min-width: 16rem;
-  min-height: 18rem;
+  border-radius: 2rem;
+  padding: 2rem 2.4rem;
+  min-width: 24rem;
+  max-width: 28rem;
+  min-height: 20rem;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--white);
   text-align: left;
   pointer-events: auto;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.2),
     inset 0 -1px 0 rgba(0,0,0,0.1),
@@ -381,10 +388,11 @@ const FloatingCardWrap = styled(motion.div)`
   }
 
   @media (max-width: 768px) {
-    padding: 1.2rem 1rem;
+    padding: 1.6rem 1.4rem;
     font-size: 1.1rem;
-    min-width: 14rem;
-    min-height: 16rem;
+    min-width: 18rem;
+    max-width: 22rem;
+    min-height: 18rem;
     
     &.top-left, &.bottom-left, &.top-right, &.bottom-right {
       position: static;
@@ -399,17 +407,20 @@ const FloatingCardWrap = styled(motion.div)`
   }
   
   &:hover {
+    animation-play-state: paused;
     background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.15) 0%, 
-      rgba(255, 255, 255, 0.08) 50%,
-      rgba(227, 6, 19, 0.15) 100%
+      rgba(255, 255, 255, 0.2) 0%, 
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(227, 6, 19, 0.2) 100%
     );
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(30px) saturate(200%);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.3),
-      inset 0 -1px 0 rgba(0,0,0,0.1),
-      0 16px 48px rgba(0,0,0,0.2),
-      0 8px 24px rgba(227, 6, 19, 0.2);
+      inset 0 2px 0 rgba(255,255,255,0.4),
+      inset 0 -1px 0 rgba(0,0,0,0.15),
+      0 24px 64px rgba(0,0,0,0.3),
+      0 12px 32px rgba(227, 6, 19, 0.3),
+      0 0 0 1px rgba(227, 6, 19, 0.2);
     
     &::before {
       left: 100%;
@@ -434,9 +445,9 @@ const FloatingCard = styled(motion.div)`
   }
   
   .card-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.8rem;
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 1rem;
     background: linear-gradient(135deg, 
       rgba(227, 6, 19, 0.2) 0%, 
       rgba(227, 6, 19, 0.1) 100%
@@ -446,8 +457,8 @@ const FloatingCard = styled(motion.div)`
     align-items: center;
     justify-content: center;
     color: rgba(227, 6, 19, 0.9);
-    font-size: 1.4rem;
-    transition: all 0.3s ease;
+    font-size: 1.6rem;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .category {
@@ -471,7 +482,7 @@ const FloatingCard = styled(motion.div)`
   }
   
   .card-stat {
-    font-size: 3.2rem;
+    font-size: 3.8rem;
     font-weight: 900;
     color: var(--white);
     line-height: 0.9;
@@ -481,15 +492,17 @@ const FloatingCard = styled(motion.div)`
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .card-title {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: var(--white);
     margin-bottom: 0.5rem;
     line-height: 1.3;
     text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .card-footer {
@@ -516,15 +529,26 @@ const FloatingCard = styled(motion.div)`
     }
   }
   
-  /* Hover effect for card icon */
+  /* Hover effects */
   &:hover .card-icon {
     background: linear-gradient(135deg, 
-      rgba(227, 6, 19, 0.3) 0%, 
-      rgba(227, 6, 19, 0.2) 100%
+      rgba(227, 6, 19, 0.4) 0%, 
+      rgba(227, 6, 19, 0.3) 100%
     );
-    border-color: rgba(227, 6, 19, 0.5);
+    border-color: rgba(227, 6, 19, 0.6);
     color: rgba(227, 6, 19, 1);
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.2) rotate(8deg);
+    box-shadow: 0 8px 24px rgba(227, 6, 19, 0.4);
+  }
+  
+  &:hover .card-stat {
+    transform: scale(1.05);
+    text-shadow: 0 4px 16px rgba(227, 6, 19, 0.5);
+  }
+  
+  &:hover .card-title {
+    transform: translateX(4px);
+    color: rgba(255, 255, 255, 1);
   }
 `;
 
