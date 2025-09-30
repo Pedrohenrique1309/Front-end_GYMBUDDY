@@ -65,9 +65,11 @@ const Header = () => {
   };
   
   const handleMouseEnterProfile = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setShowProfileCard(true);
-    }, 2500);
+    if (!showUserMenu) {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setShowProfileCard(true);
+      }, 2500);
+    }
   };
   
   const handleMouseLeaveProfile = () => {
@@ -76,6 +78,16 @@ const Header = () => {
     }
     setShowProfileCard(false);
   };
+  
+  // Fechar card quando menu abrir
+  useEffect(() => {
+    if (showUserMenu) {
+      setShowProfileCard(false);
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    }
+  }, [showUserMenu]);
 
   // Hook para fechar menu ao clicar fora
   useEffect(() => {
@@ -183,7 +195,7 @@ const Header = () => {
             </UserProfile>
             
             <AnimatePresence>
-              {showProfileCard && (
+              {showProfileCard && !showUserMenu && (
                 <ProfileHoverCard
                   initial={{ 
                     opacity: 0,
