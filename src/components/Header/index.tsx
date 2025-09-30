@@ -340,6 +340,29 @@ const Header = () => {
                         <span>Ver perfil</span>
                         <ProfileArrow>→</ProfileArrow>
                       </ProfileButton>
+                      
+                      <NetworkButton
+                        as={Link}
+                        to="/rede"
+                        whileHover={{ 
+                          backgroundColor: 'rgba(227, 6, 19, 0.15)',
+                          x: 5,
+                          scale: 1.02
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <motion.div
+                          whileHover={{ rotate: 15 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <FiUsers />
+                        </motion.div>
+                        <span>Acessar Rede GymBuddy</span>
+                        <NetworkArrow>→</NetworkArrow>
+                      </NetworkButton>
+                      
                       <LogoutButton
                         onClick={handleLogout}
                         whileHover={{ 
@@ -1004,6 +1027,44 @@ const ProfileButton = styled(motion.button)`
     background: rgba(227, 6, 19, 0.1);
     
     ${ProfileArrow} {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  svg {
+    font-size: 1.6rem;
+  }
+`;
+
+const NetworkArrow = styled.span`
+  margin-left: auto;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+`;
+
+const NetworkButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: #E30613;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
+  
+  &:hover {
+    background: rgba(227, 6, 19, 0.1);
+    
+    ${NetworkArrow} {
       opacity: 1;
       transform: translateX(0);
     }

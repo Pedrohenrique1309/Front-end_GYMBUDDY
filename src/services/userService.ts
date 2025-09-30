@@ -11,6 +11,8 @@ export interface Usuario {
   username?: string;
   telefone?: string;
   biografia?: string;
+  peso?: number;
+  altura?: number;
 }
 
 export interface AtualizarSenhaData {

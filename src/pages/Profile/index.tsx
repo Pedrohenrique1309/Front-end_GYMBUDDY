@@ -5,11 +5,15 @@ import { FiEdit3, FiCamera, FiPlus, FiX, FiCheck } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
+import WeightHeightPopup from '../../components/WeightHeightPopup'
+import { useUserActions } from '../../hooks/useUserActions'
 
 const Profile = () => {
   const { user, isLoggedIn, updateUser } = useUser()
   const navigate = useNavigate()
+  const { updateUser: updateUserAPI } = useUserActions()
   const [isEditing, setIsEditing] = useState(false)
+  const [showWeightHeightPopup, setShowWeightHeightPopup] = useState(false)
   const [editedData, setEditedData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
@@ -24,6 +28,22 @@ const Profile = () => {
       navigate('/')
     }
   }, [isLoggedIn, navigate])
+
+  // Verificar primeira visita e mostrar popup de peso/altura
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      const hasVisitedProfile = localStorage.getItem(`profile_visited_${user.id || user.email}`);
+      const hasMissingData = !user.peso || !user.altura;
+      
+      // Mostrar popup apenas se for primeira visita E não tiver os dados
+      if (!hasVisitedProfile && hasMissingData) {
+        // Pequeno delay para melhor UX
+        setTimeout(() => {
+          setShowWeightHeightPopup(true);
+        }, 1000);
+      }
+    }
+  }, [isLoggedIn, user])
 
   useEffect(() => {
     if (user) {
@@ -45,6 +65,45 @@ const Profile = () => {
     updateUser(editedData)
     setIsEditing(false)
   }
+
+  const handleWeightHeightSubmit = async (data: { peso: number | null; altura: number | null }) => {
+    try {
+      // Atualizar no backend se tiver ID do usuário
+      if (user?.id) {
+        await updateUserAPI(user.id, {
+          peso: data.peso || undefined,
+          altura: data.altura || undefined,
+        });
+      }
+      
+      // Atualizar contexto local
+      updateUser({
+        ...user,
+        peso: data.peso?.toString() || '--',
+        altura: data.altura?.toString() || '--',
+      });
+      
+      // Marcar que visitou o perfil
+      localStorage.setItem(`profile_visited_${user?.id || user?.email}`, 'true');
+      setShowWeightHeightPopup(false);
+    } catch (error) {
+      console.error('Erro ao salvar dados:', error);
+      alert('Erro ao salvar dados. Tente novamente.');
+    }
+  };
+
+  const handleWeightHeightSkip = () => {
+    // Setar como "--" quando pular
+    updateUser({
+      ...user,
+      peso: '--',
+      altura: '--',
+    });
+    
+    // Marcar que visitou o perfil
+    localStorage.setItem(`profile_visited_${user?.id || user?.email}`, 'true');
+    setShowWeightHeightPopup(false);
+  };
 
   const handleCancel = () => {
     setEditedData({
@@ -186,7 +245,7 @@ const Profile = () => {
                 <DetailText>{user.descricao || 'Descrição do usuário'}</DetailText>
                 <DetailsRow>
                   <DetailInfo>
-                    <DetailValue>{user.peso || '75'}</DetailValue>
+                    <DetailValue>{user.peso && user.peso !== '--' ? user.peso : '--'}</DetailValue>
                     <DetailUnit>kg</DetailUnit>
                   </DetailInfo>
                   <DetailInfo>
@@ -282,6 +341,14 @@ const Profile = () => {
           </PhotoGrid>
         </PhotosSection>
       </ProfileContent>
+
+      {/* Popup de Peso e Altura */}
+      <WeightHeightPopup
+        isOpen={showWeightHeightPopup}
+        onClose={() => setShowWeightHeightPopup(false)}
+        onSubmit={handleWeightHeightSubmit}
+        onSkip={handleWeightHeightSkip}
+      />
     </ProfileContainer>
   )
 }

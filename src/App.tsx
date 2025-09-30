@@ -7,6 +7,7 @@ import AboutUs from './components/AboutUs'
 import Resources from './components/Resources'
 import AppPage from './pages/App'
 import Profile from './pages/Profile'
+import Network from './pages/Network'
 import { UserProvider } from './contexts/UserContext'
 
 const pageVariants = {
@@ -109,6 +110,20 @@ const AnimatedRoutes = () => {
               transition={pageTransition}
             >
               <Profile />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/rede" 
+          element={
+            <motion.div
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <Network />
             </motion.div>
           } 
         />
