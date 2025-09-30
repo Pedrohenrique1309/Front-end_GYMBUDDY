@@ -233,7 +233,6 @@ const Header = () => {
                     <ProfileCardInfo>
                       <ProfileCardName>
                         {user?.nome || user?.username || 'Usuário'}
-                        <VerifiedBadge>✓</VerifiedBadge>
                       </ProfileCardName>
                       <ProfileCardBio>
                         {user?.email || 'Membro ativo do GYM BUDDY focado em resultados.'}
@@ -1112,6 +1111,7 @@ const ProfileCardInfo = styled.div`
   right: 2.4rem;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1.2rem;
   z-index: 1;
 `;
@@ -1119,11 +1119,13 @@ const ProfileCardInfo = styled.div`
 const ProfileCardName = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.8rem;
   font-size: 2.8rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 1);
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+  text-align: center;
 `;
 
 const VerifiedBadge = styled.span`
@@ -1152,6 +1154,7 @@ const ProfileCardBio = styled.p`
   line-height: 1.6;
   margin: 0;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  text-align: center;
 `;
 
 const ProfileCardStatsInline = styled.div`
