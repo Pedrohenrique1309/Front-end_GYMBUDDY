@@ -6,36 +6,35 @@ import SignupPopup from '../SignupPopup'
 
 const AboutUs = () => {
   const containerRef = useRef(null);
-  const [showSignupPopup, setShowSignupPopup] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const controls = useAnimationControls();
+  const [showSignupPopup, setShowSignupPopup] = useState(false)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const controls = useAnimationControls()
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"]
-  });
+  })
 
-  const imageY = useTransform(scrollYProgress, [0, 1], [100, -100]);
-  const imageRotate = useTransform(scrollYProgress, [0, 1], [-5, 5]);
-  const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.1, 0.8]);
-  const floatY = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const imageY = useTransform(scrollYProgress, [0, 1], [100, -100])
+  const imageRotate = useTransform(scrollYProgress, [0, 1], [-5, 5])
+  const imageScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.1, 0.8])
+  const floatY = useTransform(scrollYProgress, [0, 1], [0, -50])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({
         x: (e.clientX / window.innerWidth - 0.5) * 20,
         y: (e.clientY / window.innerHeight - 0.5) * 20
-      });
-    };
+      })
+    }
     
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
 
   const handleSwitchToLogin = () => {
-    // This would need to be implemented if you want to switch to login
-    setShowSignupPopup(false);
-  };
+    setShowSignupPopup(false)
+  }
 
   const textItems = [
     {
@@ -69,7 +68,7 @@ const AboutUs = () => {
         delayChildren: 0.3
       }
     }
-  };
+  }
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
@@ -81,7 +80,7 @@ const AboutUs = () => {
         ease: "easeOut"
       }
     }
-  };
+  }
 
   const heroVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -93,11 +92,11 @@ const AboutUs = () => {
         ease: "easeOut"
       }
     }
-  };
+  }
 
   return (
     <AboutUsContainer ref={containerRef}>
-      {/* Hero Section */}
+      {/* seção home */}
       <HeroSection>
         <HeroParticles />
         <motion.div
@@ -135,7 +134,7 @@ const AboutUs = () => {
         </motion.div>
       </HeroSection>
 
-      {/* Modern Content Section */}
+      {/* conteudo home*/}
       <ContentSection>
         <ContentContainer>
           <ModernCard
@@ -144,7 +143,7 @@ const AboutUs = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            {/* Background Image with Parallax */}
+            {/* imagem do homem musculoso d fundo*/}
             <CardImageBackground
               style={{
                 y: imageY,
