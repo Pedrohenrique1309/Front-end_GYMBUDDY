@@ -1,8 +1,8 @@
-import React from 'react';
+import React from 'react'
 
 interface DefaultAvatarProps {
-  size?: number;
-  className?: string;
+  size?: number
+  className?: string
 }
 
 const DefaultAvatar: React.FC<DefaultAvatarProps> = ({ size = 40, className }) => {
@@ -22,7 +22,7 @@ const DefaultAvatar: React.FC<DefaultAvatarProps> = ({ size = 40, className }) =
         fill="rgba(255, 255, 255, 0.6)"
       />
     </svg>
-  );
-};
+  )
+}
 
-export default DefaultAvatar;
+export default DefaultAvatar
