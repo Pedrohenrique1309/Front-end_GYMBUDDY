@@ -9,10 +9,15 @@ export interface Usuario {
   foto?: string
   data_nascimento?: string
   username?: string
+  nickname?: string
   telefone?: string
+  descricao?: string
   biografia?: string
+  localizacao?: string
   peso?: number
   altura?: number
+  imc?: number
+  is_bloqueado?: boolean
 }
 
 export interface AtualizarSenhaData {

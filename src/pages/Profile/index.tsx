@@ -17,9 +17,13 @@ const Profile = () => {
   const [editedData, setEditedData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
+    nickname: user?.nickname || '',
     descricao: user?.descricao || '',
+    localizacao: user?.localizacao || '',
+    data_nascimento: user?.data_nascimento || '',
     peso: user?.peso || '',
-    altura: user?.altura || ''
+    altura: user?.altura || '',
+    foto: user?.foto || ''
   });
   const [photos, setPhotos] = useState<string[]>([])
 
@@ -50,9 +54,13 @@ const Profile = () => {
       setEditedData({
         nome: user.nome || '',
         email: user.email || '',
-        descricao: user.descricao || 'Descrição do usuário',
-        peso: user.peso || '75',
-        altura: user.altura || '165'
+        nickname: user.nickname || '',
+        descricao: user.descricao || '',
+        localizacao: user.localizacao || '',
+        data_nascimento: user.data_nascimento || '',
+        peso: user.peso || '',
+        altura: user.altura || '',
+        foto: user.foto || ''
       });
     }
   }, [user]);
@@ -61,9 +69,35 @@ const Profile = () => {
     setIsEditing(true);
   }
 
-  const handleSave = () => {
-    updateUser(editedData)
-    setIsEditing(false)
+  const handleSave = async () => {
+    try {
+      // Atualizar no backend se tiver ID do usuário
+      if (user?.id) {
+        await updateUserAPI(user.id, {
+          nome: editedData.nome,
+          email: editedData.email,
+          nickname: editedData.nickname,
+          descricao: editedData.descricao,
+          localizacao: editedData.localizacao,
+          data_nascimento: editedData.data_nascimento,
+          peso: editedData.peso ? Number(editedData.peso) : undefined,
+          altura: editedData.altura ? Number(editedData.altura) : undefined,
+          foto: editedData.foto
+        })
+      }
+      
+      // Atualizar contexto local
+      updateUser({
+        ...user,
+        ...editedData
+      })
+      
+      setIsEditing(false)
+      console.log('✅ Perfil atualizado com sucesso!')
+    } catch (error) {
+      console.error('❌ Erro ao atualizar perfil:', error)
+      alert('Erro ao salvar alterações. Tente novamente.')
+    }
   }
 
   const handleWeightHeightSubmit = async (data: { peso: number | null; altura: number | null }) => {
@@ -109,9 +143,13 @@ const Profile = () => {
     setEditedData({
       nome: user?.nome || '',
       email: user?.email || '',
+      nickname: user?.nickname || '',
       descricao: user?.descricao || '',
+      localizacao: user?.localizacao || '',
+      data_nascimento: user?.data_nascimento || '',
       peso: user?.peso || '',
-      altura: user?.altura || ''
+      altura: user?.altura || '',
+      foto: user?.foto || ''
     })
     setIsEditing(false)
   };
@@ -189,7 +227,13 @@ const Profile = () => {
                   type="text"
                   value={editedData.nome}
                   onChange={(e) => setEditedData({ ...editedData, nome: e.target.value })}
-                  placeholder="Nome"
+                  placeholder="Nome completo"
+                />
+                <EditInput
+                  type="text"
+                  value={editedData.nickname}
+                  onChange={(e) => setEditedData({ ...editedData, nickname: e.target.value })}
+                  placeholder="Nickname"
                 />
                 <EditInput
                   type="email"
@@ -201,7 +245,7 @@ const Profile = () => {
             ) : (
               <>
                 <UserName>{user.nome || 'Usuário'}</UserName>
-                <UserEmail>@{user.email?.split('@')[0] || 'email'}</UserEmail>
+                <UserEmail>@{user.nickname || user.email?.split('@')[0] || 'email'}</UserEmail>
               </>
             )}
           </UserInfoSection>
@@ -214,43 +258,79 @@ const Profile = () => {
                   <EditTextarea
                     value={editedData.descricao}
                     onChange={(e) => setEditedData({ ...editedData, descricao: e.target.value })}
-                    placeholder="Descrição do usuário"
+                    placeholder="Conte um pouco sobre você, seus objetivos no fitness..."
                   />
                 </DetailItem>
                 <DetailsRow>
                   <DetailItem>
-                    <DetailLabel>Peso:</DetailLabel>
+                    <DetailLabel>Localização:</DetailLabel>
                     <EditInput
                       type="text"
+                      value={editedData.localizacao}
+                      onChange={(e) => setEditedData({ ...editedData, localizacao: e.target.value })}
+                      placeholder="Ex: São Paulo - SP"
+                    />
+                  </DetailItem>
+                  <DetailItem>
+                    <DetailLabel>Data de Nascimento:</DetailLabel>
+                    <EditInput
+                      type="date"
+                      value={editedData.data_nascimento}
+                      onChange={(e) => setEditedData({ ...editedData, data_nascimento: e.target.value })}
+                      placeholder="DD-MM-AAAA"
+                    />
+                  </DetailItem>
+                </DetailsRow>
+                <DetailsRow>
+                  <DetailItem>
+                    <DetailLabel>Peso:</DetailLabel>
+                    <EditInput
+                      type="number"
+                      step="0.1"
                       value={editedData.peso}
                       onChange={(e) => setEditedData({ ...editedData, peso: e.target.value })}
-                      placeholder="75"
+                      placeholder="75.0"
                     />
                     <DetailUnit>kg</DetailUnit>
                   </DetailItem>
                   <DetailItem>
                     <DetailLabel>Altura:</DetailLabel>
                     <EditInput
-                      type="text"
+                      type="number"
+                      step="0.01"
                       value={editedData.altura}
                       onChange={(e) => setEditedData({ ...editedData, altura: e.target.value })}
-                      placeholder="165"
+                      placeholder="1.75"
                     />
-                    <DetailUnit>cm</DetailUnit>
+                    <DetailUnit>m</DetailUnit>
                   </DetailItem>
                 </DetailsRow>
               </EditableDetails>
             ) : (
               <>
-                <DetailText>{user.descricao || 'Descrição do usuário'}</DetailText>
+                <DetailText>{user.descricao || 'Sem descrição'}</DetailText>
+                <DetailsRow>
+                  <DetailInfo>
+                    <DetailLabel>Localização:</DetailLabel>
+                    <DetailValue>{user.localizacao || 'Não informada'}</DetailValue>
+                  </DetailInfo>
+                  <DetailInfo>
+                    <DetailLabel>Nascimento:</DetailLabel>
+                    <DetailValue>{user.data_nascimento || 'Não informado'}</DetailValue>
+                  </DetailInfo>
+                </DetailsRow>
                 <DetailsRow>
                   <DetailInfo>
                     <DetailValue>{user.peso && user.peso !== '--' ? user.peso : '--'}</DetailValue>
                     <DetailUnit>kg</DetailUnit>
                   </DetailInfo>
                   <DetailInfo>
-                    <DetailValue>{user.altura || '165'}</DetailValue>
-                    <DetailUnit>cm</DetailUnit>
+                    <DetailValue>{user.altura && user.altura !== '--' ? user.altura : '--'}</DetailValue>
+                    <DetailUnit>m</DetailUnit>
+                  </DetailInfo>
+                  <DetailInfo>
+                    <DetailLabel>IMC:</DetailLabel>
+                    <DetailValue>{user.imc ? Number(user.imc).toFixed(1) : '--'}</DetailValue>
                   </DetailInfo>
                 </DetailsRow>
               </>

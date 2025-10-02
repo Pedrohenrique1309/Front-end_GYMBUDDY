@@ -17,11 +17,17 @@ export interface UserData {
   id?: number
   nome: string
   username?: string
+  nickname?: string
   email: string
+  senha?: string
   foto?: string
   descricao?: string
-  peso?: string
-  altura?: string
+  localizacao?: string
+  data_nascimento?: string
+  peso?: string | number
+  altura?: string | number
+  imc?: string | number
+  is_bloqueado?: boolean
   created_at?: string
   updated_at?: string
 }
