@@ -68,7 +68,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     setError(null);
 
     try {
-      // Validações locais
+      // validacao locais
       if (!formData.username.trim()) {
         throw new Error('Nome de usuário é obrigatório.');
       }
@@ -77,7 +77,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
         throw new Error('Nickname é obrigatório.');
       }
       
-      // Verificar se email ou username já existem
+      // verifica se email ou username já existem
       if (emailExists === true) {
         throw new Error('Este email já está cadastrado. Use outro email.');
       }

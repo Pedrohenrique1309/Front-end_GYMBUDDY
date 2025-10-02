@@ -115,7 +115,6 @@ const Header = () => {
       <div className="container">
         <Logo>
           <LogoImage src={BRAND.logoSrc} alt={BRAND.name} />
-          <span>{BRAND.name}</span>
         </Logo>
         
         <Nav>
@@ -499,13 +498,18 @@ const Logo = styled.div`
 `
 
 const LogoImage = styled.img`
-  height: 3.2rem;
+  height: 17rem;
   width: auto;
   object-fit: contain;
   transition: transform 0.3s ease;
+  margin-top: 64px;
   
   &:hover {
     transform: scale(1.05);
+  }
+  
+  @media (max-width: 768px) {
+    height: 12rem;
   }
 `
 
