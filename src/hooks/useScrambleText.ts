@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 
 interface UseScrambleTextOptions {
-  text: string;
-  speed?: number; // velocidade da animação em ms
-  scrambleSpeed?: number; // velocidade de troca de caracteres
-  delay?: number; // delay antes de começar
-  characters?: string; // caracteres para usar no scramble
+  text: string
+  speed?: number // velocidade da animação em ms
+  scrambleSpeed?: number // velocidade de troca de caracteres
+  delay?: number // delay antes de começar
+  characters?: string // caracteres para usar no scramble
 }
 
 export const useScrambleText = ({

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import { 
   Usuario, 
   AtualizarSenhaData,
@@ -8,7 +8,7 @@ import {
   buscarUsuario,
   atualizarUsuario,
   excluirUsuario
-} from '../services/userService';
+} from '../services/userService'
 
 export const useUserActions = () => {
   const [loading, setLoading] = useState(false);

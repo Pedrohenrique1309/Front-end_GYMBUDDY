@@ -6,8 +6,8 @@ const API_BASE_URL = 'http://10.107.144.9:8080'
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 })
 
 // Interceptor para adicionar token de autenticação se necessário

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from 'react'
 import { 
   Publicacao,
   inserirPublicacao,
@@ -6,7 +6,7 @@ import {
   listarPublicacoes,
   buscarPublicacao,
   excluirPublicacao
-} from '../services/publicationService';
+} from '../services/publicationService'
 
 export const usePublicationActions = () => {
   const [loading, setLoading] = useState(false);

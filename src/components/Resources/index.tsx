@@ -1,8 +1,8 @@
-import { motion, useScroll, useTransform, useMotionValue, useTransform as useTransformMotion } from 'framer-motion';
-import { FaUsers, FaChartLine } from 'react-icons/fa';
-import { SiOpenai } from 'react-icons/si';
-import { useRef, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import { motion, useScroll, useTransform, useMotionValue, useTransform as useTransformMotion } from 'framer-motion'
+import { FaUsers, FaChartLine } from 'react-icons/fa'
+import { SiOpenai } from 'react-icons/si'
+import { useRef, useState } from 'react'
+import styled, { keyframes } from 'styled-components'
 
 const Resources = () => {
   const containerRef = useRef(null);

@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import styled from 'styled-components';
-import { FiX, FiActivity } from 'react-icons/fi';
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import styled from 'styled-components'
+import { FiX, FiActivity } from 'react-icons/fi'
 
 interface WeightHeightPopupProps {
   isOpen: boolean;

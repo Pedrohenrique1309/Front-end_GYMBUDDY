@@ -47,4 +47,4 @@ export const BRAND = {
   ],
 } as const
 
-export type FloatingCardItem = (typeof BRAND)['floatingCards'][number];
+export type FloatingCardItem = (typeof BRAND)['floatingCards'][number]

@@ -37,12 +37,12 @@ export interface SignupData {
 
 // interface para resposta do cadastro
 export interface SignupResponse {
-  status?: boolean;
-  status_code?: number | string; // API pode retornar status_code: 200
-  message?: string;
-  usuario?: UserData[];
-  user?: UserData;
-  data?: UserData;
+  status?: boolean
+  status_code?: number | string // API pode retornar status_code: 200
+  message?: string
+  usuario?: UserData[]
+  user?: UserData
+  data?: UserData
 }
 
 // interface para resposta de validação
@@ -69,8 +69,8 @@ export const loginUser = async (email: string, senha: string): Promise<LoginResp
       mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+        'Accept': 'application/json'
+      }
     })
 
     console.log(' Resposta recebida:', {
@@ -85,10 +85,10 @@ export const loginUser = async (email: string, senha: string): Promise<LoginResp
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
-      console.log(' Resposta JSON:', data)
+      console.log('✅ Resposta JSON:', data)
     } else {
       const responseText = await response.text()
-      console.error(' Resposta não é json:', {
+      console.error('❌ Resposta não é json:', {
         status: response.status,
         contentType,
         responseText: responseText.substring(0, 500)

@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
-import { FaDumbbell } from 'react-icons/fa';
-import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity, FiShare2 } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
-import styled from 'styled-components';
-import { BRAND } from '../../config/branding';
-import PopupLogin from '../LoginPopup';
-import SignupPopup from '../SignupPopup';
-import { useUser } from '../../contexts/UserContext';
-import DefaultAvatar from '../../assets/default-avatar';
+import { useState, useEffect, useRef } from 'react'
+import { FaDumbbell } from 'react-icons/fa'
+import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity, FiShare2 } from 'react-icons/fi'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Link, useLocation } from 'react-router-dom'
+import styled from 'styled-components'
+import { BRAND } from '../../config/branding'
+import PopupLogin from '../LoginPopup'
+import SignupPopup from '../SignupPopup'
+import { useUser } from '../../contexts/UserContext'
+import DefaultAvatar from '../../assets/default-avatar'
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);

@@ -1,18 +1,18 @@
-import api from './api';
+import api from './api'
 
 // Tipos para Usuario
 export interface Usuario {
-  id?: number;
-  nome: string;
-  email: string;
-  senha?: string;
-  foto?: string;
-  data_nascimento?: string;
-  username?: string;
-  telefone?: string;
-  biografia?: string;
-  peso?: number;
-  altura?: number;
+  id?: number
+  nome: string
+  email: string
+  senha?: string
+  foto?: string
+  data_nascimento?: string
+  username?: string
+  telefone?: string
+  biografia?: string
+  peso?: number
+  altura?: number
 }
 
 export interface AtualizarSenhaData {

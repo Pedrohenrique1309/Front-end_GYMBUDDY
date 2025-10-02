@@ -1,6 +1,6 @@
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { FiUsers, FiActivity, FiTrendingUp, FiShare2 } from 'react-icons/fi';
+import styled from 'styled-components'
+import { motion } from 'framer-motion'
+import { FiUsers, FiActivity, FiTrendingUp, FiShare2 } from 'react-icons/fi'
 
 const Network = () => {
   return (

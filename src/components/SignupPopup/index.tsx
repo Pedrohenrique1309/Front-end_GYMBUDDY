@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
-import { FaDumbbell } from 'react-icons/fa';
-import styled from 'styled-components';
-import { signupUser, SignupResponse, checkEmailExists, checkUsernameExists } from '../../config/api';
-import { useUser } from '../../contexts/UserContext';
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi'
+import { FaDumbbell } from 'react-icons/fa'
+import styled from 'styled-components'
+import { signupUser, SignupResponse, checkEmailExists, checkUsernameExists } from '../../config/api'
+import { useUser } from '../../contexts/UserContext'
 
 interface SignupPopupProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSwitchToLogin: () => void;
+  isOpen: boolean
+  onClose: () => void
+  onSwitchToLogin: () => void
 }
 
 const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => {
@@ -34,7 +34,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
   
   const { login } = useUser();
 
-  // Função para resetar o formulário
+  // função para resetar o pop up qnd sair
   const resetForm = () => {
     setFormData({
       username: '',

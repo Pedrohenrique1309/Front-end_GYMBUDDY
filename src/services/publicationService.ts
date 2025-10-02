@@ -1,15 +1,15 @@
-import api from './api';
+import api from './api'
 
 // Tipos para Publicação
 export interface Publicacao {
-  id?: number;
-  id_usuario: number;
-  conteudo: string;
-  foto?: string;
-  video?: string;
-  data_publicacao?: string;
-  curtidas?: number;
-  comentarios?: number;
+  id?: number
+  id_usuario: number
+  conteudo: string
+  foto?: string
+  video?: string
+  data_publicacao?: string
+  curtidas?: number
+  comentarios?: number
 }
 
 // Inserir nova publicação

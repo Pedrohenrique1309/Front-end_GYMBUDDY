@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import { useEffect, useState } from 'react'
+import styled from 'styled-components'
 
 /**
  * Dev-only 12-column overlay to alinhar com o protótipo.

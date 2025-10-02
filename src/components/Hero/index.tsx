@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import styled from 'styled-components';
-import { BRAND } from '../../config/branding';
-import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward } from 'react-icons/fi';
-import { useScrambleText } from '../../hooks/useScrambleText';
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import styled from 'styled-components'
+import { BRAND } from '../../config/branding'
+import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward } from 'react-icons/fi'
+import { useScrambleText } from '../../hooks/useScrambleText'
 
 interface HeroProps {
-  onOpenSignup?: () => void;
+  onOpenSignup?: () => void
 }
 
 // Componente interno para cada card com scramble text
