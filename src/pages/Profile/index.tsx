@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiEdit3, FiCamera, FiPlus, FiX, FiCheck } from 'react-icons/fi'
+import { 
+  FiEdit3, FiCamera, FiPlus, FiX, FiCheck,
+  FiUser, FiMail, FiMapPin, FiCalendar, FiWeight,
+  FiActivity, FiAtSign, FiFileText, FiTrendingUp
+} from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
 import { uploadImageToAzure } from "./uploadImageToAzure"
+import LiquidDatePicker from '../../components/LiquidDatePicker'
 
 // Configurações do Azure Storage
 const AZURE_CONFIG = {
@@ -253,192 +258,305 @@ const Profile = () => {
 
   return (
     <ProfileContainer
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ 
+        duration: 0.6,
+        type: 'spring',
+        stiffness: 100,
+        damping: 20
+      }}
     >
+      <BackgroundGradient />
       <ProfileContent>
         <ProfileHeader>
-          <AvatarSection>
-            <AvatarContainer>
-              {user.foto ? (
-                <Avatar src={user.foto} alt={user.nome} />
+          <HeaderGlassCard
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <AvatarSection>
+              <AvatarContainer
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
+              >
+                {editedData.foto ? (
+                  <Avatar src={editedData.foto} alt={user.nome} />
+                ) : (
+                  <DefaultAvatarWrapper>
+                    <DefaultAvatar size={180} />
+                  </DefaultAvatarWrapper>
+                )}
+                {isEditing && (
+                  <AvatarOverlay
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="avatar-upload">
+                      <CameraButton
+                        whileHover={{ scale: 1.1, rotate: 10 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FiCamera />
+                      </CameraButton>
+                    </label>
+                  </AvatarOverlay>
+                )}
+              </AvatarContainer>
+            </AvatarSection>
+
+            <UserInfoSection>
+              <AnimatePresence mode="wait">
+                {isEditing ? (
+                  <EditableUserInfo
+                    key="editing"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <InputGroup>
+                      <InputIcon><FiUser /></InputIcon>
+                      <StyledEditInput
+                        type="text"
+                        value={editedData.nome}
+                        onChange={(e) => setEditedData({ ...editedData, nome: e.target.value })}
+                        placeholder="Nome completo"
+                      />
+                    </InputGroup>
+                    <InputGroup>
+                      <InputIcon><FiAtSign /></InputIcon>
+                      <StyledEditInput
+                        type="text"
+                        value={editedData.nickname}
+                        onChange={(e) => setEditedData({ ...editedData, nickname: e.target.value })}
+                        placeholder="Nickname"
+                      />
+                    </InputGroup>
+                    <InputGroup>
+                      <InputIcon><FiMail /></InputIcon>
+                      <StyledEditInput
+                        type="email"
+                        value={editedData.email}
+                        onChange={(e) => setEditedData({ ...editedData, email: e.target.value })}
+                        placeholder="Email"
+                      />
+                    </InputGroup>
+                  </EditableUserInfo>
+                ) : (
+                  <UserInfoDisplay
+                    key="display"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <UserName>{user.nome || 'Usuário'}</UserName>
+                    <UserEmail>@{user.nickname || user.email?.split('@')[0] || 'email'}</UserEmail>
+                    <UserEmailSecondary>{user.email}</UserEmailSecondary>
+                  </UserInfoDisplay>
+                )}
+              </AnimatePresence>
+            </UserInfoSection>
+
+          <DetailsGlassCard
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <AnimatePresence mode="wait">
+              {isEditing ? (
+                <EditableDetails
+                  key="editing-details"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <DetailSection>
+                    <SectionLabel>
+                      <FiFileText /> Sobre mim
+                    </SectionLabel>
+                    <TextAreaGroup>
+                      <StyledTextarea
+                        value={editedData.descricao}
+                        onChange={(e) => setEditedData({ ...editedData, descricao: e.target.value })}
+                        placeholder="Conte um pouco sobre você, seus objetivos no fitness..."
+                      />
+                    </TextAreaGroup>
+                  </DetailSection>
+
+                  <DetailSection>
+                    <SectionLabel>
+                      <FiUser /> Informações Pessoais
+                    </SectionLabel>
+                    <DetailsGrid>
+                      <InputGroup>
+                        <InputIcon><FiMapPin /></InputIcon>
+                        <StyledEditInput
+                          type="text"
+                          value={editedData.localizacao}
+                          onChange={(e) => setEditedData({ ...editedData, localizacao: e.target.value })}
+                          placeholder="Ex: São Paulo - SP"
+                        />
+                      </InputGroup>
+                      <DatePickerWrapper>
+                        <LiquidDatePicker
+                          value={editedData.data_nascimento}
+                          onChange={(value) => setEditedData({ ...editedData, data_nascimento: value })}
+                          placeholder="Data de nascimento"
+                        />
+                      </DatePickerWrapper>
+                    </DetailsGrid>
+                  </DetailSection>
+
+                  <DetailSection>
+                    <SectionLabel>
+                      <FiActivity /> Dados Físicos
+                    </SectionLabel>
+                    <DetailsGrid>
+                      <InputGroup>
+                        <InputIcon><FiWeight /></InputIcon>
+                        <StyledEditInput
+                          type="number"
+                          step="0.1"
+                          value={editedData.peso}
+                          onChange={(e) => setEditedData({ ...editedData, peso: e.target.value })}
+                          placeholder="Peso"
+                        />
+                        <UnitLabel>kg</UnitLabel>
+                      </InputGroup>
+                      <InputGroup>
+                        <InputIcon><FiTrendingUp /></InputIcon>
+                        <StyledEditInput
+                          type="number"
+                          step="0.01"
+                          value={editedData.altura}
+                          onChange={(e) => setEditedData({ ...editedData, altura: e.target.value })}
+                          placeholder="Altura"
+                        />
+                        <UnitLabel>m</UnitLabel>
+                      </InputGroup>
+                    </DetailsGrid>
+                  </DetailSection>
+                </EditableDetails>
               ) : (
-                <DefaultAvatarWrapper>
-                  <DefaultAvatar size={180} />
-                </DefaultAvatarWrapper>
+                <DisplayDetails
+                  key="display-details"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <DetailSection>
+                    <SectionLabel>
+                      <FiFileText /> Sobre mim
+                    </SectionLabel>
+                    <DescriptionText>{user.descricao || 'Nenhuma descrição adicionada ainda.'}</DescriptionText>
+                  </DetailSection>
+
+                  <DetailSection>
+                    <SectionLabel>
+                      <FiUser /> Informações
+                    </SectionLabel>
+                    <InfoGrid>
+                      <InfoCard>
+                        <InfoIcon><FiMapPin /></InfoIcon>
+                        <InfoContent>
+                          <InfoLabel>Localização</InfoLabel>
+                          <InfoValue>{user.localizacao || 'Não informada'}</InfoValue>
+                        </InfoContent>
+                      </InfoCard>
+                      <InfoCard>
+                        <InfoIcon><FiCalendar /></InfoIcon>
+                        <InfoContent>
+                          <InfoLabel>Nascimento</InfoLabel>
+                          <InfoValue>{user.data_nascimento || 'Não informado'}</InfoValue>
+                        </InfoContent>
+                      </InfoCard>
+                    </InfoGrid>
+                  </DetailSection>
+
+                  <DetailSection>
+                    <SectionLabel>
+                      <FiActivity /> Dados Físicos
+                    </SectionLabel>
+                    <StatsGrid>
+                      <StatCard>
+                        <StatValue>{user.peso && user.peso !== '--' ? user.peso : '--'}</StatValue>
+                        <StatLabel>Peso (kg)</StatLabel>
+                      </StatCard>
+                      <StatCard>
+                        <StatValue>{user.altura && user.altura !== '--' ? user.altura : '--'}</StatValue>
+                        <StatLabel>Altura (m)</StatLabel>
+                      </StatCard>
+                      <StatCard isHighlight>
+                        <StatValue>{user.imc ? Number(user.imc).toFixed(1) : '--'}</StatValue>
+                        <StatLabel>IMC</StatLabel>
+                      </StatCard>
+                    </StatsGrid>
+                  </DetailSection>
+                </DisplayDetails>
               )}
-              {isEditing && (
-                <AvatarOverlay>
-                  <input
-                    type="file"
-                    id="avatar-upload"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="avatar-upload">
-                    <CameraButton
-                      whileHover={{ scale: 1.1 }}
+            </AnimatePresence>
+          </DetailsGlassCard>
+
+            <ActionButtons>
+              <AnimatePresence mode="wait">
+                {isEditing ? (
+                  <ButtonGroup
+                    key="edit-buttons"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <SaveButton
+                      onClick={handleSave}
+                      whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <FiCamera />
-                    </CameraButton>
-                  </label>
-                </AvatarOverlay>
-              )}
-            </AvatarContainer>
-          </AvatarSection>
+                      <FiCheck /> Salvar
+                    </SaveButton>
+                    <CancelButton
+                      onClick={handleCancel}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiX /> Cancelar
+                    </CancelButton>
+                  </ButtonGroup>
+                ) : (
+                  <EditButton
+                    key="edit-button"
+                    onClick={handleEdit}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <FiEdit3 /> Editar Perfil
+                  </EditButton>
+                )}
+              </AnimatePresence>
+            </ActionButtons>
+          </HeaderGlassCard>
 
-          <UserInfoSection>
-            {isEditing ? (
-              <EditableUserInfo>
-                <EditInput
-                  type="text"
-                  value={editedData.nome}
-                  onChange={(e) => setEditedData({ ...editedData, nome: e.target.value })}
-                  placeholder="Nome completo"
-                />
-                <EditInput
-                  type="text"
-                  value={editedData.nickname}
-                  onChange={(e) => setEditedData({ ...editedData, nickname: e.target.value })}
-                  placeholder="Nickname"
-                />
-                <EditInput
-                  type="email"
-                  value={editedData.email}
-                  onChange={(e) => setEditedData({ ...editedData, email: e.target.value })}
-                  placeholder="Email"
-                />
-              </EditableUserInfo>
-            ) : (
-              <>
-                <UserName>{user.nome || 'Usuário'}</UserName>
-                <UserEmail>@{user.nickname || user.email?.split('@')[0] || 'email'}</UserEmail>
-              </>
-            )}
-          </UserInfoSection>
-
-          <DetailsSection>
-            {isEditing ? (
-              <EditableDetails>
-                <DetailItem>
-                  <DetailLabel>Descrição:</DetailLabel>
-                  <EditTextarea
-                    value={editedData.descricao}
-                    onChange={(e) => setEditedData({ ...editedData, descricao: e.target.value })}
-                    placeholder="Conte um pouco sobre você, seus objetivos no fitness..."
-                  />
-                </DetailItem>
-                <DetailsRow>
-                  <DetailItem>
-                    <DetailLabel>Localização:</DetailLabel>
-                    <EditInput
-                      type="text"
-                      value={editedData.localizacao}
-                      onChange={(e) => setEditedData({ ...editedData, localizacao: e.target.value })}
-                      placeholder="Ex: São Paulo - SP"
-                    />
-                  </DetailItem>
-                  <DetailItem>
-                    <DetailLabel>Data de Nascimento:</DetailLabel>
-                    <EditInput
-                      type="date"
-                      value={editedData.data_nascimento}
-                      onChange={(e) => setEditedData({ ...editedData, data_nascimento: e.target.value })}
-                      placeholder="DD-MM-AAAA"
-                    />
-                  </DetailItem>
-                </DetailsRow>
-                <DetailsRow>
-                  <DetailItem>
-                    <DetailLabel>Peso:</DetailLabel>
-                    <EditInput
-                      type="number"
-                      step="0.1"
-                      value={editedData.peso}
-                      onChange={(e) => setEditedData({ ...editedData, peso: e.target.value })}
-                      placeholder="75.0"
-                    />
-                    <DetailUnit>kg</DetailUnit>
-                  </DetailItem>
-                  <DetailItem>
-                    <DetailLabel>Altura:</DetailLabel>
-                    <EditInput
-                      type="number"
-                      step="0.01"
-                      value={editedData.altura}
-                      onChange={(e) => setEditedData({ ...editedData, altura: e.target.value })}
-                      placeholder="1.75"
-                    />
-                    <DetailUnit>m</DetailUnit>
-                  </DetailItem>
-                </DetailsRow>
-              </EditableDetails>
-            ) : (
-              <>
-                <DetailText>{user.descricao || 'Sem descrição'}</DetailText>
-                <DetailsRow>
-                  <DetailInfo>
-                    <DetailLabel>Localização:</DetailLabel>
-                    <DetailValue>{user.localizacao || 'Não informada'}</DetailValue>
-                  </DetailInfo>
-                  <DetailInfo>
-                    <DetailLabel>Nascimento:</DetailLabel>
-                    <DetailValue>{user.data_nascimento || 'Não informado'}</DetailValue>
-                  </DetailInfo>
-                </DetailsRow>
-                <DetailsRow>
-                  <DetailInfo>
-                    <DetailValue>{user.peso && user.peso !== '--' ? user.peso : '--'}</DetailValue>
-                    <DetailUnit>kg</DetailUnit>
-                  </DetailInfo>
-                  <DetailInfo>
-                    <DetailValue>{user.altura && user.altura !== '--' ? user.altura : '--'}</DetailValue>
-                    <DetailUnit>m</DetailUnit>
-                  </DetailInfo>
-                  <DetailInfo>
-                    <DetailLabel>IMC:</DetailLabel>
-                    <DetailValue>{user.imc ? Number(user.imc).toFixed(1) : '--'}</DetailValue>
-                  </DetailInfo>
-                </DetailsRow>
-              </>
-            )}
-          </DetailsSection>
-
-          <ActionButtons>
-            {isEditing ? (
-              <>
-                <SaveButton
-                  onClick={handleSave}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiCheck /> Salvar
-                </SaveButton>
-                <CancelButton
-                  onClick={handleCancel}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiX /> Cancelar
-                </CancelButton>
-              </>
-            ) : (
-              <EditButton
-                onClick={handleEdit}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiEdit3 /> Editar Perfil
-              </EditButton>
-            )}
-          </ActionButtons>
-        </ProfileHeader>
-
-        <PhotosSection>
+        <PhotosSection
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
           <SectionTitle>Fotos</SectionTitle>
           <PhotoGrid>
             <AnimatePresence>
@@ -509,12 +627,36 @@ const ProfileContainer = styled(motion.div)`
   background: #0A0A0A;
   padding-top: 10rem;
   padding-bottom: 4rem;
+  position: relative;
+  overflow-x: hidden;
+`
+
+const BackgroundGradient = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse at top right,
+    rgba(227, 6, 19, 0.1) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    ellipse at bottom left,
+    rgba(227, 6, 19, 0.05) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: 0;
 `
 
 const ProfileContent = styled.div`
   max-width: 120rem;
   margin: 0 auto;
   padding: 0 2rem;
+  position: relative;
+  z-index: 1;
 `
 
 const ProfileHeader = styled.div`
@@ -524,11 +666,41 @@ const ProfileHeader = styled.div`
   margin-bottom: 6rem;
 `
 
+const HeaderGlassCard = styled(motion.div)`
+  background: rgba(20, 20, 20, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3rem;
+  padding: 4rem;
+  width: 100%;
+  max-width: 80rem;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    inset 0 0 30px rgba(227, 6, 19, 0.02);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(227, 6, 19, 0.5),
+      transparent
+    );
+  }
+`
+
 const AvatarSection = styled.div`
   margin-bottom: 3rem;
 `
 
-const AvatarContainer = styled.div`
+const AvatarContainer = styled(motion.div)`
   position: relative;
   width: 18rem;
   height: 18rem;
@@ -554,7 +726,7 @@ const DefaultAvatarWrapper = styled.div`
   border: 4px solid rgba(227, 6, 19, 0.3);
 `
 
-const AvatarOverlay = styled.div`
+const AvatarOverlay = styled(motion.div)`
   position: absolute;
   bottom: 1rem;
   right: 1rem;
@@ -579,7 +751,8 @@ const CameraButton = styled(motion.div)`
 
 const UserInfoSection = styled.div`
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  width: 100%;
 `
 
 const UserName = styled.h1`
@@ -590,110 +763,288 @@ const UserName = styled.h1`
 `
 
 const UserEmail = styled.p`
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   color: var(--primary);
-  font-weight: 500;
+  font-weight: 600;
+  margin: 0.5rem 0;
 `
 
-const EditableUserInfo = styled.div`
+const UserEmailSecondary = styled.p`
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+`
+
+const EditableUserInfo = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
 `
 
-const DetailsSection = styled.div`
-  text-align: center;
-  margin-bottom: 3rem;
-`
-
-const DetailText = styled.p`
-  font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 2rem;
-  max-width: 60rem;
-`
-
-const DetailsRow = styled.div`
+const UserInfoDisplay = styled(motion.div)`
   display: flex;
-  justify-content: center;
-  gap: 4rem;
-  margin-top: 2rem;
-`
-
-const DetailInfo = styled.div`
-  display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
 `
 
-const DetailValue = styled.span`
-  font-size: 2.4rem;
-  font-weight: 700;
-  color: var(--white);
-`
-
-const DetailUnit = styled.span`
-  font-size: 1.8rem;
-  color: rgba(255, 255, 255, 0.5);
-`
-
-const EditableDetails = styled.div`
+const InputGroup = styled.div`
+  position: relative;
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 2rem;
   align-items: center;
 `
 
-const DetailItem = styled.div`
+const InputIcon = styled.div`
+  position: absolute;
+  left: 1.8rem;
+  color: var(--primary);
+  font-size: 2rem;
+  z-index: 1;
+  pointer-events: none;
+`
+
+const StyledEditInput = styled.input`
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.6rem;
+  padding: 1.4rem 1.8rem 1.4rem 5rem;
+  font-size: 1.6rem;
+  color: var(--white);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 30px rgba(227, 6, 19, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+`
+
+const UnitLabel = styled.span`
+  position: absolute;
+  right: 1.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.6rem;
+  pointer-events: none;
+`
+
+const DetailsSection = styled.div`
+  margin-bottom: 3rem;
+`
+
+const DetailsGlassCard = styled(motion.div)`
+  background: rgba(20, 20, 20, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2.5rem;
+  padding: 3rem;
+  width: 100%;
+  max-width: 80rem;
+  margin: 3rem auto;
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.2),
+    inset 0 0 20px rgba(227, 6, 19, 0.01);
+`
+
+const EditableDetails = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+`
+
+const DisplayDetails = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+`
+
+const DetailSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`
+
+const SectionLabel = styled.h3`
   display: flex;
   align-items: center;
   gap: 1rem;
-`
-
-const DetailLabel = styled.label`
-  font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  min-width: 8rem;
-  text-align: right;
-`
-
-const EditInput = styled.input`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.8rem;
-  padding: 1rem 1.5rem;
-  font-size: 1.6rem;
-  color: var(--white);
-  transition: all 0.3s ease;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 1rem;
   
-  &:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.08);
+  svg {
+    font-size: 2rem;
   }
 `
 
-const EditTextarea = styled.textarea`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.8rem;
-  padding: 1rem 1.5rem;
+const TextAreaGroup = styled.div`
+  width: 100%;
+`
+
+const StyledTextarea = styled.textarea`
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.6rem;
+  padding: 1.5rem 1.8rem;
   font-size: 1.6rem;
   color: var(--white);
-  transition: all 0.3s ease;
-  min-width: 40rem;
-  min-height: 8rem;
+  min-height: 12rem;
   resize: vertical;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
   
   &:focus {
     outline: none;
     border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 30px rgba(227, 6, 19, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.3);
   }
 `
+
+const DetailsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 2rem;
+`
+
+const DatePickerWrapper = styled.div`
+  width: 100%;
+`
+
+const DescriptionText = styled.p`
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+`
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 2rem;
+`
+
+const InfoCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.5rem;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(227, 6, 19, 0.2);
+    transform: translateY(-2px);
+  }
+`
+
+const InfoIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  background: rgba(227, 6, 19, 0.1);
+  border-radius: 1.2rem;
+  color: var(--primary);
+  font-size: 2rem;
+`
+
+const InfoContent = styled.div`
+  flex: 1;
+`
+
+const InfoLabel = styled.p`
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`
+
+const InfoValue = styled.p`
+  font-size: 1.6rem;
+  color: var(--white);
+  font-weight: 500;
+`
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+`
+
+const StatCard = styled.div<{ isHighlight?: boolean }>`
+  padding: 2rem;
+  background: ${props => props.isHighlight 
+    ? 'linear-gradient(135deg, rgba(227, 6, 19, 0.1), rgba(227, 6, 19, 0.05))'
+    : 'rgba(255, 255, 255, 0.02)'};
+  border: 1px solid ${props => props.isHighlight 
+    ? 'rgba(227, 6, 19, 0.3)'
+    : 'rgba(255, 255, 255, 0.05)'};
+  border-radius: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-3px);
+    background: ${props => props.isHighlight 
+      ? 'linear-gradient(135deg, rgba(227, 6, 19, 0.15), rgba(227, 6, 19, 0.08))'
+      : 'rgba(255, 255, 255, 0.04)'};
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+`
+
+const StatValue = styled.div`
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.5rem;
+`
+
+const StatLabel = styled.div`
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`
+
+
 
 const ActionButtons = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  justify-content: center;
+`
+
+const ButtonGroup = styled(motion.div)`
   display: flex;
   gap: 1.5rem;
 `
@@ -702,52 +1053,97 @@ const EditButton = styled(motion.button)`
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  padding: 1.2rem 3rem;
-  background: var(--primary);
+  padding: 1.4rem 3.5rem;
+  background: linear-gradient(135deg, var(--primary), #FF1744);
   color: white;
   border: none;
-  border-radius: 2.5rem;
+  border-radius: 2rem;
   font-size: 1.6rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(227, 6, 19, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: 
+    0 10px 30px rgba(227, 6, 19, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
-  &:hover {
-    background: var(--primary-dark);
-    box-shadow: 0 10px 30px rgba(227, 6, 19, 0.4);
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+  
+  &:hover::before {
+    left: 100%;
+  }
+  
+  svg {
+    font-size: 1.8rem;
   }
 `
 
 const SaveButton = styled(EditButton)`
-  background: #10B981;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
-  
-  &:hover {
-    background: #059669;
-    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
-  }
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 
+    0 10px 30px rgba(16, 185, 129, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 `
 
 const CancelButton = styled(EditButton)`
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: none;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
   }
 `
 
-const PhotosSection = styled.div`
-  margin-top: 6rem;
+const PhotosSection = styled(motion.div)`
+  margin-top: 4rem;
+  background: rgba(20, 20, 20, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2.5rem;
+  padding: 3rem;
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.2),
+    inset 0 0 20px rgba(227, 6, 19, 0.01);
 `
 
 const SectionTitle = styled.h2`
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), #FF1744);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 3rem;
   text-align: center;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8rem;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  }
 `
 
 const PhotoGrid = styled.div`
@@ -760,11 +1156,32 @@ const PhotoGrid = styled.div`
 const PhotoCard = styled(motion.div)`
   position: relative;
   aspect-ratio: 1;
-  border-radius: 1.2rem;
+  border-radius: 1.8rem;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.1),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
 `
 
 const PhotoImage = styled.img`
@@ -810,17 +1227,41 @@ const DeletePhotoButton = styled(motion.button)`
 
 const AddPhotoCard = styled.div`
   aspect-ratio: 1;
-  border-radius: 1.2rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 1.8rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 3px dashed rgba(227, 6, 19, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    background: radial-gradient(
+      circle,
+      rgba(227, 6, 19, 0.1),
+      transparent
+    );
+    transition: all 0.5s;
+  }
   
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(227, 6, 19, 0.05);
     border-color: var(--primary);
+    transform: translateY(-3px);
+    
+    &::before {
+      width: 200%;
+      height: 200%;
+    }
   }
 `
 
