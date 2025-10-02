@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-// URL base da API - usando backend local
-const API_BASE_URL = 'http://localhost:8080'
+// URL base da API - usando proxy do Vite
+const API_BASE_URL = '/api'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

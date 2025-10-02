@@ -73,17 +73,38 @@ const Profile = () => {
     try {
       // Atualizar no backend se tiver ID do usuário
       if (user?.id) {
-        await updateUserAPI(user.id, {
-          nome: editedData.nome,
-          email: editedData.email,
-          nickname: editedData.nickname,
-          descricao: editedData.descricao,
-          localizacao: editedData.localizacao,
-          data_nascimento: editedData.data_nascimento,
-          peso: editedData.peso ? Number(editedData.peso) : undefined,
-          altura: editedData.altura ? Number(editedData.altura) : undefined,
-          foto: editedData.foto
-        })
+        // Envia apenas os campos que foram alterados
+        const changedFields: any = {};
+        
+        if (editedData.nome && editedData.nome !== user.nome) {
+          changedFields.nome = editedData.nome;
+        }
+        if (editedData.email && editedData.email !== user.email) {
+          changedFields.email = editedData.email;
+        }
+        if (editedData.nickname && editedData.nickname !== user.nickname) {
+          changedFields.nickname = editedData.nickname;
+        }
+        if (editedData.descricao !== user.descricao) {
+          changedFields.descricao = editedData.descricao || '';
+        }
+        if (editedData.localizacao !== user.localizacao) {
+          changedFields.localizacao = editedData.localizacao || '';
+        }
+        if (editedData.peso && editedData.peso !== user.peso) {
+          changedFields.peso = editedData.peso;
+        }
+        if (editedData.altura && editedData.altura !== user.altura) {
+          changedFields.altura = editedData.altura;
+        }
+        if (editedData.foto && editedData.foto !== user.foto) {
+          changedFields.foto = editedData.foto;
+        }
+        
+        // Se houver alterações, envia para o backend
+        if (Object.keys(changedFields).length > 0) {
+          await updateUserAPI(user.id, changedFields);
+        }
       }
       
       // Atualizar contexto local
@@ -113,6 +134,8 @@ const Profile = () => {
       // Atualizar contexto local
       updateUser({
         ...user,
+        nome: user?.nome || 'Usuário',
+        email: user?.email || 'email@exemplo.com', 
         peso: data.peso?.toString() || '--',
         altura: data.altura?.toString() || '--',
       });
@@ -130,6 +153,8 @@ const Profile = () => {
     // Setar como "--" quando pular
     updateUser({
       ...user,
+      nome: user?.nome || 'Usuário',
+      email: user?.email || 'email@exemplo.com',
       peso: '--',
       altura: '--',
     });
