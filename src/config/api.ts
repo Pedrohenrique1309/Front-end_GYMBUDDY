@@ -27,7 +27,7 @@ export interface UserData {
   peso?: string | number
   altura?: string | number
   imc?: string | number
-  is_bloqueado?: boolean
+  is_bloqueado?: boolean | number
   created_at?: string
   updated_at?: string
 }
