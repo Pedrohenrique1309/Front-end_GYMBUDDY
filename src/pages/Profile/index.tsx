@@ -36,6 +36,7 @@ const Profile = () => {
     foto: user?.foto || '',
   });
   const [photos, setPhotos] = useState<string[]>([])
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -82,6 +83,28 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
+      let finalFotoUrl = editedData.foto;
+      
+      // Se há uma nova foto pendente, fazer upload para Azure
+      if (pendingAvatarFile) {
+        console.log('📤 Fazendo upload da nova foto para Azure...');
+        try {
+          const uploadParams = {
+            file: pendingAvatarFile,
+            ...AZURE_CONFIG
+          };
+          
+          finalFotoUrl = await uploadImageToAzure(uploadParams);
+          console.log('✅ Upload concluído:', finalFotoUrl);
+          
+          // Limpar arquivo pendente
+          setPendingAvatarFile(null);
+        } catch (uploadError) {
+          console.error('❌ Erro no upload:', uploadError);
+          alert('Erro ao fazer upload da foto. Salvando outros dados...');
+        }
+      }
+      
       // Atualizar no backend se tiver ID do usuário
       if (user?.id) {
         const payload = {
@@ -95,8 +118,7 @@ const Profile = () => {
           peso: editedData.peso ? Number(editedData.peso) : undefined,
           altura: editedData.altura ? Number(editedData.altura) : undefined,
           imc: editedData.imc ? Number(editedData.imc) : undefined,
-          // Não enviar foto se for muito grande (evitar erro 500)
-          ...(editedData.foto && editedData.foto.length < 100000 ? { foto: editedData.foto } : {})
+          foto: finalFotoUrl
         }
         
         console.log('🚀 Enviando dados para API:', {
@@ -132,7 +154,7 @@ const Profile = () => {
       }
       
       // Atualizar contexto local
-      if (user) {
+      if (user && user.nome && user.email) {
         updateUser({
           ...user,
           nome: user.nome,
@@ -153,11 +175,15 @@ const Profile = () => {
 
   const handleWeightHeightSkip = () => {
     // Setar como "--" quando pular
-    updateUser({
-      ...user,
-      peso: '--',
-      altura: '--',
-    });
+    if (user && user.nome && user.email) {
+      updateUser({
+        ...user,
+        nome: user.nome,
+        email: user.email,
+        peso: '--',
+        altura: '--',
+      });
+    }
     
     // Marcar que visitou o perfil
     localStorage.setItem(`profile_visited_${user?.id || user?.email}`, 'true');
@@ -177,6 +203,8 @@ const Profile = () => {
       imc: user?.imc || '',
       foto: user?.foto || ''
     })
+    // Limpar arquivo pendente ao cancelar
+    setPendingAvatarFile(null)
     setIsEditing(false)
   };
 
@@ -201,19 +229,18 @@ const Profile = () => {
         return
       }
       
+      console.log('📸 Foto selecionada para upload:', {
+        fileName: file.name,
+        fileSize: file.size
+      })
+      
+      // Armazenar arquivo para upload posterior
+      setPendingAvatarFile(file)
+      
+      // Mostrar preview local
       const reader = new FileReader()
       reader.onloadend = () => {
         const avatarUrl = reader.result as string
-        console.log('📸 Upload de avatar:', {
-          fileName: file.name,
-          fileSize: file.size,
-          base64Length: avatarUrl.length
-        })
-        
-        // Atualizar apenas localmente primeiro
-        updateUser({ ...user, foto: avatarUrl })
-        
-        // Atualizar editedData para sincronizar
         setEditedData(prev => ({ ...prev, foto: avatarUrl }))
       }
       reader.readAsDataURL(file)
@@ -242,23 +269,25 @@ const Profile = () => {
                   <DefaultAvatar size={180} />
                 </DefaultAvatarWrapper>
               )}
-              <AvatarOverlay>
-                <input
-                  type="file"
-                  id="avatar-upload"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="avatar-upload">
-                  <CameraButton
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiCamera />
-                  </CameraButton>
-                </label>
-              </AvatarOverlay>
+              {isEditing && (
+                <AvatarOverlay>
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="avatar-upload">
+                    <CameraButton
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiCamera />
+                    </CameraButton>
+                  </label>
+                </AvatarOverlay>
+              )}
             </AvatarContainer>
           </AvatarSection>
 

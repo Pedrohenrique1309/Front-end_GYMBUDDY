@@ -1,11 +1,17 @@
 'use strict'
 
-export async function uploadImageToAzure(uploadParams) {
+interface UploadParams {
+  file: File;
+  storageAccount: string;
+  sasToken: string;
+  containerName: string;
+}
 
-    //descontruindo o Json recebido
+export async function uploadImageToAzure(uploadParams: UploadParams): Promise<string> {
+    // Descontruindo o Json recebido
     const { file, storageAccount, sasToken, containerName } = uploadParams;
 
-    //criando nomes únicos para cada imagem utilizando o horário/data 
+    // Criando nomes únicos para cada imagem utilizando o horário/data 
     const blobName = `${Date.now()}-${file.name}`;
 
     const baseUrl = `https://${storageAccount}.blob.core.windows.net/${containerName}/${blobName}`;
@@ -24,9 +30,8 @@ export async function uploadImageToAzure(uploadParams) {
 
     if (response.ok) {
       return baseUrl;
-    }else {
-      return response.ok
+    } else {
+      throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
     }
-   
 }
 
