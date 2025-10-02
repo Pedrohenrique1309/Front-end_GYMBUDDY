@@ -56,7 +56,7 @@ const SignupPopup = ({ isOpen, onClose, onSwitchToLogin }: SignupPopupProps) => 
     setUsernameExists(null);
   };
 
-  // Função personalizada para fechar o popup
+  // função para fechar o popup
   const handleClose = () => {
     resetForm();
     onClose();
