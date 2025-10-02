@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // URL base da API - usando backend local
-const API_BASE_URL = 'http://10.107.144.9:8080'
+const API_BASE_URL = 'http://localhost:8080'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -28,6 +28,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.error('API Error:', {
+      message: error.message,
+      code: error.code,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        baseURL: error.config?.baseURL
+      },
+      response: error.response?.data
+    })
+    
     if (error.response?.status === 401) {
       // Token inválido ou expirado
       localStorage.removeItem('authToken')
