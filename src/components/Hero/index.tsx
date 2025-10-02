@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import styled from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { BRAND } from '../../config/branding'
-import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward } from 'react-icons/fi'
+import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward, FiGlobe, FiUserCheck } from 'react-icons/fi'
 import { useScrambleText } from '../../hooks/useScrambleText'
+import { useUser } from '../../contexts/UserContext'
 
 interface HeroProps {
   onOpenSignup?: () => void
@@ -193,6 +195,8 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
 };
 
 const Hero = ({ onOpenSignup }: HeroProps) => {
+  const { isLoggedIn } = useUser()
+  const navigate = useNavigate()
   const floatingCards = BRAND.floatingCards;
 
   // Mapeamento de ícones para cada card
@@ -202,6 +206,10 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
     'workouts': FiActivity,
     'ai': FiZap
   };
+
+  const handleNetworkAccess = () => {
+    navigate('/network')
+  }
 
 
 
@@ -258,19 +266,68 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
               </AnimatePresence>
             </FloatingCards>
           </ImageContainer>
-          <FixedCTA
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            onClick={onOpenSignup}
-          >
-            <span className="label">Vamos começar</span>
-            <span className="arrows" aria-hidden="true">
-              <FiChevronRight className="a1" />
-              <FiChevronRight className="a2" />
-              <FiChevronRight className="a3" />
-            </span>
-          </FixedCTA>
+          <AnimatePresence mode="wait">
+            {!isLoggedIn ? (
+              <FixedCTA
+                key="signup-btn"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                onClick={onOpenSignup}
+              >
+                <span className="label">Vamos começar</span>
+                <span className="arrows" aria-hidden="true">
+                  <FiChevronRight className="a1" />
+                  <FiChevronRight className="a2" />
+                  <FiChevronRight className="a3" />
+                </span>
+              </FixedCTA>
+            ) : (
+              <NetworkCTA
+                key="network-btn"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                onClick={handleNetworkAccess}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <motion.div 
+                  className="icon-wrapper"
+                  animate={{ 
+                    rotate: [0, 360],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ 
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                >
+                  <FiGlobe />
+                </motion.div>
+                <div className="content">
+                  <span className="label">Acessar Rede</span>
+                  <span className="sublabel">GYM BUDDY</span>
+                </div>
+                <motion.div 
+                  className="user-icon"
+                  animate={{ 
+                    y: [0, -2, 0],
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <FiUserCheck />
+                </motion.div>
+              </NetworkCTA>
+            )}
+          </AnimatePresence>
         </Content>
       </div>
     </HeroSection>
@@ -840,5 +897,116 @@ const FixedCTA = styled(motion.button)`
   @media (max-width: 480px) {
     font-size: 1.4rem;
     padding: 10px 20px;
+  }
+`;
+
+// Novo botão para usuários logados
+const NetworkCTA = styled(motion.button)`
+  position: fixed;
+  right: clamp(1.6rem, 2.5vw, 3.2rem);
+  bottom: clamp(6rem, 8vw, 8rem);
+  z-index: 1500;
+  background: linear-gradient(135deg, 
+    rgba(227, 6, 19, 0.9) 0%, 
+    rgba(227, 6, 19, 1) 50%,
+    rgba(180, 5, 15, 1) 100%
+  );
+  color: var(--white);
+  border: none;
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: 
+    0 12px 28px rgba(227, 6, 19, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 200px;
+  
+  .icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .content {
+    flex: 1;
+    text-align: left;
+    
+    .label {
+      display: block;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+    
+    .sublabel {
+      display: block;
+      font-weight: 600;
+      font-size: 11px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+    }
+  }
+  
+  .user-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, 
+      rgba(227, 6, 19, 1) 0%, 
+      rgba(250, 7, 20, 1) 50%,
+      rgba(200, 5, 16, 1) 100%
+    );
+    box-shadow: 
+      0 20px 40px rgba(227, 6, 19, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    
+    .icon-wrapper {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+    
+    .user-icon {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 180px;
+    padding: 14px 20px;
+    
+    .content .label {
+      font-size: 13px;
+    }
+    
+    .content .sublabel {
+      font-size: 10px;
+    }
   }
 `;

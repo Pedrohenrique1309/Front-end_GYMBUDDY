@@ -7,6 +7,15 @@ import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
+import { uploadImageToAzure } from "./uploadImageToAzure"
+
+// Configurações do Azure Storage
+const AZURE_CONFIG = {
+  storageAccount: 'gymbuddyfoto',
+  sasToken: 'sp=r&st=2025-10-02T18:44:39Z&se=2025-10-03T02:59:39Z&spr=https&sv=2024-11-04&sr=c&sig=Y1ffwILATqQ84SaetGEf933cndS3HPbmLnYs7yPoeAs%3D',
+  containerName: 'tccgymbuddyfoto',
+};
+
 
 const Profile = () => {
   const { user, isLoggedIn, updateUser } = useUser()
@@ -86,7 +95,8 @@ const Profile = () => {
           peso: editedData.peso ? Number(editedData.peso) : undefined,
           altura: editedData.altura ? Number(editedData.altura) : undefined,
           imc: editedData.imc ? Number(editedData.imc) : undefined,
-          foto: editedData.foto
+          // Não enviar foto se for muito grande (evitar erro 500)
+          ...(editedData.foto && editedData.foto.length < 100000 ? { foto: editedData.foto } : {})
         }
         
         console.log('🚀 Enviando dados para API:', {
@@ -164,6 +174,7 @@ const Profile = () => {
       data_nascimento: user?.data_nascimento || '',
       peso: user?.peso || '',
       altura: user?.altura || '',
+      imc: user?.imc || '',
       foto: user?.foto || ''
     })
     setIsEditing(false)
@@ -184,10 +195,26 @@ const Profile = () => {
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file && user) {
+      // Verificar tamanho do arquivo (máximo 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Imagem muito grande! Máximo 2MB permitido.')
+        return
+      }
+      
       const reader = new FileReader()
       reader.onloadend = () => {
         const avatarUrl = reader.result as string
+        console.log('📸 Upload de avatar:', {
+          fileName: file.name,
+          fileSize: file.size,
+          base64Length: avatarUrl.length
+        })
+        
+        // Atualizar apenas localmente primeiro
         updateUser({ ...user, foto: avatarUrl })
+        
+        // Atualizar editedData para sincronizar
+        setEditedData(prev => ({ ...prev, foto: avatarUrl }))
       }
       reader.readAsDataURL(file)
     }
