@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   FiEdit3, FiCamera, FiPlus, FiX, FiCheck,
-  FiUser, FiMail, FiMapPin, FiCalendar, FiWeight,
+  FiUser, FiMail, FiMapPin, FiCalendar, FiTarget,
   FiActivity, FiAtSign, FiFileText, FiTrendingUp
 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
@@ -12,7 +12,7 @@ import DefaultAvatar from '../../assets/default-avatar'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
 import { uploadImageToAzure } from "./uploadImageToAzure"
-import LiquidDatePicker from '../../components/LiquidDatePicker'
+// import LiquidDatePicker from '../../components/LiquidDatePicker'
 
 // Configurações do Azure Storage
 const AZURE_CONFIG = {
@@ -312,6 +312,48 @@ const Profile = () => {
                   </AvatarOverlay>
                 )}
               </AvatarContainer>
+              
+              {/* Botões de ação abaixo da foto */}
+              <AvatarActionButtons>
+                <AnimatePresence mode="wait">
+                  {isEditing ? (
+                    <ButtonGroup
+                      key="edit-buttons"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <SaveButton
+                        onClick={handleSave}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FiCheck /> Salvar
+                      </SaveButton>
+                      <CancelButton
+                        onClick={handleCancel}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FiX /> Cancelar
+                      </CancelButton>
+                    </ButtonGroup>
+                  ) : (
+                    <EditButton
+                      key="edit-button"
+                      onClick={handleEdit}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      <FiEdit3 /> Editar Perfil
+                    </EditButton>
+                  )}
+                </AnimatePresence>
+              </AvatarActionButtons>
             </AvatarSection>
 
             <UserInfoSection>
@@ -409,13 +451,15 @@ const Profile = () => {
                           placeholder="Ex: São Paulo - SP"
                         />
                       </InputGroup>
-                      <DatePickerWrapper>
-                        <LiquidDatePicker
+                      <InputGroup>
+                        <InputIcon><FiCalendar /></InputIcon>
+                        <StyledEditInput
+                          type="date"
                           value={editedData.data_nascimento}
-                          onChange={(value) => setEditedData({ ...editedData, data_nascimento: value })}
+                          onChange={(e) => setEditedData({ ...editedData, data_nascimento: e.target.value })}
                           placeholder="Data de nascimento"
                         />
-                      </DatePickerWrapper>
+                      </InputGroup>
                     </DetailsGrid>
                   </DetailSection>
 
@@ -425,7 +469,7 @@ const Profile = () => {
                     </SectionLabel>
                     <DetailsGrid>
                       <InputGroup>
-                        <InputIcon><FiWeight /></InputIcon>
+                        <InputIcon><FiTarget /></InputIcon>
                         <StyledEditInput
                           type="number"
                           step="0.1"
@@ -510,47 +554,8 @@ const Profile = () => {
             </AnimatePresence>
           </DetailsGlassCard>
 
-            <ActionButtons>
-              <AnimatePresence mode="wait">
-                {isEditing ? (
-                  <ButtonGroup
-                    key="edit-buttons"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <SaveButton
-                      onClick={handleSave}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiCheck /> Salvar
-                    </SaveButton>
-                    <CancelButton
-                      onClick={handleCancel}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiX /> Cancelar
-                    </CancelButton>
-                  </ButtonGroup>
-                ) : (
-                  <EditButton
-                    key="edit-button"
-                    onClick={handleEdit}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                  >
-                    <FiEdit3 /> Editar Perfil
-                  </EditButton>
-                )}
-              </AnimatePresence>
-            </ActionButtons>
           </HeaderGlassCard>
+        </ProfileHeader>
 
         <PhotosSection
           initial={{ opacity: 0, y: 20 }}
@@ -698,6 +703,16 @@ const HeaderGlassCard = styled(motion.div)`
 
 const AvatarSection = styled.div`
   margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`
+
+const AvatarActionButtons = styled.div`
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  justify-content: center;
 `
 
 const AvatarContainer = styled(motion.div)`
@@ -927,9 +942,6 @@ const DetailsGrid = styled.div`
   gap: 2rem;
 `
 
-const DatePickerWrapper = styled.div`
-  width: 100%;
-`
 
 const DescriptionText = styled.p`
   font-size: 1.6rem;
