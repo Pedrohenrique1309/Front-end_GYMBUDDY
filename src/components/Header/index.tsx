@@ -114,7 +114,7 @@ const Header = () => {
     <HeaderContainer $scrolled={scrolled}>
       <div className="container">
         <Logo>
-          <FaDumbbell className="icon" />
+          <LogoImage src={BRAND.logoSrc} alt={BRAND.name} />
           <span>{BRAND.name}</span>
         </Logo>
         
@@ -496,8 +496,18 @@ const Logo = styled.div`
     color: var(--primary);
     font-size: 2.8rem;
   }
+`
 
-`;
+const LogoImage = styled.img`
+  height: 3.2rem;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+`
 
 const Nav = styled.nav`
   @media (max-width: 1024px) {

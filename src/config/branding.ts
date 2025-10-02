@@ -1,6 +1,6 @@
 export const BRAND = {
   name: 'GYM BUDDY',
-  logoSrc: '/icon-hand-dumbbell-red.png',
+  logoSrc: '/gym-buddy-logo.png',
   heroSrc: '/hero-image.png',
   //cards do home 
   floatingCards: [
