@@ -5,6 +5,7 @@ import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { loginUser, LoginResponse } from '../../config/api'
 import { useUser } from '../../contexts/UserContext'
+import PopupEsqueciSenha from '../ForgotPasswordPopup'
 
 interface PropsPopupLogin {
   estaAberto: boolean
@@ -16,6 +17,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [estaCarregando, setEstaCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const [popupEsqueciSenhaAberto, setPopupEsqueciSenhaAberto] = useState(false)
   const [dadosFormulario, setDadosFormulario] = useState({
     email: '',
     senha: ''
@@ -158,7 +160,11 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
                 </BotaoMostrarSenha>
               </GrupoCampo>
 
-              <LinkEsqueciSenha href="#" onClick={(e) => e.preventDefault()}>
+              <LinkEsqueciSenha href="#" onClick={(e) => {
+                e.preventDefault()
+                aoFechar()
+                setTimeout(() => setPopupEsqueciSenhaAberto(true), 100)
+              }}>
                 Esqueci minha senha
               </LinkEsqueciSenha>
 
@@ -190,6 +196,11 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
             </TextoCadastro>
             </ConteudoPopup>
           </ContainerPopup>
+          
+          <PopupEsqueciSenha
+            estaAberto={popupEsqueciSenhaAberto}
+            aoFechar={() => setPopupEsqueciSenhaAberto(false)}
+          />
         </>
       )}
     </AnimatePresence>
