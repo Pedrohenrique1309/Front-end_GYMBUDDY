@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Hero from '../../components/Hero'
 import SignupPopup from '../../components/SignupPopup'
+import SocialNetworkButton from '../../components/SocialNetworkButton'
 
 const Home = () => {
   const [showSignupPopup, setShowSignupPopup] = useState(false)
@@ -31,6 +32,8 @@ const Home = () => {
         onClose={handleCloseSignup}
         onSwitchToLogin={() => {}} // Pode implementar depois se necessário
       />
+      
+      <SocialNetworkButton />
     </>
   )
 }

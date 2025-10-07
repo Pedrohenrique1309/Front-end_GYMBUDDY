@@ -12,15 +12,8 @@ import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
-// import { uploadImageToAzure } from "./uploadImageToAzure" // Desabilitado - upload será implementado posteriormente
+// import { uploadImageToAzure } from './uploadImageToAzure'
 // import LiquidDatePicker from '../../components/LiquidDatePicker'
-
-// Configurações do Azure Storage - Desabilitado temporariamente
-// const AZURE_CONFIG = {
-//   storageAccount: 'gymbuddyfoto',
-//   sasToken: 'sp=r&st=2025-10-02T18:44:39Z&se=2025-10-03T02:59:39Z&spr=https&sv=2024-11-04&sr=c&sig=Y1ffwILATqQ84SaetGEf933cndS3HPbmLnYs7yPoeAs%3D',
-//   containerName: 'tccgymbuddyfoto',
-// };
 
 
 const Profile = () => {
@@ -40,7 +33,7 @@ const Profile = () => {
     altura: user?.altura || '',
     imc: user?.imc || '',
     foto: user?.foto || '',
-  });
+  })
   const [photos, setPhotos] = useState<string[]>([])
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)

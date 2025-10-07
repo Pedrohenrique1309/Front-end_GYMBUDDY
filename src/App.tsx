@@ -8,6 +8,7 @@ import Resources from './components/Resources'
 import AppPage from './pages/App'
 import Profile from './pages/Profile'
 import Network from './pages/Network'
+import Social from './pages/Social'
 import { UserProvider } from './contexts/UserContext'
 
 const pageVariants = {
@@ -123,7 +124,7 @@ const AnimatedRoutes = () => {
               variants={pageVariants}
               transition={pageTransition}
             >
-              <Network />
+              <Social />
             </motion.div>
           } 
         />
