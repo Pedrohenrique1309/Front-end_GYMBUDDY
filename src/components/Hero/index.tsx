@@ -267,7 +267,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
             </FloatingCards>
           </ImageContainer>
           <AnimatePresence mode="wait">
-            {!isLoggedIn ? (
+            {!isLoggedIn && (
               <FixedCTA
                 key="signup-btn"
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -283,49 +283,6 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
                   <FiChevronRight className="a3" />
                 </span>
               </FixedCTA>
-            ) : (
-              <NetworkCTA
-                key="network-btn"
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                onClick={handleNetworkAccess}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div 
-                  className="icon-wrapper"
-                  animate={{ 
-                    rotate: [0, 360],
-                    scale: [1, 1.1, 1]
-                  }}
-                  transition={{ 
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "linear"
-                  }}
-                >
-                  <FiGlobe />
-                </motion.div>
-                <div className="content">
-                  <span className="label">Acessar Rede</span>
-                  <span className="sublabel">GYM BUDDY</span>
-                </div>
-                <motion.div 
-                  className="user-icon"
-                  animate={{ 
-                    y: [0, -2, 0],
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <FiUserCheck />
-                </motion.div>
-              </NetworkCTA>
             )}
           </AnimatePresence>
         </Content>
