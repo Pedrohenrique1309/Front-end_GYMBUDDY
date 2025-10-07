@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { motion } from 'framer-motion'
-import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight } from 'react-icons/fi'
+import { motion, AnimatePresence } from 'framer-motion'
+import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
@@ -11,7 +11,7 @@ const API_BASE_URL = '/api/v1/gymbuddy'
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
-  background: #121212;
+  background: #1a1a1a;
   color: white;
   position: relative;
 `
@@ -21,39 +21,65 @@ const Sidebar = styled.div`
   left: 0;
   top: 0;
   bottom: 0;
-  width: 60px;
+  width: 50px;
   background: #E53935;
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 2px 0 10px rgba(229, 57, 53, 0.3);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, 
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.3) 100%
+    );
+  }
 `
 
 const SidebarIcon = styled.div`
   color: white;
-  font-size: 24px;
+  font-size: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   
   &:hover {
-    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 `
 
 const Header = styled.header`
   position: fixed;
   top: 0;
-  left: 60px;
+  left: 50px;
   right: 0;
   height: 70px;
-  background: rgba(18, 18, 18, 0.95);
+  background: rgba(26, 26, 26, 0.95);
   backdrop-filter: blur(10px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 3rem;
   z-index: 99;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 `
 
 const Logo = styled.div`
@@ -81,9 +107,14 @@ const MainContent = styled.div`
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: 2rem;
-  padding: 100px 2rem 2rem 90px;
+  padding: 100px 2rem 2rem 80px;
   max-width: 1400px;
   margin: 0 auto;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    padding: 100px 2rem 2rem 70px;
+  }
 `
 
 const ContentArea = styled.div`
@@ -150,14 +181,16 @@ const PostsGrid = styled.div`
 `
 
 const PostCard = styled.div`
-  background: #1E1E1E;
+  background: #2a2a2a;
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border-color: rgba(229, 57, 53, 0.2);
   }
 `
 
@@ -326,6 +359,175 @@ const FriendStatus = styled.div`
   line-height: 1.3;
 `
 
+// AI Overlay Components
+const AiOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 33vw;
+  height: 100vh;
+  background: rgba(139, 69, 19, 0.15);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(229, 57, 53, 0.1) 0%,
+      rgba(139, 69, 19, 0.05) 50%,
+      rgba(183, 28, 28, 0.1) 100%
+    );
+    z-index: -1;
+  }
+  
+  @media (max-width: 1024px) {
+    width: 50vw;
+  }
+  
+  @media (max-width: 768px) {
+    width: 80vw;
+  }
+`
+
+const AiHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`
+
+const AiTitle = styled.h2`
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+`
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 2.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  
+  &:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+  }
+`
+
+const AiContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+`
+
+const AiMessage = styled.div`
+  font-size: 1.8rem;
+  line-height: 1.6;
+  color: white;
+  font-weight: 500;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`
+
+const SuggestionTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+`
+
+const SuggestionTag = styled.div`
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+  }
+`
+
+const AiInputContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+`
+
+const AiInput = styled.input`
+  flex: 1;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 25px;
+  padding: 1.5rem 2rem;
+  font-size: 1.4rem;
+  color: #333;
+  
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.5);
+  }
+  
+  &:focus {
+    outline: none;
+    background: white;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+`
+
+const SendButton = styled(motion.button)`
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(229, 57, 53, 0.8);
+  border: 1px solid rgba(229, 57, 53, 0.5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(229, 57, 53, 1);
+    box-shadow: 0 0 20px rgba(229, 57, 53, 0.4);
+  }
+  
+  svg {
+    font-size: 1.8rem;
+  }
+`
+
 // Interfaces
 export interface User {
   id: number
@@ -355,6 +557,8 @@ const Social = () => {
   const [users, setUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<Post[]>([])
+  const [showAiOverlay, setShowAiOverlay] = useState(false)
+  const [aiMessage, setAiMessage] = useState('')
 
   useEffect(() => {
     loadUsers()
@@ -448,11 +652,70 @@ const Social = () => {
   }
   
 
+  const handleAiSubmit = () => {
+    if (!aiMessage.trim()) return
+    // Aqui você pode implementar a lógica do chat da IA
+    console.log('Mensagem para IA:', aiMessage)
+    setAiMessage('')
+  }
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setShowAiOverlay(false)
+    }
+  }
+
   return (
     <Container>
+      {/* Overlay de IA */}
+      <AnimatePresence>
+        {showAiOverlay && (
+          <AiOverlay
+            initial={{ x: -400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -400, opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            <AiHeader>
+              <AiTitle>Assistente IA</AiTitle>
+              <CloseButton onClick={() => setShowAiOverlay(false)}>×</CloseButton>
+            </AiHeader>
+            
+            <AiContent>
+              <AiMessage>
+                Em seu último treino você progrediu carga em 2 exercícios.
+              </AiMessage>
+              
+              <SuggestionTags>
+                <SuggestionTag>#Hipertrofia</SuggestionTag>
+                <SuggestionTag>Dieta</SuggestionTag>
+                <SuggestionTag>Cardio</SuggestionTag>
+              </SuggestionTags>
+            </AiContent>
+            
+            <AiInputContainer>
+              <AiInput
+                type="text"
+                placeholder="Me ajude no meu treino?"
+                value={aiMessage}
+                onChange={(e) => setAiMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAiSubmit()}
+              />
+              <SendButton
+                onClick={handleAiSubmit}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <FiSend />
+              </SendButton>
+            </AiInputContainer>
+          </AiOverlay>
+        )}
+      </AnimatePresence>
+      
       {/* Barra Lateral Vermelha */}
       <Sidebar>
-        <SidebarIcon>
+        <SidebarIcon onClick={() => setShowAiOverlay(!showAiOverlay)}>
           <FiChevronRight />
         </SidebarIcon>
       </Sidebar>
