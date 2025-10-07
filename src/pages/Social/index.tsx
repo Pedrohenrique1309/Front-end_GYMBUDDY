@@ -318,12 +318,15 @@ const FriendItem = styled.div`
   display: flex;
   gap: 1.2rem;
   cursor: pointer;
-  padding: 1rem;
+  padding: 1.2rem;
   border-radius: 12px;
   transition: all 0.3s ease;
+  min-height: 70px;
+  align-items: flex-start;
   
   &:hover {
     background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
   }
 `
 
@@ -345,7 +348,8 @@ const FriendInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.5rem;
+  min-width: 0;
 `
 
 const FriendName = styled.div`
@@ -355,11 +359,29 @@ const FriendName = styled.div`
 
 const FriendStatus = styled.div`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.6);
-  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.4;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-top: 0.2rem;
 `
 
 // AI Overlay Components
+const OverlayBackground = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  cursor: pointer;
+`
+
 const AiOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -620,7 +642,7 @@ const Social = () => {
           nome: 'João Silva',
           nickname: '@joaosilva',
           foto: '',
-          descricao: 'Foco no treino! 💪',
+          descricao: 'Foco no treino! 💪 Perdeu 10kg em 6 meses',
           publicacoes: 45
         },
         {
@@ -628,7 +650,7 @@ const Social = () => {
           nome: 'Maria Santos',
           nickname: '@mariafitness',
           foto: '',
-          descricao: 'Personal Trainer',
+          descricao: 'Personal Trainer certificada. Especialista em hipertrofia',
           publicacoes: 89
         },
         {
@@ -636,7 +658,7 @@ const Social = () => {
           nome: 'Pedro Costa',
           nickname: '@pedrocosta',
           foto: '',
-          descricao: 'Crossfit lover',
+          descricao: 'Crossfit lover 🏋️ Competidor há 3 anos',
           publicacoes: 34
         },
         {
@@ -644,8 +666,24 @@ const Social = () => {
           nome: 'Ana Julia',
           nickname: '@anajulia',
           foto: '',
-          descricao: 'Yoga e pilates',
+          descricao: 'Yoga e pilates 🧘 Instrutora certificada',
           publicacoes: 67
+        },
+        {
+          id: 6,
+          nome: 'Carlos Mendes',
+          nickname: '@carlosfit',
+          foto: '',
+          descricao: 'Bodybuilder natural. Preparação para campeonatos',
+          publicacoes: 123
+        },
+        {
+          id: 7,
+          nome: 'Lucia Fernanda',
+          nickname: '@luciafernanda',
+          foto: '',
+          descricao: 'Nutricionista esportiva 🥗 Consultoria online',
+          publicacoes: 78
         }
       ])
     }
@@ -670,12 +708,20 @@ const Social = () => {
       {/* Overlay de IA */}
       <AnimatePresence>
         {showAiOverlay && (
-          <AiOverlay
-            initial={{ x: -400, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -400, opacity: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          >
+          <>
+            <OverlayBackground 
+              onClick={handleOverlayClick}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            />
+            <AiOverlay
+              initial={{ x: -400, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -400, opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            >
             <AiHeader>
               <AiTitle>Assistente IA</AiTitle>
               <CloseButton onClick={() => setShowAiOverlay(false)}>×</CloseButton>
@@ -709,7 +755,8 @@ const Social = () => {
                 <FiSend />
               </SendButton>
             </AiInputContainer>
-          </AiOverlay>
+            </AiOverlay>
+          </>
         )}
       </AnimatePresence>
       
