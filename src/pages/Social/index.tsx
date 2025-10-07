@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiChevronLeft, FiSearch } from 'react-icons/fi'
+import { FiChevronLeft, FiSearch, FiHeart, FiMessageCircle } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
@@ -41,6 +41,7 @@ const Social = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [hoveredUser, setHoveredUser] = useState<User | null>(null)
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null)
+  const [showAIChat, setShowAIChat] = useState(false)
 
   useEffect(() => {
     loadPosts()
@@ -101,11 +102,13 @@ const Social = () => {
       const response = await fetch(`${API_BASE_URL}/usuario`)
       const data = await response.json()
       if (data?.usuarios) {
-        setSuggestedUsers(data.usuarios.slice(0, 6))
+        // Filtrar usuário logado da lista
+        const filteredUsers = data.usuarios.filter((usuario: User) => usuario.id !== user?.id)
+        setSuggestedUsers(filteredUsers)
       }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
-      // Mock data
+      // Mock data - excluindo o usuário logado
       setSuggestedUsers([
         {
           id: 3,
@@ -122,8 +125,24 @@ const Social = () => {
           foto: '',
           descricao: 'Treinando e mantendo sempre o foco!',
           publicacoes: 156
+        },
+        {
+          id: 5,
+          nome: 'Mariana Santos',
+          nickname: '@mari_fit',
+          foto: '',
+          descricao: 'Crossfit e funcional todos os dias',
+          publicacoes: 89
+        },
+        {
+          id: 6,
+          nome: 'Carlos Eduardo',
+          nickname: '@carlos_gym',
+          foto: '',
+          descricao: 'Powerlifting é minha paixão',
+          publicacoes: 203
         }
-      ])
+      ].filter(u => u.id !== user?.id))
     }
   }
 
@@ -147,41 +166,94 @@ const Social = () => {
 
   return (
     <Container>
-      <MainContent>
-        <LeftColumn>
-          <ProfileSidebar />
-        </LeftColumn>
+      {/* Chat IA Minimizado - Lado Esquerdo */}
+      <AIChatSidebar className={showAIChat ? 'expanded' : ''}>
+        {!showAIChat ? (
+          <MinimizedAIButton onClick={() => setShowAIChat(true)}>
+            <span>💬</span>
+            <span>GymBuddy AI</span>
+          </MinimizedAIButton>
+        ) : (
+          <ExpandedAIChat>
+            <AIChat />
+            <CloseAIButton onClick={() => setShowAIChat(false)}>
+              ✕
+            </CloseAIButton>
+          </ExpandedAIChat>
+        )}
+      </AIChatSidebar>
 
-        <CenterColumn>
-          <SearchSection>
+      {/* Background Overlay quando AI Chat está aberto */}
+      {showAIChat && <Overlay onClick={() => setShowAIChat(false)} />}
+
+      <MainContent>
+        <ContentArea>
+          <Header>
+            <h1>Como seus amigos estão<br/>treinando hoje?</h1>
             <SearchBar>
               <FiSearch />
               <input 
                 type="text" 
-                placeholder="Buscar na rede GymBuddy..."
+                placeholder="Buscar"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </SearchBar>
-          </SearchSection>
-          
-          <AIChat />
-          <PostFeed 
-            posts={posts}
-            setPosts={setPosts}
-            loadPosts={loadPosts}
-            searchQuery={searchQuery}
-          />
-        </CenterColumn>
+          </Header>
 
-        <RightColumn>
-          <RecentActivity />
+          <PostsSection>
+            <SectionTitle>Posts recentes</SectionTitle>
+            <PostsGrid>
+              {posts.filter(post => 
+                searchQuery === '' || 
+                post.conteudo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                post.usuario.nome.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map(post => (
+                <PostCard key={post.id}>
+                  <PostImage>
+                    {post.imagem && <img src={post.imagem} alt="Post" />}
+                    <PostOverlay>
+                      <PostText>{post.conteudo}</PostText>
+                    </PostOverlay>
+                  </PostImage>
+                  <PostFooter>
+                    <UserInfo onClick={() => navigate(`/profile/${post.usuario.id}`)}>
+                      {post.usuario.foto ? (
+                        <img src={post.usuario.foto} alt={post.usuario.nome} />
+                      ) : (
+                        <DefaultAvatar size={32} />
+                      )}
+                      <span>{post.usuario.nickname}</span>
+                    </UserInfo>
+                    <PostStats>
+                      <StatItem>
+                        <FiHeart />
+                        <span>{post.curtidas}</span>
+                      </StatItem>
+                      <StatItem>
+                        <FiMessageCircle />
+                        <span>{post.comentarios}</span>
+                      </StatItem>
+                    </PostStats>
+                  </PostFooter>
+                </PostCard>
+              ))}
+            </PostsGrid>
+          </PostsSection>
+        </ContentArea>
+
+        <FriendsSection>
+          <SearchBarTop>
+            <input type="text" placeholder="Buscar" />
+          </SearchBarTop>
+          
+          <FriendsTitle>Amigos</FriendsTitle>
           <FriendsList 
             suggestedUsers={suggestedUsers}
             onUserHover={handleUserHover}
             onUserLeave={handleUserLeave}
           />
-        </RightColumn>
+        </FriendsSection>
       </MainContent>
 
       {/* User Hover Card */}
@@ -220,56 +292,131 @@ const Container = styled.div`
   min-height: 100vh;
   background: #0A0A0A;
   color: white;
-  padding-top: 2rem;
+  position: relative;
+`
+
+const AIChatSidebar = styled.div`
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  background: var(--primary);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  
+  &.expanded {
+    width: 400px;
+    background: rgba(227, 6, 19, 0.15);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(227, 6, 19, 0.3);
+  }
+`
+
+const MinimizedAIButton = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 2rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  span:first-child {
+    font-size: 2rem;
+  }
+  
+  span:last-child {
+    font-size: 1rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+`
+
+const ExpandedAIChat = styled.div`
+  flex: 1;
+  padding: 2rem;
+  position: relative;
+`
+
+const CloseAIButton = styled.button`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+`
+
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 999;
 `
 
 const MainContent = styled.div`
   display: grid;
-  grid-template-columns: 35rem 1fr 30rem;
+  grid-template-columns: 1fr 300px;
   gap: 2rem;
-  padding: 2rem 4rem;
-  max-width: 160rem;
+  padding: 2rem 2rem 2rem 80px;
+  max-width: 140rem;
   margin: 0 auto;
+  min-height: 100vh;
 `
 
-const LeftColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`
-
-const CenterColumn = styled.div`
+const ContentArea = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
 `
 
-const RightColumn = styled.div`
+const Header = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`
-
-const SearchSection = styled.div`
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  
+  h1 {
+    font-size: 3rem;
+    margin: 0;
+    line-height: 1.2;
+    color: white;
+  }
 `
 
 const SearchBar = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 3rem;
   padding: 1rem 2rem;
-  width: 100%;
-  max-width: 50rem;
-  transition: all 0.3s ease;
-  
-  &:focus-within {
-    border-color: rgba(227, 6, 19, 0.3);
-    box-shadow: 0 0 20px rgba(227, 6, 19, 0.1);
-  }
+  min-width: 300px;
   
   svg {
     color: rgba(255, 255, 255, 0.5);
@@ -284,13 +431,158 @@ const SearchBar = styled.div`
     font-size: 1.4rem;
     
     &::placeholder {
-      color: rgba(255, 255, 255, 0.3);
+      color: rgba(255, 255, 255, 0.4);
     }
     
     &:focus {
       outline: none;
     }
   }
+`
+
+const PostsSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`
+
+const SectionTitle = styled.h2`
+  font-size: 1.8rem;
+  margin: 0;
+  color: white;
+`
+
+const PostsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+`
+
+const PostCard = styled.div`
+  background: white;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+`
+
+const PostImage = styled.div`
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`
+
+const PostOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 1.5rem;
+`
+
+const PostText = styled.p`
+  color: white;
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 600;
+`
+
+const PostFooter = styled.div`
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  img {
+    width: 3.2rem;
+    height: 3.2rem;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  span {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2D2D2D;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+`
+
+const PostStats = styled.div`
+  display: flex;
+  gap: 1.5rem;
+`
+
+const StatItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666;
+  
+  svg {
+    font-size: 1.6rem;
+  }
+  
+  span {
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+`
+
+const FriendsSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`
+
+const SearchBarTop = styled.div`
+  input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3rem;
+    padding: 1rem 2rem;
+    color: white;
+    font-size: 1.4rem;
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+  }
+`
+
+const FriendsTitle = styled.h2`
+  font-size: 1.8rem;
+  margin: 0;
+  color: white;
 `
 
 const HoverCard = styled(motion.div)`

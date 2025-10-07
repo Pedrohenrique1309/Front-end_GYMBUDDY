@@ -208,7 +208,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
   };
 
   const handleNetworkAccess = () => {
-    navigate('/network')
+    navigate('/social')
   }
 
 
@@ -267,7 +267,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
             </FloatingCards>
           </ImageContainer>
           <AnimatePresence mode="wait">
-            {!isLoggedIn && (
+            {!isLoggedIn ? (
               <FixedCTA
                 key="signup-btn"
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -283,6 +283,26 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
                   <FiChevronRight className="a3" />
                 </span>
               </FixedCTA>
+            ) : (
+              <NetworkCTA
+                key="network-btn"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                onClick={handleNetworkAccess}
+              >
+                <div className="icon-wrapper">
+                  <FiGlobe />
+                </div>
+                <div className="content">
+                  <span className="label">Acessar Rede</span>
+                  <span className="sublabel">GYM BUDDY</span>
+                </div>
+                <div className="user-icon">
+                  <FiUserCheck />
+                </div>
+              </NetworkCTA>
             )}
           </AnimatePresence>
         </Content>
