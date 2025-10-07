@@ -10,7 +10,11 @@ import SignupPopup from '../SignupPopup'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/default-avatar'
 
-const Header = () => {
+interface HeaderProps {
+  isVisible?: boolean
+}
+
+const Header = ({ isVisible = true }: HeaderProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -111,7 +115,7 @@ const Header = () => {
   ];
 
   return (
-    <HeaderContainer $scrolled={scrolled}>
+    <HeaderContainer $scrolled={scrolled} $isVisible={isVisible}>
       <div className="container">
         <Logo>
           <LogoImage src={BRAND.logoSrc} alt={BRAND.name} />
@@ -453,14 +457,14 @@ const Header = () => {
   );
 };
 
-const HeaderContainer = styled.header<{ $scrolled: boolean }>`
+const HeaderContainer = styled.header<{ $scrolled: boolean; $isVisible: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
   height: ${({ $scrolled }) => ($scrolled ? '6.4rem' : '8rem')};
-  transition: height 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+  transition: all 0.5s ease;
   background: ${({ $scrolled }) =>
     $scrolled
       ? 'rgba(10, 10, 10, 0.7)'
@@ -469,14 +473,17 @@ const HeaderContainer = styled.header<{ $scrolled: boolean }>`
   border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent')};
   box-shadow: ${({ $scrolled }) => ($scrolled ? '0 4px 20px rgba(0,0,0,0.25)' : 'none')};
   
+  opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
+  transform: ${({ $isVisible }) => ($isVisible ? 'translateY(0)' : 'translateY(-100%)')};
+  
   .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 100%;
-    padding-left: 0; /* flush left for header only */
+    padding-left: 0;
   }
-`;
+`
 
 const Logo = styled.div`
   display: flex;

@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import Network from './pages/Network'
 import Social from './pages/Social'
 import { UserProvider } from './contexts/UserContext'
+import { HeaderProvider, useHeader } from './contexts/HeaderContext'
 
 const pageVariants = {
   initial: {
@@ -40,6 +41,7 @@ const pageTransition = {
 
 const AnimatedRoutes = () => {
   const location = useLocation()
+  const { isHeaderVisible } = useHeader()
   
   return (
     <AnimatePresence mode="wait">
@@ -136,12 +138,24 @@ const AnimatedRoutes = () => {
 function App() {
   return (
     <UserProvider>
-      <Router>
-        <Header />
-        <DevGridOverlay />
-        <AnimatedRoutes />
-      </Router>
+      <HeaderProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </HeaderProvider>
     </UserProvider>
+  )
+}
+
+const AppContent = () => {
+  const { isHeaderVisible } = useHeader()
+  
+  return (
+    <>
+      <Header isVisible={isHeaderVisible} />
+      <DevGridOverlay />
+      <AnimatedRoutes />
+    </>
   )
 }
 

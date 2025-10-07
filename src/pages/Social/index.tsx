@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiChevronLeft, FiSearch, FiHeart, FiMessageCircle } from 'react-icons/fi'
+import { FiChevronLeft, FiSearch, FiHeart, FiMessageCircle, FiChevronRight } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
+import { useHeader } from '../../contexts/HeaderContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
 import AIChat from './components/AIChat'
@@ -35,6 +36,7 @@ export interface Post {
 
 const Social = () => {
   const { user } = useUser()
+  const { setHeaderVisible } = useHeader()
   const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
@@ -170,8 +172,7 @@ const Social = () => {
       <AIChatSidebar className={showAIChat ? 'expanded' : ''}>
         {!showAIChat ? (
           <MinimizedAIButton onClick={() => setShowAIChat(true)}>
-            <span>💬</span>
-            <span>GymBuddy AI</span>
+            <FiChevronRight className="arrow" />
           </MinimizedAIButton>
         ) : (
           <ExpandedAIChat>
@@ -306,40 +307,55 @@ const AIChatSidebar = styled.div`
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   
   &.expanded {
     width: 400px;
     background: rgba(227, 6, 19, 0.15);
     backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(227, 6, 19, 0.3);
+    align-items: stretch;
+    justify-content: flex-start;
   }
 `
 
 const MinimizedAIButton = styled.button`
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
   background: transparent;
   border: none;
   color: white;
-  padding: 2rem 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
+  height: 100%;
+  position: relative;
   
-  span:first-child {
+  .arrow {
     font-size: 2rem;
+    animation: pulse-arrow 2s ease-in-out infinite;
+    transform: rotate(90deg);
   }
   
-  span:last-child {
-    font-size: 1rem;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+  @keyframes pulse-arrow {
+    0%, 100% {
+      transform: rotate(90deg) translateX(0);
+      opacity: 0.7;
+    }
+    50% {
+      transform: rotate(90deg) translateX(3px);
+      opacity: 1;
+    }
   }
   
   &:hover {
     background: rgba(255, 255, 255, 0.1);
+    
+    .arrow {
+      animation-duration: 0.8s;
+      transform: rotate(90deg) scale(1.1);
+    }
   }
 `
 
@@ -382,10 +398,11 @@ const MainContent = styled.div`
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 2rem;
-  padding: 2rem 2rem 2rem 80px;
+  padding: 10rem 2rem 2rem 80px;
   max-width: 140rem;
   margin: 0 auto;
   min-height: 100vh;
+  transition: all 0.5s ease;
 `
 
 const ContentArea = styled.div`
