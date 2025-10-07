@@ -239,12 +239,8 @@ const Header = () => {
                       
                       <ProfileCardStatsInline>
                         <StatInlineItem>
-                          <FiUsers style={{ fontSize: '1.6rem' }} />
-                          <span>312</span>
-                        </StatInlineItem>
-                        <StatInlineItem>
-                          <FiActivity style={{ fontSize: '1.6rem' }} />
-                          <span>48</span>
+                          <FiShare2 style={{ fontSize: '1.6rem' }} />
+                          <span>24 publicações</span>
                         </StatInlineItem>
                       </ProfileCardStatsInline>
                     </ProfileCardInfo>

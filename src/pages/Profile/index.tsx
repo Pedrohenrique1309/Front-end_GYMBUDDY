@@ -4,22 +4,23 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   FiEdit3, FiCamera, FiPlus, FiX, FiCheck,
   FiUser, FiMail, FiMapPin, FiCalendar, FiTarget,
-  FiActivity, FiAtSign, FiFileText, FiTrendingUp
+  FiActivity, FiAtSign, FiFileText, FiTrendingUp,
+  FiChevronDown, FiChevronUp
 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
-import { uploadImageToAzure } from "./uploadImageToAzure"
+// import { uploadImageToAzure } from "./uploadImageToAzure" // Desabilitado - upload será implementado posteriormente
 // import LiquidDatePicker from '../../components/LiquidDatePicker'
 
-// Configurações do Azure Storage
-const AZURE_CONFIG = {
-  storageAccount: 'gymbuddyfoto',
-  sasToken: 'sp=r&st=2025-10-02T18:44:39Z&se=2025-10-03T02:59:39Z&spr=https&sv=2024-11-04&sr=c&sig=Y1ffwILATqQ84SaetGEf933cndS3HPbmLnYs7yPoeAs%3D',
-  containerName: 'tccgymbuddyfoto',
-};
+// Configurações do Azure Storage - Desabilitado temporariamente
+// const AZURE_CONFIG = {
+//   storageAccount: 'gymbuddyfoto',
+//   sasToken: 'sp=r&st=2025-10-02T18:44:39Z&se=2025-10-03T02:59:39Z&spr=https&sv=2024-11-04&sr=c&sig=Y1ffwILATqQ84SaetGEf933cndS3HPbmLnYs7yPoeAs%3D',
+//   containerName: 'tccgymbuddyfoto',
+// };
 
 
 const Profile = () => {
@@ -42,6 +43,7 @@ const Profile = () => {
   });
   const [photos, setPhotos] = useState<string[]>([])
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -67,7 +69,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      setEditedData({
+      const newEditedData = {
         nome: user.nome || '',
         email: user.email || '',
         nickname: user.nickname || '',
@@ -78,7 +80,15 @@ const Profile = () => {
         altura: user.altura || '',
         imc: user.imc || '',
         foto: user.foto || ''
-      });
+      }
+      
+      console.log('🔄 Sincronizando editedData com user:', {
+        userFoto: !!user.foto,
+        newEditedDataFoto: !!newEditedData.foto,
+        userFotoLength: user.foto?.length || 0
+      })
+      
+      setEditedData(newEditedData);
     }
   }, [user]);
 
@@ -90,55 +100,79 @@ const Profile = () => {
     try {
       let finalFotoUrl = editedData.foto;
       
-      // Se há uma nova foto pendente, fazer upload para Azure
+      // Upload de foto será implementado posteriormente - por enquanto apenas visual
       if (pendingAvatarFile) {
-        console.log('📤 Fazendo upload da nova foto para Azure...');
-        try {
-          const uploadParams = {
-            file: pendingAvatarFile,
-            ...AZURE_CONFIG
-          };
-          
-          finalFotoUrl = await uploadImageToAzure(uploadParams);
-          console.log('✅ Upload concluído:', finalFotoUrl);
-          
-          // Limpar arquivo pendente
-          setPendingAvatarFile(null);
-        } catch (uploadError) {
-          console.error('❌ Erro no upload:', uploadError);
-          alert('Erro ao fazer upload da foto. Salvando outros dados...');
-        }
+        console.log('📸 Foto selecionada (upload estático - não enviado ao servidor)');
+        // A foto já foi processada visualmente no handleAvatarUpload
+        // finalFotoUrl já contém o preview local (base64)
+        
+        // Limpar arquivo pendente
+        setPendingAvatarFile(null);
       }
       
       // Atualizar no backend se tiver ID do usuário
       if (user?.id) {
-        const payload = {
+        // Debug do user object completo
+        console.log('🔍 Debug user object:', {
+          user,
+          userId: user.id,
+          userIdType: typeof user.id,
+          userIdValue: JSON.stringify(user.id)
+        })
+        
+        // Preparar payload básico
+        const payload: any = {
           nome: editedData.nome,
           email: editedData.email,
           nickname: editedData.nickname,
-          senha: user.senha || 'senha123', // Backend exige senha
-          descricao: editedData.descricao,
-          localizacao: editedData.localizacao,
-          data_nascimento: editedData.data_nascimento,
-          peso: editedData.peso ? Number(editedData.peso) : undefined,
-          altura: editedData.altura ? Number(editedData.altura) : undefined,
-          imc: editedData.imc ? Number(editedData.imc) : undefined,
-          foto: finalFotoUrl
+          senha: user.senha || 'Senha123@', // Backend requer senha para validação
+          descricao: editedData.descricao || '',
+          localizacao: editedData.localizacao || '',
+          data_nascimento: editedData.data_nascimento || '1990-01-01',
+          foto: finalFotoUrl || ''
+        }
+        
+        // Adicionar campos numéricos apenas se tiverem valores válidos
+        if (editedData.peso && editedData.peso !== '' && editedData.peso !== '--') {
+          payload.peso = Number(editedData.peso)
+        }
+        if (editedData.altura && editedData.altura !== '' && editedData.altura !== '--') {
+          payload.altura = Number(editedData.altura)
+        }
+        
+        // Calcular IMC automaticamente se peso e altura estiverem disponíveis
+        if (payload.peso && payload.altura) {
+          payload.imc = Number((payload.peso / (payload.altura * payload.altura)).toFixed(2))
+          console.log(`📊 IMC calculado automaticamente: ${payload.imc} (peso: ${payload.peso}kg, altura: ${payload.altura}m)`)
         }
         
         console.log('🚀 Enviando dados para API:', {
           userId: user.id,
+          userIdType: typeof user.id,
           payload: { ...payload, senha: '[REDACTED]' }
         })
         
         await updateUserAPI(user.id, payload)
       }
       
-      // Atualizar contexto local
-      updateUser({
+      // Atualizar contexto local com IMC calculado e foto
+      const updatedUserData = {
         ...user,
-        ...editedData
-      })
+        ...editedData,
+        foto: finalFotoUrl // Garantir que a foto seja atualizada no contexto
+      }
+      
+      // Calcular e adicionar IMC se peso e altura estiverem disponíveis
+      if (editedData.peso && editedData.altura && editedData.peso !== '--' && editedData.altura !== '--') {
+        const peso = Number(editedData.peso)
+        const altura = Number(editedData.altura)
+        const imc = peso / (altura * altura)
+        updatedUserData.imc = imc.toFixed(2)
+        console.log(`📊 IMC atualizado no contexto: ${updatedUserData.imc}`)
+      }
+      
+      console.log('📸 Foto atualizada no contexto:', finalFotoUrl ? 'Nova foto definida' : 'Sem alteração de foto')
+      updateUser(updatedUserData)
       
       setIsEditing(false)
       console.log('✅ Perfil atualizado com sucesso!')
@@ -152,21 +186,46 @@ const Profile = () => {
     try {
       // Atualizar no backend se tiver ID do usuário
       if (user?.id) {
-        await updateUserAPI(user.id, {
-          peso: data.peso || undefined,
-          altura: data.altura || undefined,
-        });
+        const updateData: any = {};
+        
+        // Adicionar apenas se tiver valores válidos
+        if (data.peso !== null && data.peso !== undefined) {
+          updateData.peso = data.peso;
+        }
+        if (data.altura !== null && data.altura !== undefined) {
+          updateData.altura = data.altura;
+        }
+        
+        // Calcular IMC se ambos peso e altura estiverem disponíveis
+        if (data.peso && data.altura) {
+          updateData.imc = Number((data.peso / (data.altura * data.altura)).toFixed(2));
+          console.log(`📊 IMC calculado no popup: ${updateData.imc}`);
+        }
+        
+        // Só fazer update se tiver dados para atualizar
+        if (Object.keys(updateData).length > 0) {
+          await updateUserAPI(user.id, updateData);
+        }
       }
       
       // Atualizar contexto local
       if (user && user.nome && user.email) {
-        updateUser({
+        const updatedData = {
           ...user,
           nome: user.nome,
           email: user.email,
           peso: data.peso?.toString() || '--',
           altura: data.altura?.toString() || '--',
-        });
+        };
+        
+        // Calcular e adicionar IMC no contexto local
+        if (data.peso && data.altura) {
+          const imc = data.peso / (data.altura * data.altura);
+          updatedData.imc = imc.toFixed(2);
+          console.log(`📊 IMC atualizado no contexto do popup: ${updatedData.imc}`);
+        }
+        
+        updateUser(updatedData);
       }
       
       // Marcar que visitou o perfil
@@ -246,7 +305,19 @@ const Profile = () => {
       const reader = new FileReader()
       reader.onloadend = () => {
         const avatarUrl = reader.result as string
-        setEditedData(prev => ({ ...prev, foto: avatarUrl }))
+        console.log('📸 Preview da foto gerado:', avatarUrl ? 'Base64 criado com sucesso' : 'Erro ao gerar preview')
+        console.log('📸 Tamanho do base64:', avatarUrl?.length || 0)
+        console.log('📸 Preview URL (primeiros 100 chars):', avatarUrl?.substring(0, 100))
+        
+        setEditedData(prev => {
+          const newData = { ...prev, foto: avatarUrl }
+          console.log('📸 Estado editedData atualizado:', { 
+            hadFotoBefore: !!prev.foto, 
+            hasFotoNow: !!newData.foto,
+            fotoLength: newData.foto?.length || 0
+          })
+          return newData
+        })
       }
       reader.readAsDataURL(file)
     }
@@ -281,13 +352,24 @@ const Profile = () => {
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
-                {editedData.foto ? (
-                  <Avatar src={editedData.foto} alt={user.nome} />
-                ) : (
-                  <DefaultAvatarWrapper>
-                    <DefaultAvatar size={180} />
-                  </DefaultAvatarWrapper>
-                )}
+                {(() => {
+                  const fotoSrc = isEditing ? editedData.foto : user?.foto
+                  console.log('🖼️ Renderizando avatar:', {
+                    isEditing,
+                    editedDataFoto: !!editedData.foto,
+                    userFoto: !!user?.foto,
+                    fotoSrcSelected: !!fotoSrc,
+                    fotoSrcLength: fotoSrc?.length || 0
+                  })
+                  
+                  return fotoSrc ? (
+                    <Avatar src={fotoSrc} alt={user.nome} />
+                  ) : (
+                    <DefaultAvatarWrapper>
+                      <DefaultAvatar size={180} />
+                    </DefaultAvatarWrapper>
+                  )
+                })()}
                 {isEditing && (
                   <AvatarOverlay
                     initial={{ opacity: 0 }}
@@ -405,6 +487,9 @@ const Profile = () => {
                     <UserName>{user.nome || 'Usuário'}</UserName>
                     <UserEmail>@{user.nickname || user.email?.split('@')[0] || 'email'}</UserEmail>
                     <UserEmailSecondary>{user.email}</UserEmailSecondary>
+                    <UserDescription>
+                      {user.descricao || 'Nenhuma descrição adicionada ainda.'}
+                    </UserDescription>
                   </UserInfoDisplay>
                 )}
               </AnimatePresence>
@@ -424,6 +509,7 @@ const Profile = () => {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
+                  {/* Seção Sobre Mim - Sempre visível */}
                   <DetailSection>
                     <SectionLabel>
                       <FiFileText /> Sobre mim
@@ -437,61 +523,84 @@ const Profile = () => {
                     </TextAreaGroup>
                   </DetailSection>
 
-                  <DetailSection>
-                    <SectionLabel>
-                      <FiUser /> Informações Pessoais
-                    </SectionLabel>
-                    <DetailsGrid>
-                      <InputGroup>
-                        <InputIcon><FiMapPin /></InputIcon>
-                        <StyledEditInput
-                          type="text"
-                          value={editedData.localizacao}
-                          onChange={(e) => setEditedData({ ...editedData, localizacao: e.target.value })}
-                          placeholder="Ex: São Paulo - SP"
-                        />
-                      </InputGroup>
-                      <InputGroup>
-                        <InputIcon><FiCalendar /></InputIcon>
-                        <StyledEditInput
-                          type="date"
-                          value={editedData.data_nascimento}
-                          onChange={(e) => setEditedData({ ...editedData, data_nascimento: e.target.value })}
-                          placeholder="Data de nascimento"
-                        />
-                      </InputGroup>
-                    </DetailsGrid>
-                  </DetailSection>
+                  {/* Botão de Expansão */}
+                  <ExpandButton
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                    {isExpanded ? 'Ocultar dados' : 'Ver mais informações'}
+                  </ExpandButton>
 
-                  <DetailSection>
-                    <SectionLabel>
-                      <FiActivity /> Dados Físicos
-                    </SectionLabel>
-                    <DetailsGrid>
-                      <InputGroup>
-                        <InputIcon><FiTarget /></InputIcon>
-                        <StyledEditInput
-                          type="number"
-                          step="0.1"
-                          value={editedData.peso}
-                          onChange={(e) => setEditedData({ ...editedData, peso: e.target.value })}
-                          placeholder="Peso"
-                        />
-                        <UnitLabel>kg</UnitLabel>
-                      </InputGroup>
-                      <InputGroup>
-                        <InputIcon><FiTrendingUp /></InputIcon>
-                        <StyledEditInput
-                          type="number"
-                          step="0.01"
-                          value={editedData.altura}
-                          onChange={(e) => setEditedData({ ...editedData, altura: e.target.value })}
-                          placeholder="Altura"
-                        />
-                        <UnitLabel>m</UnitLabel>
-                      </InputGroup>
-                    </DetailsGrid>
-                  </DetailSection>
+                  {/* Seções Expandidas */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <ExpandedContent
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <DetailSection>
+                          <SectionLabel>
+                            <FiUser /> Informações Pessoais
+                          </SectionLabel>
+                          <DetailsGrid>
+                            <InputGroup>
+                              <InputIcon><FiMapPin /></InputIcon>
+                              <StyledEditInput
+                                type="text"
+                                value={editedData.localizacao}
+                                onChange={(e) => setEditedData({ ...editedData, localizacao: e.target.value })}
+                                placeholder="Ex: São Paulo - SP"
+                              />
+                            </InputGroup>
+                            <InputGroup>
+                              <InputIcon><FiCalendar /></InputIcon>
+                              <StyledEditInput
+                                type="date"
+                                value={editedData.data_nascimento}
+                                onChange={(e) => setEditedData({ ...editedData, data_nascimento: e.target.value })}
+                                placeholder="Data de nascimento"
+                              />
+                            </InputGroup>
+                          </DetailsGrid>
+                        </DetailSection>
+
+                        <DetailSection>
+                          <SectionLabel>
+                            <FiActivity /> Dados Físicos
+                          </SectionLabel>
+                          <DetailsGrid>
+                            <InputGroup>
+                              <InputIcon><FiTarget /></InputIcon>
+                              <StyledEditInput
+                                type="number"
+                                step="0.1"
+                                value={editedData.peso}
+                                onChange={(e) => setEditedData({ ...editedData, peso: e.target.value })}
+                                placeholder="Peso"
+                              />
+                              <UnitLabel>kg</UnitLabel>
+                            </InputGroup>
+                            <InputGroup>
+                              <InputIcon><FiTrendingUp /></InputIcon>
+                              <StyledEditInput
+                                type="number"
+                                step="0.01"
+                                value={editedData.altura}
+                                onChange={(e) => setEditedData({ ...editedData, altura: e.target.value })}
+                                placeholder="Altura"
+                              />
+                              <UnitLabel>m</UnitLabel>
+                            </InputGroup>
+                          </DetailsGrid>
+                        </DetailSection>
+                      </ExpandedContent>
+                    )}
+                  </AnimatePresence>
+
                 </EditableDetails>
               ) : (
                 <DisplayDetails
@@ -501,54 +610,69 @@ const Profile = () => {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <DetailSection>
-                    <SectionLabel>
-                      <FiFileText /> Sobre mim
-                    </SectionLabel>
-                    <DescriptionText>{user.descricao || 'Nenhuma descrição adicionada ainda.'}</DescriptionText>
-                  </DetailSection>
+                  {/* Botão de Expansão */}
+                  <ExpandButton
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                    {isExpanded ? 'Ocultar informações' : 'Ver mais informações'}
+                  </ExpandButton>
 
-                  <DetailSection>
-                    <SectionLabel>
-                      <FiUser /> Informações
-                    </SectionLabel>
-                    <InfoGrid>
-                      <InfoCard>
-                        <InfoIcon><FiMapPin /></InfoIcon>
-                        <InfoContent>
-                          <InfoLabel>Localização</InfoLabel>
-                          <InfoValue>{user.localizacao || 'Não informada'}</InfoValue>
-                        </InfoContent>
-                      </InfoCard>
-                      <InfoCard>
-                        <InfoIcon><FiCalendar /></InfoIcon>
-                        <InfoContent>
-                          <InfoLabel>Nascimento</InfoLabel>
-                          <InfoValue>{user.data_nascimento || 'Não informado'}</InfoValue>
-                        </InfoContent>
-                      </InfoCard>
-                    </InfoGrid>
-                  </DetailSection>
+                  {/* Seções Expandidas */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <ExpandedContent
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <DetailSection>
+                          <SectionLabel>
+                            <FiUser /> Informações Pessoais
+                          </SectionLabel>
+                          <InfoGrid>
+                            <InfoCard>
+                              <InfoIcon><FiMapPin /></InfoIcon>
+                              <InfoContent>
+                                <InfoLabel>Localização</InfoLabel>
+                                <InfoValue>{user.localizacao || 'Não informada'}</InfoValue>
+                              </InfoContent>
+                            </InfoCard>
+                            <InfoCard>
+                              <InfoIcon><FiCalendar /></InfoIcon>
+                              <InfoContent>
+                                <InfoLabel>Nascimento</InfoLabel>
+                                <InfoValue>{user.data_nascimento || 'Não informado'}</InfoValue>
+                              </InfoContent>
+                            </InfoCard>
+                          </InfoGrid>
+                        </DetailSection>
 
-                  <DetailSection>
-                    <SectionLabel>
-                      <FiActivity /> Dados Físicos
-                    </SectionLabel>
-                    <StatsGrid>
-                      <StatCard>
-                        <StatValue>{user.peso && user.peso !== '--' ? user.peso : '--'}</StatValue>
-                        <StatLabel>Peso (kg)</StatLabel>
-                      </StatCard>
-                      <StatCard>
-                        <StatValue>{user.altura && user.altura !== '--' ? user.altura : '--'}</StatValue>
-                        <StatLabel>Altura (m)</StatLabel>
-                      </StatCard>
-                      <StatCard isHighlight>
-                        <StatValue>{user.imc ? Number(user.imc).toFixed(1) : '--'}</StatValue>
-                        <StatLabel>IMC</StatLabel>
-                      </StatCard>
-                    </StatsGrid>
-                  </DetailSection>
+                        <DetailSection>
+                          <SectionLabel>
+                            <FiActivity /> Dados Físicos
+                          </SectionLabel>
+                          <StatsGrid>
+                            <StatCard>
+                              <StatValue>{user.peso && user.peso !== '--' ? user.peso : '--'}</StatValue>
+                              <StatLabel>Peso (kg)</StatLabel>
+                            </StatCard>
+                            <StatCard>
+                              <StatValue>{user.altura && user.altura !== '--' ? user.altura : '--'}</StatValue>
+                              <StatLabel>Altura (m)</StatLabel>
+                            </StatCard>
+                            <StatCard isHighlight>
+                              <StatValue>{user.imc ? Number(user.imc).toFixed(1) : '--'}</StatValue>
+                              <StatLabel>IMC</StatLabel>
+                            </StatCard>
+                          </StatsGrid>
+                        </DetailSection>
+                      </ExpandedContent>
+                    )}
+                  </AnimatePresence>
                 </DisplayDetails>
               )}
             </AnimatePresence>
@@ -788,6 +912,21 @@ const UserEmailSecondary = styled.p`
   font-size: 1.4rem;
   color: rgba(255, 255, 255, 0.5);
   font-weight: 400;
+`
+
+const UserDescription = styled.p`
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin: 1rem 0 0 0;
+  text-align: center;
+  max-width: 40rem;
+  font-style: italic;
+  
+  &:empty::before {
+    content: 'Nenhuma descrição adicionada ainda.';
+    color: rgba(255, 255, 255, 0.4);
+  }
 `
 
 const EditableUserInfo = styled(motion.div)`
@@ -1046,6 +1185,52 @@ const StatLabel = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `
+
+// Novos componentes para UI compacta
+const ExpandButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 1.2rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 2rem 0;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(227, 6, 19, 0.3);
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  svg {
+    font-size: 1.6rem;
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover svg {
+    transform: scale(1.1);
+  }
+`
+
+const ExpandedContent = styled(motion.div)`
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`
+
+
 
 
 

@@ -112,13 +112,14 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
             transition={{ duration: 0.3 }}
             onClick={aoFecharPopup}
           />
-          <ContainerPopup
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          >
-            <ConteudoPopup>
+          {!popupEsqueciSenhaAberto && (
+            <ContainerPopup
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              <ConteudoPopup>
               <BotaoFechar onClick={aoFecharPopup}>
                 <FiX />
               </BotaoFechar>
@@ -162,8 +163,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
 
               <LinkEsqueciSenha href="#" onClick={(e) => {
                 e.preventDefault()
-                aoFechar()
-                setTimeout(() => setPopupEsqueciSenhaAberto(true), 100)
+                setPopupEsqueciSenhaAberto(true)
               }}>
                 Esqueci minha senha
               </LinkEsqueciSenha>
@@ -194,12 +194,14 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
                 aoTrocarParaCadastro()
               }}>Criar conta</LinkCadastro>
             </TextoCadastro>
-            </ConteudoPopup>
-          </ContainerPopup>
+              </ConteudoPopup>
+            </ContainerPopup>
+          )}
           
           <PopupEsqueciSenha
             estaAberto={popupEsqueciSenhaAberto}
             aoFechar={() => setPopupEsqueciSenhaAberto(false)}
+            aoVoltarParaLogin={() => setPopupEsqueciSenhaAberto(false)}
           />
         </>
       )}

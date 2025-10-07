@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiEye, FiEyeOff, FiX, FiCheck, FiMail, FiKey, FiLock } from 'react-icons/fi'
+import { FiEye, FiEyeOff, FiX, FiCheck, FiMail, FiKey, FiLock, FiArrowLeft } from 'react-icons/fi'
 import styled from 'styled-components'
 import { enviarCodigoRecuperacao, validarCodigoRecuperacao, alterarSenha } from '../../config/api'
 
 interface PropsPopupEsqueciSenha {
   estaAberto: boolean
   aoFechar: () => void
+  aoVoltarParaLogin?: () => void
 }
 
 type Etapa = 'email' | 'codigo' | 'novaSenha'
 
-const PopupEsqueciSenha = ({ estaAberto, aoFechar }: PropsPopupEsqueciSenha) => {
+const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPopupEsqueciSenha) => {
   const [etapaAtual, setEtapaAtual] = useState<Etapa>('email')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [estaCarregando, setEstaCarregando] = useState(false)
@@ -397,9 +398,11 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar }: PropsPopupEsqueciSenha) => 
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             <ConteudoPopup>
-              <BotaoFechar onClick={aoFecharPopup}>
-                <FiX />
-              </BotaoFechar>
+              {etapaAtual === 'email' && aoVoltarParaLogin && (
+                <BotaoVoltar onClick={aoVoltarParaLogin}>
+                  <FiArrowLeft />
+                </BotaoVoltar>
+              )}
 
               <SecaoLogo>
                 <img src="/gym-buddy-logo.png" alt="GYM BUDDY" className="logo-imagem" />
@@ -672,6 +675,25 @@ const LinkVoltar = styled.button`
   &:hover {
     color: var(--primary-dark);
     text-decoration: underline;
+  }
+`
+
+const BotaoVoltar = styled.button`
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
   }
 `
 

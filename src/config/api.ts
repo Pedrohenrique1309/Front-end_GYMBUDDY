@@ -300,3 +300,153 @@ export const saveAuthData = (token?: string, userData?: UserData): void => {
     localStorage.setItem('userData', JSON.stringify(userData))
   }
 }
+
+// interface para resposta de recuperação de senha
+export interface RecoveryResponse {
+  status: boolean
+  message: string
+  status_code?: number
+  isValid?: boolean
+}
+
+// função para enviar código de recuperação
+export const enviarCodigoRecuperacao = async (email: string): Promise<RecoveryResponse> => {
+  try {
+    const url = `${API_BASE_URL}/usuario/forgot-password`
+    
+    console.log('🔄 Enviando código de recuperação:', { email, url })
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    })
+
+    console.log('📧 Resposta do envio de código:', {
+      status: response.status,
+      statusText: response.statusText
+    })
+
+    const contentType = response.headers.get('content-type')
+    let data: RecoveryResponse
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json()
+      console.log('✅ Resposta JSON do código:', data)
+    } else {
+      const responseText = await response.text()
+      console.error('❌ Resposta não é JSON:', responseText)
+      
+      if (response.status === 500) {
+        throw new Error(`Erro interno do servidor. Verifique se o backend está rodando.`)
+      }
+      
+      throw new Error(`Erro na API. Status: ${response.status}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error('❌ Erro ao enviar código:', error)
+    throw error
+  }
+}
+
+// função para validar código de recuperação
+export const validarCodigoRecuperacao = async (email: string, codigo: string): Promise<RecoveryResponse> => {
+  try {
+    const url = `${API_BASE_URL}/usuario/validate-recovery-code`
+    
+    console.log('🔄 Validando código de recuperação:', { email, codigo, url })
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ email, code: codigo })
+    })
+
+    console.log('🔍 Resposta da validação:', {
+      status: response.status,
+      statusText: response.statusText
+    })
+
+    const contentType = response.headers.get('content-type')
+    let data: RecoveryResponse
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json()
+      console.log('✅ Resposta JSON da validação:', data)
+    } else {
+      const responseText = await response.text()
+      console.error('❌ Resposta não é JSON:', responseText)
+      
+      if (response.status === 500) {
+        throw new Error(`Erro interno do servidor. Verifique se o backend está rodando.`)
+      }
+      
+      throw new Error(`Erro na API. Status: ${response.status}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error('❌ Erro ao validar código:', error)
+    throw error
+  }
+}
+
+// função para alterar senha
+export const alterarSenha = async (email: string, novaSenha: string, codigo: string): Promise<RecoveryResponse> => {
+  try {
+    const url = `${API_BASE_URL}/usuario/reset-password`
+    
+    console.log('🔄 Alterando senha:', { email, url })
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ 
+        email, 
+        newPassword: novaSenha, 
+        code: codigo 
+      })
+    })
+
+    console.log('🔐 Resposta da alteração de senha:', {
+      status: response.status,
+      statusText: response.statusText
+    })
+
+    const contentType = response.headers.get('content-type')
+    let data: RecoveryResponse
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json()
+      console.log('✅ Resposta JSON da alteração:', data)
+    } else {
+      const responseText = await response.text()
+      console.error('❌ Resposta não é JSON:', responseText)
+      
+      if (response.status === 500) {
+        throw new Error(`Erro interno do servidor. Verifique se o backend está rodando.`)
+      }
+      
+      throw new Error(`Erro na API. Status: ${response.status}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error('❌ Erro ao alterar senha:', error)
+    throw error
+  }
+}
