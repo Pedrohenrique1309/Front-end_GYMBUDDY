@@ -8,6 +8,8 @@ import DefaultAvatar from '../../assets/default-avatar'
 import AIChat from './components/AIChat'
 import PostFeed from './components/PostFeed'
 import FriendsList from './components/FriendsList'
+import ProfileSidebar from './components/ProfileSidebar'
+import RecentActivity from './components/RecentActivity'
 const API_BASE_URL = '/api/v1/gymbuddy'
 
 export interface User {
@@ -145,50 +147,41 @@ const Social = () => {
 
   return (
     <Container>
-      <Header>
-        <BackButton onClick={() => navigate('/')}>
-          <FiChevronLeft />
-          Voltar
-        </BackButton>
-        
-        <Logo>
-          <span className="gym">GYM</span>
-          <span className="buddy">BUDDY</span>
-        </Logo>
-        
-        <SearchBar>
-          <FiSearch />
-          <input 
-            type="text" 
-            placeholder="Buscar"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </SearchBar>
-        
-        <UserSection>
-          {user?.foto ? (
-            <UserAvatar src={user.foto} alt={user.nome} />
-          ) : (
-            <DefaultAvatar size={40} />
-          )}
-        </UserSection>
-      </Header>
-
       <MainContent>
-        <AIChat />
-        
-        <PostFeed 
-          posts={posts}
-          setPosts={setPosts}
-          loadPosts={loadPosts}
-        />
-        
-        <FriendsList 
-          suggestedUsers={suggestedUsers}
-          onUserHover={handleUserHover}
-          onUserLeave={handleUserLeave}
-        />
+        <LeftColumn>
+          <ProfileSidebar />
+        </LeftColumn>
+
+        <CenterColumn>
+          <SearchSection>
+            <SearchBar>
+              <FiSearch />
+              <input 
+                type="text" 
+                placeholder="Buscar na rede GymBuddy..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </SearchBar>
+          </SearchSection>
+          
+          <AIChat />
+          <PostFeed 
+            posts={posts}
+            setPosts={setPosts}
+            loadPosts={loadPosts}
+            searchQuery={searchQuery}
+          />
+        </CenterColumn>
+
+        <RightColumn>
+          <RecentActivity />
+          <FriendsList 
+            suggestedUsers={suggestedUsers}
+            onUserHover={handleUserHover}
+            onUserLeave={handleUserLeave}
+          />
+        </RightColumn>
       </MainContent>
 
       {/* User Hover Card */}
@@ -227,53 +220,38 @@ const Container = styled.div`
   min-height: 100vh;
   background: #0A0A0A;
   color: white;
+  padding-top: 2rem;
 `
 
-const Header = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+const MainContent = styled.div`
+  display: grid;
+  grid-template-columns: 35rem 1fr 30rem;
+  gap: 2rem;
   padding: 2rem 4rem;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  max-width: 160rem;
+  margin: 0 auto;
 `
 
-const BackButton = styled.button`
+const LeftColumn = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 1.6rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    color: var(--primary);
-  }
-  
-  svg {
-    font-size: 2rem;
-  }
+  flex-direction: column;
+  gap: 1.5rem;
 `
 
-const Logo = styled.div`
-  font-size: 2.4rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  
-  .gym {
-    color: var(--primary);
-  }
-  
-  .buddy {
-    color: white;
-  }
+const CenterColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+`
+
+const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`
+
+const SearchSection = styled.div`
+  margin-bottom: 1.5rem;
 `
 
 const SearchBar = styled.div`
@@ -284,7 +262,14 @@ const SearchBar = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 3rem;
   padding: 1rem 2rem;
-  width: 30rem;
+  width: 100%;
+  max-width: 50rem;
+  transition: all 0.3s ease;
+  
+  &:focus-within {
+    border-color: rgba(227, 6, 19, 0.3);
+    box-shadow: 0 0 20px rgba(227, 6, 19, 0.1);
+  }
   
   svg {
     color: rgba(255, 255, 255, 0.5);
@@ -306,27 +291,6 @@ const SearchBar = styled.div`
       outline: none;
     }
   }
-`
-
-const UserSection = styled.div`
-  display: flex;
-  align-items: center;
-`
-
-const UserAvatar = styled.img`
-  width: 4rem;
-  height: 4rem;
-  border-radius: 50%;
-  object-fit: cover;
-`
-
-const MainContent = styled.div`
-  display: grid;
-  grid-template-columns: 35rem 1fr 30rem;
-  gap: 2rem;
-  padding: 2rem 4rem;
-  max-width: 160rem;
-  margin: 0 auto;
 `
 
 const HoverCard = styled(motion.div)`

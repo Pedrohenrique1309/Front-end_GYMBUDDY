@@ -11,12 +11,12 @@ interface PostFeedProps {
   posts: Post[]
   setPosts: React.Dispatch<React.SetStateAction<Post[]>>
   loadPosts: () => void
+  searchQuery?: string
 }
 
-const PostFeed = ({ posts, setPosts, loadPosts }: PostFeedProps) => {
+const PostFeed = ({ posts, setPosts, loadPosts, searchQuery = '' }: PostFeedProps) => {
   const { user } = useUser()
   const [newPostContent, setNewPostContent] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
   const [commentInputs, setCommentInputs] = useState<{[key: number]: string}>({})
 
   const handleLike = async (postId: number) => {
@@ -115,16 +115,6 @@ const PostFeed = ({ posts, setPosts, loadPosts }: PostFeedProps) => {
     <Container>
       <Header>
         <h1>Como seus amigos estão<br/>treinando hoje?</h1>
-        
-        <SearchInput>
-          <FiSearch />
-          <input 
-            type="text" 
-            placeholder="Buscar"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </SearchInput>
       </Header>
 
       <NewPostSection>
@@ -222,36 +212,6 @@ const Header = styled.div`
   }
 `
 
-const SearchInput = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  padding: 1.2rem 2rem;
-  
-  svg {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 2rem;
-  }
-  
-  input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 1.4rem;
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.3);
-    }
-    
-    &:focus {
-      outline: none;
-    }
-  }
-`
 
 const NewPostSection = styled.div`
   background: rgba(255, 255, 255, 0.03);
