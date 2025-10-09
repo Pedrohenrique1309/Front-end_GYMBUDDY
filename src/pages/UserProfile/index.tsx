@@ -33,25 +33,55 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (userId) {
+      console.log('🔍 Carregando perfil para userId:', userId)
       loadUserProfile(parseInt(userId))
+    } else {
+      console.log('❌ Nenhum userId fornecido')
+      setError('ID do usuário não fornecido')
+      setLoading(false)
     }
   }, [userId])
 
   const loadUserProfile = async (id: number) => {
     try {
       setLoading(true)
+      setError(null)
+      
+      // Primeiro tenta carregar da API principal
       const response = await fetch(`${API_BASE_URL}/usuario/${id}`)
-      const data = await response.json()
       
-      if (data?.usuario) {
-        setProfileUser(data.usuario)
-      } else {
-        setError('Usuário não encontrado')
+      if (response.ok) {
+        const data = await response.json()
+        
+        if (data?.usuario) {
+          console.log('✅ Usuário carregado da API:', data.usuario)
+          setProfileUser(data.usuario)
+          return
+        }
       }
-    } catch (error) {
-      console.error('Erro ao carregar perfil:', error)
       
-      // Mock data baseado no ID para demonstração
+      // Se não encontrou na API, tenta carregar da lista geral
+      const usersResponse = await fetch(`${API_BASE_URL}/usuario`)
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json()
+        if (usersData?.usuarios) {
+          const foundUser = usersData.usuarios.find((u: any) => u.id === id)
+          if (foundUser) {
+            console.log('✅ Usuário encontrado na lista geral:', foundUser)
+            setProfileUser(foundUser)
+            return
+          }
+        }
+      }
+      
+      // Se chegou até aqui, usuário não foi encontrado na API
+      throw new Error('Usuário não encontrado na API')
+      
+    } catch (error) {
+      console.error('❌ Erro ao carregar perfil da API:', error)
+      console.log('🔄 Tentando fallback para mock data...')
+      
+      // Mock data baseado no ID - sincronizado com a página Social
       const mockUsers: UserProfileData[] = [
         {
           id: 2,
@@ -94,13 +124,113 @@ const UserProfile = () => {
           altura: '1.82',
           imc: '25.7',
           publicacoes: 34
+        },
+        {
+          id: 5,
+          nome: 'Ana Julia',
+          nickname: '@anajulia',
+          email: 'ana@example.com',
+          foto: '',
+          descricao: 'Yoga e pilates 🧘 Instrutora certificada',
+          localizacao: 'Florianópolis - SC',
+          data_nascimento: '1992-05-18',
+          peso: '58.0',
+          altura: '1.68',
+          imc: '20.5',
+          publicacoes: 67
+        },
+        {
+          id: 6,
+          nome: 'Carlos Mendes',
+          nickname: '@carlosfit',
+          email: 'carlos@example.com',
+          foto: '',
+          descricao: 'Bodybuilder natural. Preparação para campeonatos',
+          localizacao: 'Brasília - DF',
+          data_nascimento: '1987-09-03',
+          peso: '90.5',
+          altura: '1.85',
+          imc: '26.4',
+          publicacoes: 123
+        },
+        {
+          id: 7,
+          nome: 'Lucia Fernanda',
+          nickname: '@luciafernanda',
+          email: 'lucia@example.com',
+          foto: '',
+          descricao: 'Nutricionista esportiva 🥗 Consultoria online',
+          localizacao: 'Porto Alegre - RS',
+          data_nascimento: '1991-12-07',
+          peso: '60.2',
+          altura: '1.70',
+          imc: '20.8',
+          publicacoes: 78
+        },
+        {
+          id: 8,
+          nome: 'Rafael Almeida',
+          nickname: '@rafaelstrong',
+          email: 'rafael@example.com',
+          foto: '',
+          descricao: 'Powerlifter profissional. Records pessoais toda semana',
+          localizacao: 'Recife - PE',
+          data_nascimento: '1989-04-25',
+          peso: '95.0',
+          altura: '1.88',
+          imc: '26.9',
+          publicacoes: 156
+        },
+        {
+          id: 9,
+          nome: 'Camila Oliveira',
+          nickname: '@camilafit',
+          email: 'camila@example.com',
+          foto: '',
+          descricao: 'Transformação corporal é minha especialidade 🔥',
+          localizacao: 'Salvador - BA',
+          data_nascimento: '1993-08-14',
+          peso: '55.8',
+          altura: '1.63',
+          imc: '21.0',
+          publicacoes: 92
+        },
+        {
+          id: 10,
+          nome: 'Bruno Cardoso',
+          nickname: '@brunocardio',
+          email: 'bruno@example.com',
+          foto: '',
+          descricao: 'Corredor de maratôna. Vida ativa sempre! 🏃‍♂️',
+          localizacao: 'Curitiba - PR',
+          data_nascimento: '1990-01-30',
+          peso: '70.0',
+          altura: '1.75',
+          imc: '22.9',
+          publicacoes: 201
+        },
+        {
+          id: 11,
+          nome: 'Isabella Costa',
+          nickname: '@isabellacoach',
+          email: 'isabella@example.com',
+          foto: '',
+          descricao: 'Life Coach e Personal Trainer. Mente e corpo em equilíbrio',
+          localizacao: 'Fortaleza - CE',
+          data_nascimento: '1988-06-12',
+          peso: '63.5',
+          altura: '1.72',
+          imc: '21.5',
+          publicacoes: 134
         }
       ]
       
       const mockUser = mockUsers.find(u => u.id === id)
       if (mockUser) {
+        console.log('✅ Usuário carregado do fallback mock:', mockUser)
         setProfileUser(mockUser)
       } else {
+        console.log('❌ Usuário não encontrado nem no mock')
         setError('Usuário não encontrado')
       }
     } finally {
@@ -115,9 +245,11 @@ const UserProfile = () => {
   if (loading) {
     return (
       <Container>
+        <BackgroundGradient />
         <LoadingContainer>
           <LoadingSpinner />
-          <LoadingText>Carregando perfil...</LoadingText>
+          <LoadingText>Carregando perfil do usuário...</LoadingText>
+          <LoadingSubtext>ID: {userId}</LoadingSubtext>
         </LoadingContainer>
       </Container>
     )
@@ -126,10 +258,13 @@ const UserProfile = () => {
   if (error || !profileUser) {
     return (
       <Container>
+        <BackgroundGradient />
         <ErrorContainer>
+          <ErrorIcon>😞</ErrorIcon>
           <ErrorText>{error || 'Usuário não encontrado'}</ErrorText>
+          <ErrorSubtext>ID buscado: {userId}</ErrorSubtext>
           <BackButton onClick={handleBack}>
-            <FiArrowLeft /> Voltar
+            <FiArrowLeft /> Voltar para Rede Social
           </BackButton>
         </ErrorContainer>
       </Container>
@@ -542,6 +677,14 @@ const LoadingSpinner = styled.div`
 const LoadingText = styled.p`
   color: rgba(255, 255, 255, 0.7);
   font-size: 1.6rem;
+  margin: 0;
+`
+
+const LoadingSubtext = styled.p`
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 500;
 `
 
 const ErrorContainer = styled.div`
@@ -553,10 +696,24 @@ const ErrorContainer = styled.div`
   gap: 2rem;
 `
 
+const ErrorIcon = styled.div`
+  font-size: 4rem;
+  margin-bottom: 1rem;
+`
+
 const ErrorText = styled.p`
   color: rgba(255, 255, 255, 0.7);
   font-size: 1.8rem;
   text-align: center;
+  margin: 0;
+`
+
+const ErrorSubtext = styled.p`
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.4rem;
+  text-align: center;
+  margin: 0;
+  font-weight: 500;
 `
 
 export default UserProfile
