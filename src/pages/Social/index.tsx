@@ -642,7 +642,7 @@ const Social = () => {
       },
       {
         id: 2,
-        user: { username: '@mariafitness', avatar: '' },
+        user: { username: 'Tetano Pé', avatar: '' },
         image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500',
         description: 'Motivação em alta! Nunca desista dos seus sonhos',
         hashtags: ['#gym', '#motivation'],
@@ -740,11 +740,11 @@ const Social = () => {
       
     } catch (error) {
       console.error('❌ Erro ao carregar usuários da API:', error)
-      console.log('🔄 Usando fallback mock data...')
-      // Mock data com IDs altos para não conflitar com API real
+      console.log('🔄 Usando fallback mock data com IDs reais...')
+      // Mock data simulando API real (quando API não funciona)
       setUsers([
         {
-          id: 1001,
+          id: 2,
           nome: 'João Silva',
           nickname: '@joaosilva',
           foto: '',
@@ -752,15 +752,15 @@ const Social = () => {
           publicacoes: 45
         },
         {
-          id: 1002,
-          nome: 'Maria Santos',
-          nickname: '@mariafitness',
-          foto: '',
-          descricao: 'Personal Trainer certificada. Especialista em hipertrofia',
-          publicacoes: 89
+          id: 3,
+          nome: 'Inimigo',
+          nickname: 'Tetano Pé',
+          foto: 'https://gymbuddystorage.blob.core.windows.net/fotos/1760027693377-download.png',
+          descricao: 'fortin',
+          publicacoes: 12
         },
         {
-          id: 1003,
+          id: 4,
           nome: 'Pedro Costa',
           nickname: '@pedrocosta',
           foto: '',

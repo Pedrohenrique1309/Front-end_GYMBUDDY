@@ -43,13 +43,19 @@ const UserProfile = () => {
   }, [userId])
 
   const loadUserProfile = async (id: number) => {
-    console.log('🔍 Iniciando carregamento do perfil ID:', id)
+    console.log('════════════════════════════════')
+    console.log('🔍 Iniciando carregamento do perfil')
+    console.log('📌 ID solicitado:', id)
+    console.log('📌 Tipo do ID:', typeof id)
+    console.log('════════════════════════════════')
     
     try {
       setLoading(true)
       setError(null)
       
-      // Primeiro tenta carregar da API real
+      // Tenta carregar da API real
+      let apiWorked = false
+      
       try {
         console.log('🌐 Tentando API específica:', `${API_BASE_URL}/usuario/${id}`)
         const response = await fetch(`${API_BASE_URL}/usuario/${id}`)
@@ -73,211 +79,145 @@ const UserProfile = () => {
               imc: data.usuario.imc,
               publicacoes: 0 // Pode ser calculado depois
             })
-            return
+            apiWorked = true
           }
         }
         
-        // Se não encontrou na API específica, tenta lista geral
-        console.log('🌐 Tentando API lista geral:', `${API_BASE_URL}/usuario`)
-        const usersResponse = await fetch(`${API_BASE_URL}/usuario`)
-        if (usersResponse.ok) {
-          const usersData = await usersResponse.json()
-          if (usersData?.usuarios) {
-            const foundUser = usersData.usuarios.find((u: any) => u.id === id)
-            if (foundUser) {
-              console.log('✅ Usuário encontrado na lista geral:', foundUser)
-              setProfileUser({
-                id: foundUser.id,
-                nome: foundUser.nome,
-                nickname: foundUser.nickname,
-                email: foundUser.email,
-                foto: foundUser.foto,
-                descricao: foundUser.descricao,
-                localizacao: foundUser.localizacao,
-                data_nascimento: foundUser.data_nascimento,
-                peso: foundUser.peso,
-                altura: foundUser.altura,
-                imc: foundUser.imc,
-                publicacoes: 0
-              })
-              return
+        if (!apiWorked) {
+          // Se não funcionou, tenta lista geral
+          console.log('🌐 Tentando API lista geral:', `${API_BASE_URL}/usuario`)
+          const usersResponse = await fetch(`${API_BASE_URL}/usuario`)
+          if (usersResponse.ok) {
+            const usersData = await usersResponse.json()
+            if (usersData?.usuarios) {
+              const foundUser = usersData.usuarios.find((u: any) => u.id === id)
+              if (foundUser) {
+                console.log('✅ Usuário encontrado na lista geral:', foundUser)
+                setProfileUser({
+                  id: foundUser.id,
+                  nome: foundUser.nome,
+                  nickname: foundUser.nickname,
+                  email: foundUser.email,
+                  foto: foundUser.foto,
+                  descricao: foundUser.descricao,
+                  localizacao: foundUser.localizacao,
+                  data_nascimento: foundUser.data_nascimento,
+                  peso: foundUser.peso,
+                  altura: foundUser.altura,
+                  imc: foundUser.imc,
+                  publicacoes: 0
+                })
+                apiWorked = true
+              }
             }
           }
         }
         
-        throw new Error('Usuário não encontrado na API')
-        
       } catch (apiError) {
-        console.log('⚠️ API não disponível, usando mock data:', apiError)
+        console.log('⚠️ Erro na API:', apiError)
       }
       
-      // Mock data como fallback (com IDs altos para não conflitar)
-      const mockUsers: UserProfileData[] = [
-        {
-          id: 1001,
-          nome: 'João Silva',
-          nickname: '@joaosilva',
-          email: 'joao@example.com',
-          foto: '',
-          descricao: 'Foco no treino! 💪 Perdeu 10kg em 6 meses',
-          localizacao: 'São Paulo - SP',
-          data_nascimento: '1995-03-15',
-          peso: '75.5',
-          altura: '1.78',
-          imc: '23.8',
-          publicacoes: 45
-        },
-        {
-          id: 1002,
-          nome: 'Maria Santos',
-          nickname: '@mariafitness',
-          email: 'maria@example.com',
-          foto: '',
-          descricao: 'Personal Trainer certificada. Especialista em hipertrofia',
-          localizacao: 'Rio de Janeiro - RJ',
-          data_nascimento: '1990-07-22',
-          peso: '62.0',
-          altura: '1.65',
-          imc: '22.8',
-          publicacoes: 89
-        },
-        {
-          id: 4,
-          nome: 'Pedro Costa',
-          nickname: '@pedrocosta',
-          email: 'pedro@example.com',
-          foto: '',
-          descricao: 'Crossfit lover 🏋️ Competidor há 3 anos',
-          localizacao: 'Belo Horizonte - MG',
-          data_nascimento: '1988-11-10',
-          peso: '85.2',
-          altura: '1.82',
-          imc: '25.7',
-          publicacoes: 34
-        },
-        {
-          id: 5,
-          nome: 'Ana Julia',
-          nickname: '@anajulia',
-          email: 'ana@example.com',
-          foto: '',
-          descricao: 'Yoga e pilates 🧘 Instrutora certificada',
-          localizacao: 'Florianópolis - SC',
-          data_nascimento: '1992-05-18',
-          peso: '58.0',
-          altura: '1.68',
-          imc: '20.5',
-          publicacoes: 67
-        },
-        {
-          id: 6,
-          nome: 'Carlos Mendes',
-          nickname: '@carlosfit',
-          email: 'carlos@example.com',
-          foto: '',
-          descricao: 'Bodybuilder natural. Preparação para campeonatos',
-          localizacao: 'Brasília - DF',
-          data_nascimento: '1987-09-03',
-          peso: '90.5',
-          altura: '1.85',
-          imc: '26.4',
-          publicacoes: 123
-        },
-        {
-          id: 7,
-          nome: 'Lucia Fernanda',
-          nickname: '@luciafernanda',
-          email: 'lucia@example.com',
-          foto: '',
-          descricao: 'Nutricionista esportiva 🥗 Consultoria online',
-          localizacao: 'Porto Alegre - RS',
-          data_nascimento: '1991-12-07',
-          peso: '60.2',
-          altura: '1.70',
-          imc: '20.8',
-          publicacoes: 78
-        },
-        {
-          id: 8,
-          nome: 'Rafael Almeida',
-          nickname: '@rafaelstrong',
-          email: 'rafael@example.com',
-          foto: '',
-          descricao: 'Powerlifter profissional. Records pessoais toda semana',
-          localizacao: 'Recife - PE',
-          data_nascimento: '1989-04-25',
-          peso: '95.0',
-          altura: '1.88',
-          imc: '26.9',
-          publicacoes: 156
-        },
-        {
-          id: 9,
-          nome: 'Camila Oliveira',
-          nickname: '@camilafit',
-          email: 'camila@example.com',
-          foto: '',
-          descricao: 'Transformação corporal é minha especialidade 🔥',
-          localizacao: 'Salvador - BA',
-          data_nascimento: '1993-08-14',
-          peso: '55.8',
-          altura: '1.63',
-          imc: '21.0',
-          publicacoes: 92
-        },
-        {
-          id: 10,
-          nome: 'Bruno Cardoso',
-          nickname: '@brunocardio',
-          email: 'bruno@example.com',
-          foto: '',
-          descricao: 'Corredor de maratôna. Vida ativa sempre! 🏃‍♂️',
-          localizacao: 'Curitiba - PR',
-          data_nascimento: '1990-01-30',
-          peso: '70.0',
-          altura: '1.75',
-          imc: '22.9',
-          publicacoes: 201
-        },
-        {
-          id: 11,
-          nome: 'Isabella Costa',
-          nickname: '@isabellacoach',
-          email: 'isabella@example.com',
-          foto: '',
-          descricao: 'Life Coach e Personal Trainer. Mente e corpo em equilíbrio',
-          localizacao: 'Fortaleza - CE',
-          data_nascimento: '1988-06-12',
-          peso: '63.5',
-          altura: '1.72',
-          imc: '21.5',
-          publicacoes: 134
+      // Se API não funcionou, usa mock data
+      if (!apiWorked) {
+        console.log('🔄 API não funcionou, usando mock data para ID:', id)
+        
+        // Mock data como fallback (IDs reais simulando API)
+        const mockUsers: UserProfileData[] = [
+          {
+            id: 2,
+            nome: 'João Silva',
+            nickname: '@joaosilva',
+            email: 'joao@example.com',
+            foto: '',
+            descricao: 'Foco no treino! 💪 Perdeu 10kg em 6 meses',
+            localizacao: 'São Paulo - SP',
+            data_nascimento: '1995-03-15',
+            peso: '75.5',
+            altura: '1.78',
+            imc: '23.8',
+            publicacoes: 45
+          },
+          {
+            id: 3,
+            nome: 'Inimigo',
+            nickname: 'Tetano Pé',
+            email: 'robertin4m@email.com',
+            foto: 'https://gymbuddystorage.blob.core.windows.net/fotos/1760027693377-download.png',
+            descricao: 'fortin',
+            localizacao: 'Jandira-SP',
+            data_nascimento: undefined,
+            peso: '61',
+            altura: '1.78',
+            imc: '19.25',
+            publicacoes: 12
+          },
+          {
+            id: 4,
+            nome: 'Maria Santos',
+            nickname: '@mariafitness',
+            email: 'maria@example.com',
+            foto: '',
+            descricao: 'Personal Trainer certificada. Especialista em hipertrofia',
+            localizacao: 'Rio de Janeiro - RJ',
+            data_nascimento: '1990-07-22',
+            peso: '62.0',
+            altura: '1.65',
+            imc: '22.8',
+            publicacoes: 89
+          },
+          {
+            id: 5,
+            nome: 'Pedro Costa',
+            nickname: '@pedrocosta',
+            email: 'pedro@example.com',
+            foto: '',
+            descricao: 'Crossfit lover 🏋️ Competidor há 3 anos',
+            localizacao: 'Belo Horizonte - MG',
+            data_nascimento: '1988-11-10',
+            peso: '85.2',
+            altura: '1.82',
+            imc: '25.7',
+            publicacoes: 34
+          },
+          {
+            id: 5,
+            nome: 'Ana Julia',
+            nickname: '@anajulia',
+            email: 'ana@example.com',
+            foto: '',
+            descricao: 'Yoga e pilates 🧘 Instrutora certificada',
+            localizacao: 'Florianópolis - SC',
+            data_nascimento: '1992-05-18',
+            peso: '58.0',
+            altura: '1.68',
+            imc: '20.5',
+            publicacoes: 67
+          }
+        ]
+      
+        
+        // Busca usuário no mock data
+        console.log('🔄 Buscando usuário no mock data para ID:', id)
+        console.log('📋 IDs disponíveis no mock:', mockUsers.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
+        
+        const mockUser = mockUsers.find(u => u.id === id)
+        
+        if (mockUser) {
+          console.log('✅ Usuário encontrado no mock:', mockUser)
+          console.log('📝 Dados completos:', {
+            id: mockUser.id,
+            nome: mockUser.nome,
+            nickname: mockUser.nickname,
+            descricao: mockUser.descricao
+          })
+          setProfileUser(mockUser)
+          setLoading(false) // Importante: parar o loading aqui também
+        } else {
+          console.log('❌ Usuário não encontrado para ID:', id)
+          console.log('💡 Sugestão: Verifique se o ID está sendo passado corretamente na navegação')
+          setError(`Usuário com ID ${id} não encontrado`)
         }
-      ]
-      
-      // Delay removido - usando dados reais da API
-      
-      // Busca usuário no mock data
-      console.log('🔄 Buscando usuário no mock data para ID:', id)
-      console.log('📋 IDs disponíveis:', mockUsers.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
-      
-      const mockUser = mockUsers.find(u => u.id === id)
-      
-      if (mockUser) {
-        console.log('✅ Usuário encontrado:', mockUser)
-        console.log('📝 Dados completos:', {
-          id: mockUser.id,
-          nome: mockUser.nome,
-          nickname: mockUser.nickname,
-          descricao: mockUser.descricao
-        })
-        setProfileUser(mockUser)
-      } else {
-        console.log('❌ Usuário não encontrado para ID:', id)
-        console.log('💡 Sugestão: Verifique se o ID está sendo passado corretamente na navegação')
-        setError(`Usuário com ID ${id} não encontrado`)
       }
-      
     } catch (error) {
       console.error('❌ Erro ao carregar perfil:', error)
       setError('Erro ao carregar perfil')
