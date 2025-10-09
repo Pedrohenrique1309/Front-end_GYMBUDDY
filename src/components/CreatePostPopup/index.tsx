@@ -22,6 +22,7 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
   const [hashtagInput, setHashtagInput] = useState<string>('')
   const [hashtagChips, setHashtagChips] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -32,9 +33,22 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
         return
       }
       
+      // Verificar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione apenas arquivos de imagem.')
+        return
+      }
+      
+      setUploadingImage(true)
+      
       const reader = new FileReader()
       reader.onloadend = () => {
         setImage(reader.result as string)
+        setUploadingImage(false)
+      }
+      reader.onerror = () => {
+        alert('Erro ao ler arquivo. Tente novamente.')
+        setUploadingImage(false)
       }
       reader.readAsDataURL(file)
     }
@@ -174,7 +188,14 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
               </CharacterCount>
             </ContentSection>
 
-            {image && (
+            {uploadingImage && (
+              <UploadingContainer>
+                <Spinner />
+                <span>Processando imagem...</span>
+              </UploadingContainer>
+            )}
+
+            {image && !uploadingImage && (
               <ImagePreview>
                 <img src={image} alt="Preview do post" />
                 <RemoveImageButton
@@ -223,18 +244,27 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
             </HashtagSection>
 
             <ActionButtons>
-              <ImageUploadButton type="button" disabled={isSubmitting}>
+              <ImageUploadButton type="button" disabled={isSubmitting || uploadingImage}>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
                   id="image-upload"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || uploadingImage}
                 />
                 <label htmlFor="image-upload">
-                  <FiImage />
-                  Adicionar foto
+                  {uploadingImage ? (
+                    <>
+                      <Spinner />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <FiImage />
+                      {image ? 'Trocar foto' : 'Adicionar foto'}
+                    </>
+                  )}
                 </label>
               </ImageUploadButton>
 
@@ -666,6 +696,20 @@ const RemoveHashtagButton = styled.button`
 
 const HashtagInputContainer = styled.div`
   position: relative;
+`
+
+const UploadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed rgba(229, 57, 53, 0.3);
+  border-radius: 1.5rem;
+  padding: 4rem 2rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.6rem;
+  font-weight: 500;
 `
 
 export default CreatePostPopup

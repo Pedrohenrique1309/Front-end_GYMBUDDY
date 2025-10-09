@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus } from 'react-icons/fi'
+import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus, FiShare2 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
@@ -279,13 +279,38 @@ const StatItem = styled.div`
   align-items: center;
   gap: 0.5rem;
   color: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
   
   svg {
     font-size: 18px;
+    transition: all 0.3s ease;
   }
   
   span {
     font-size: 1.3rem;
+  }
+  
+  &.like-button:hover {
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.1);
+    transform: scale(1.05);
+    
+    svg {
+      fill: #ff4757;
+    }
+  }
+  
+  &.comment-button:hover {
+    color: #3742fa;
+    background: rgba(55, 66, 250, 0.1);
+    transform: scale(1.05);
+  }
+  
+  &:hover {
+    color: rgba(255, 255, 255, 0.9);
   }
 `
 
@@ -593,11 +618,17 @@ interface Post {
     avatar?: string
     username: string
   }
-  image: string
+  image?: string
   description?: string
   hashtags: string[]
   likes: number
   comments: number
+  data_criacao?: string
+  id_usuario?: number
+  conteudo?: string // Para compatibilidade com API
+  imagem?: string // Para compatibilidade com API
+  curtidas?: number // Para compatibilidade com API
+  comentarios?: number // Para compatibilidade com API
 }
 
 // Component
@@ -628,64 +659,110 @@ const Social = () => {
     }
   }, [users])
 
-  const loadPosts = () => {
-    // Mock data para posts com usernames sincronizados
-    setPosts([
-      {
-        id: 1,
-        user: { username: '@joaosilva', avatar: '' },
-        image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500',
-        description: 'Treino de pernas hoje! Foco total na hipertrofia 💪',
-        hashtags: ['#foco', '#treino', '#saude'],
-        likes: 1709,
-        comments: 10
-      },
-      {
-        id: 2,
-        user: { username: 'Tetano Pé', avatar: '' },
-        image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500',
-        description: 'Motivação em alta! Nunca desista dos seus sonhos',
-        hashtags: ['#gym', '#motivation'],
-        likes: 892,
-        comments: 23
-      },
-      {
-        id: 3,
-        user: { username: '@pedrocosta', avatar: '' },
-        image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500',
-        description: 'Pré-treino carregado! Hora de dar tudo de si',
-        hashtags: ['#workout', '#fitness'],
-        likes: 567,
-        comments: 15
-      },
-      {
-        id: 4,
-        user: { username: '@anajulia', avatar: '' },
-        image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500',
-        description: 'Dicas de treino funcional para todos os níveis',
-        hashtags: ['#training', '#healthy'],
-        likes: 1234,
-        comments: 45
-      },
-      {
-        id: 5,
-        user: { username: '@carlosfit', avatar: '' },
-        image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500',
-        description: 'Progresso é progresso, não importa quão pequeno seja',
-        hashtags: ['#bodybuilding', '#progress'],
-        likes: 445,
-        comments: 8
-      },
-      {
-        id: 6,
-        user: { username: '@luciafernanda', avatar: '' },
-        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500',
-        description: 'Alimentação saudável é a base de tudo! 🥗',
-        hashtags: ['#nutricao', '#saude', '#alimentacao'],
-        likes: 678,
-        comments: 34
+  const loadPosts = async () => {
+    try {
+      console.log('📡 Carregando posts da API...')
+      
+      const response = await fetch(`${API_BASE_URL}/publicacao`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('📋 Dados dos posts da API:', data)
+        
+        if (data?.publicacoes && Array.isArray(data.publicacoes)) {
+          // Transformar dados da API para formato do componente
+          const apiPosts: Post[] = await Promise.all(
+            data.publicacoes.map(async (apiPost: any) => {
+              // Buscar dados do usuário que criou o post
+              const userData = users.find(u => u.id === apiPost.id_usuario)
+              
+              return {
+                id: apiPost.id,
+                user: {
+                  username: userData?.nickname || `@user${apiPost.id_usuario}`,
+                  avatar: userData?.foto || ''
+                },
+                image: apiPost.imagem || '',
+                description: apiPost.conteudo || '',
+                hashtags: apiPost.hashtags ? apiPost.hashtags.split(' ').filter((tag: string) => tag.startsWith('#')) : [],
+                likes: apiPost.curtidas || 0,
+                comments: apiPost.comentarios || 0,
+                data_criacao: apiPost.data_criacao,
+                id_usuario: apiPost.id_usuario
+              }
+            })
+          )
+          
+          console.log('✅ Posts processados:', apiPosts.length)
+          setPosts(apiPosts)
+          return
+        }
       }
-    ])
+      
+      throw new Error('API não retornou posts válidos')
+      
+    } catch (error) {
+      console.error('❌ Erro ao carregar posts da API:', error)
+      console.log('🔄 Usando posts mock...')
+      
+      // Mock data para posts com usernames sincronizados
+      setPosts([
+        {
+          id: 1,
+          user: { username: '@joaosilva', avatar: '' },
+          image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500',
+          description: 'Treino de pernas hoje! Foco total na hipertrofia 💪',
+          hashtags: ['#foco', '#treino', '#saude'],
+          likes: 1709,
+          comments: 10
+        },
+        {
+          id: 2,
+          user: { username: 'Tetano Pé', avatar: '' },
+          image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500',
+          description: 'Motivação em alta! Nunca desista dos seus sonhos',
+          hashtags: ['#gym', '#motivation'],
+          likes: 892,
+          comments: 23
+        },
+        {
+          id: 3,
+          user: { username: '@pedrocosta', avatar: '' },
+          image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500',
+          description: 'Pré-treino carregado! Hora de dar tudo de si',
+          hashtags: ['#workout', '#fitness'],
+          likes: 567,
+          comments: 15
+        },
+        {
+          id: 4,
+          user: { username: '@anajulia', avatar: '' },
+          image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500',
+          description: 'Dicas de treino funcional para todos os níveis',
+          hashtags: ['#training', '#healthy'],
+          likes: 1234,
+          comments: 45
+        },
+        {
+          id: 5,
+          user: { username: '@carlosfit', avatar: '' },
+          image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500',
+          description: 'Progresso é progresso, não importa quão pequeno seja',
+          hashtags: ['#bodybuilding', '#progress'],
+          likes: 445,
+          comments: 8
+        },
+        {
+          id: 6,
+          user: { username: '@luciafernanda', avatar: '' },
+          image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500',
+          description: 'Alimentação saudável é a base de tudo! 🥗',
+          hashtags: ['#nutricao', '#saude', '#alimentacao'],
+          likes: 678,
+          comments: 34
+        }
+      ])
+    }
   }
   
   const filterPosts = () => {
@@ -828,6 +905,77 @@ const Social = () => {
   }
   
 
+  // Função para curtir/descurtir posts
+  const handleLikePost = async (postId: number) => {
+    try {
+      console.log('💖 Curtindo post:', postId)
+      
+      const response = await fetch(`${API_BASE_URL}/curtida`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id_publicacao: postId,
+          id_usuario: user?.id
+        })
+      })
+      
+      if (response.ok) {
+        console.log('✅ Curtida enviada com sucesso')
+        // Recarregar posts para pegar contadores atualizados
+        loadPosts()
+      } else {
+        throw new Error('Erro na API de curtida')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao curtir post:', error)
+      
+      // Fallback: atualizar localmente
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes: post.likes + 1 }
+          : post
+      ))
+    }
+  }
+
+  // Função para comentar em posts
+  const handleCommentPost = async (postId: number, comentario: string) => {
+    try {
+      console.log('💬 Comentando no post:', postId, comentario)
+      
+      const response = await fetch(`${API_BASE_URL}/comentario`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id_publicacao: postId,
+          id_usuario: user?.id,
+          conteudo: comentario
+        })
+      })
+      
+      if (response.ok) {
+        console.log('✅ Comentário enviado com sucesso')
+        // Recarregar posts para pegar contadores atualizados
+        loadPosts()
+      } else {
+        throw new Error('Erro na API de comentário')
+      }
+    } catch (error) {
+      console.error('❌ Erro ao comentar:', error)
+      
+      // Fallback: atualizar localmente
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, comments: post.comments + 1 }
+          : post
+      ))
+    }
+  }
+
   const handleAiSubmit = () => {
     if (!aiMessage.trim()) return
     // Aqui você pode implementar a lógica do chat da IA
@@ -847,14 +995,92 @@ const Social = () => {
     hashtags: string[]
   }) => {
     try {
-      // Criar novo post com dados do usuário
+      console.log('📝 Iniciando criação de post...')
+      console.log('📄 Conteúdo:', postData.content)
+      console.log('🏷️ Hashtags:', postData.hashtags)
+      console.log('📸 Tem imagem:', !!postData.image)
+      
+      let imageUrl = ''
+      
+      // Se há uma imagem, fazer upload para Azure primeiro
+      if (postData.image) {
+        console.log('📤 Fazendo upload da imagem...')
+        
+        try {
+          // Converter base64 para Blob
+          const response = await fetch(postData.image)
+          const blob = await response.blob()
+          
+          // Criar FormData para enviar arquivo
+          const formData = new FormData()
+          formData.append('foto', blob, `post-${Date.now()}.jpg`)
+          
+          // Upload para Azure via API (endpoint específico para posts)
+          const uploadResponse = await fetch(`${API_BASE_URL}/publicacao/upload`, {
+            method: 'POST',
+            body: formData
+          })
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json()
+            imageUrl = uploadData.foto_url || uploadData.url || uploadData.foto
+            console.log('✅ Upload da imagem concluído:', imageUrl)
+          } else {
+            console.log('⚠️ Falha no upload, usando imagem local')
+            imageUrl = postData.image // Fallback para imagem local
+          }
+        } catch (uploadError) {
+          console.error('❌ Erro no upload da imagem:', uploadError)
+          imageUrl = postData.image // Fallback para imagem local
+        }
+      }
+      
+      // Criar post via API
+      try {
+        const apiPayload = {
+          id_usuario: user?.id,
+          conteudo: postData.content,
+          imagem: imageUrl || null,
+          hashtags: postData.hashtags.join(' ') // Converter array para string
+        }
+        
+        console.log('📡 Enviando post para API:', apiPayload)
+        
+        const apiResponse = await fetch(`${API_BASE_URL}/publicacao`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(apiPayload)
+        })
+        
+        if (apiResponse.ok) {
+          const responseData = await apiResponse.json()
+          console.log('✅ Post criado na API:', responseData)
+          
+          // Recarregar posts para pegar o novo post
+          loadPosts()
+          
+          return // Sair da função se API funcionou
+        } else {
+          const errorData = await apiResponse.text()
+          console.log('❌ Erro da API:', apiResponse.status, errorData)
+          throw new Error(`API Error: ${apiResponse.status}`)
+        }
+        
+      } catch (apiError) {
+        console.log('⚠️ API indisponível, criando post localmente:', apiError)
+      }
+      
+      // Fallback: criar post localmente se API falhar
       const newPost: Post = {
         id: posts.length + 1,
         user: {
           username: `@${user?.nickname || user?.email?.split('@')[0] || 'usuario'}`,
           avatar: user?.foto || ''
         },
-        image: postData.image || '',
+        image: imageUrl || postData.image || '',
+        description: postData.content,
         hashtags: postData.hashtags,
         likes: 0,
         comments: 0
@@ -863,9 +1089,9 @@ const Social = () => {
       // Adicionar ao início da lista de posts
       setPosts(prevPosts => [newPost, ...prevPosts])
       
-      console.log('✅ Post criado com sucesso:', newPost)
+      console.log('✅ Post criado localmente:', newPost)
     } catch (error) {
-      console.error('❌ Erro ao criar post:', error)
+      console.error('❌ Erro geral ao criar post:', error)
       throw error
     }
   }
@@ -978,9 +1204,11 @@ const Social = () => {
           <PostsGrid>
             {filteredPosts.map((post) => (
               <PostCard key={post.id}>
-                <PostImage>
-                  <img src={post.image} alt="Post" />
-                </PostImage>
+                {(post.image || post.imagem) && (
+                  <PostImage>
+                    <img src={post.image || post.imagem} alt="Post" />
+                  </PostImage>
+                )}
                 <PostFooter>
                   <PostUser>
                     <UserAvatar>
@@ -1005,8 +1233,8 @@ const Social = () => {
                       }
                     }}>{post.user.username}</Username>
                   </PostUser>
-                  {post.description && (
-                    <PostDescription>{post.description}</PostDescription>
+                  {(post.description || post.conteudo) && (
+                    <PostDescription>{post.description || post.conteudo}</PostDescription>
                   )}
                   <PostHashtags>
                     {post.hashtags.map((tag, index) => (
@@ -1018,13 +1246,30 @@ const Social = () => {
                     ))}
                   </PostHashtags>
                   <PostStats>
-                    <StatItem>
+                    <StatItem 
+                      onClick={() => handleLikePost(post.id)}
+                      style={{ cursor: 'pointer' }}
+                      className="like-button"
+                    >
                       <FiHeart />
-                      <span>{post.likes}</span>
+                      <span>{post.likes || post.curtidas || 0}</span>
+                    </StatItem>
+                    <StatItem 
+                      onClick={() => {
+                        const comentario = prompt('Deixe seu comentário:')
+                        if (comentario?.trim()) {
+                          handleCommentPost(post.id, comentario)
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                      className="comment-button"
+                    >
+                      <FiMessageCircle />
+                      <span>{post.comments || post.comentarios || 0}</span>
                     </StatItem>
                     <StatItem>
-                      <FiMessageCircle />
-                      <span>{post.comments}</span>
+                      <FiShare2 />
+                      <span>0</span>
                     </StatItem>
                   </PostStats>
                 </PostFooter>
