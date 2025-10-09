@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend } from 'react-icons/fi'
+import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
+import CreatePostPopup from '../../components/CreatePostPopup'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
@@ -581,6 +582,7 @@ const Social = () => {
   const [posts, setPosts] = useState<Post[]>([])
   const [showAiOverlay, setShowAiOverlay] = useState(false)
   const [aiMessage, setAiMessage] = useState('')
+  const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
 
   useEffect(() => {
     loadUsers()
@@ -701,6 +703,43 @@ const Social = () => {
     if (e.target === e.currentTarget) {
       setShowAiOverlay(false)
     }
+  }
+
+  const handleCreatePost = async (postData: {
+    content: string
+    image?: string
+    hashtags: string[]
+  }) => {
+    try {
+      // Criar novo post com dados do usuário
+      const newPost: Post = {
+        id: posts.length + 1,
+        user: {
+          username: `@${user?.nickname || user?.email?.split('@')[0] || 'usuario'}`,
+          avatar: user?.foto || ''
+        },
+        image: postData.image || '',
+        hashtags: postData.hashtags,
+        likes: 0,
+        comments: 0
+      }
+
+      // Adicionar ao início da lista de posts
+      setPosts(prevPosts => [newPost, ...prevPosts])
+      
+      console.log('✅ Post criado com sucesso:', newPost)
+    } catch (error) {
+      console.error('❌ Erro ao criar post:', error)
+      throw error
+    }
+  }
+
+  const handleOpenCreatePost = () => {
+    setShowCreatePostPopup(true)
+  }
+
+  const handleCloseCreatePost = () => {
+    setShowCreatePostPopup(false)
   }
 
   return (
@@ -869,8 +908,129 @@ const Social = () => {
           </FriendsList>
         </FriendsSidebar>
       </MainContent>
+      
+      {/* Botão Flutuante de Criar Post */}
+      <CreatePostButton
+        onClick={handleOpenCreatePost}
+        whileHover={{ scale: 1.1, rotate: 90 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.5 }}
+      >
+        <FiPlus />
+      </CreatePostButton>
+      
+      {/* Popup de Criar Post */}
+      <CreatePostPopup
+        isOpen={showCreatePostPopup}
+        onClose={handleCloseCreatePost}
+        onSubmit={handleCreatePost}
+      />
     </Container>
   )
 }
+
+// Botão Flutuante de Criar Post
+const CreatePostButton = styled(motion.button)`
+  position: fixed;
+  bottom: 3rem;
+  right: 3rem;
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #E53935, #FF5722);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 
+    0 15px 35px rgba(229, 57, 53, 0.4),
+    0 5px 15px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #E53935, #FF5722, #E53935);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
+  
+  svg {
+    font-size: 2.8rem;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+  
+  &:hover {
+    box-shadow: 
+      0 20px 45px rgba(229, 57, 53, 0.5),
+      0 8px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+  }
+  
+  &:active {
+    transform: translateY(0) scale(0.95);
+    box-shadow: 
+      0 10px 25px rgba(229, 57, 53, 0.3),
+      0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Animação de pulsação sutil */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229, 57, 53, 0.3) 0%, transparent 70%);
+    animation: pulse 2s infinite;
+    z-index: -1;
+  }
+  
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      opacity: 0.7;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 0.3;
+    }
+    100% {
+      transform: scale(0.95);
+      opacity: 0.7;
+    }
+  }
+  
+  /* Responsivo */
+  @media (max-width: 768px) {
+    bottom: 2rem;
+    right: 2rem;
+    width: 5.5rem;
+    height: 5.5rem;
+    
+    svg {
+      font-size: 2.4rem;
+    }
+  }
+`;
 
 export default Social
