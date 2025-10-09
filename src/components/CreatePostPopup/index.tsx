@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiImage, FiHash, FiSend, FiUser } from 'react-icons/fi'
+import { FiX, FiImage, FiSend, FiHash } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/default-avatar'
 
@@ -19,7 +19,8 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
   const { user } = useUser()
   const [content, setContent] = useState('')
   const [image, setImage] = useState<string>('')
-  const [hashtags, setHashtags] = useState<string>('')
+  const [hashtagInput, setHashtagInput] = useState<string>('')
+  const [hashtagChips, setHashtagChips] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +40,39 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
     }
   }
 
+  const handleHashtagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      addHashtagChip()
+    }
+  }
+
+  const handleHashtagBlur = () => {
+    addHashtagChip()
+  }
+
+  const addHashtagChip = () => {
+    if (hashtagInput.trim()) {
+      let hashtag = hashtagInput.trim()
+      
+      // Adicionar # se não tiver
+      if (!hashtag.startsWith('#')) {
+        hashtag = `#${hashtag}`
+      }
+      
+      // Verificar se não é duplicata e se é válida
+      if (!hashtagChips.includes(hashtag) && hashtag.length > 1) {
+        setHashtagChips(prev => [...prev, hashtag])
+      }
+      
+      setHashtagInput('')
+    }
+  }
+
+  const removeHashtagChip = (tagToRemove: string) => {
+    setHashtagChips(prev => prev.filter(tag => tag !== tagToRemove))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -50,16 +84,10 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
     setIsSubmitting(true)
     
     try {
-      // Processar hashtags
-      const hashtagList = hashtags
-        .split(' ')
-        .filter(tag => tag.trim() && tag.startsWith('#'))
-        .map(tag => tag.trim())
-
       const postData = {
         content: content.trim(),
         image: image || undefined,
-        hashtags: hashtagList
+        hashtags: hashtagChips
       }
 
       // Chamar função de callback se fornecida
@@ -70,7 +98,8 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
       // Limpar formulário
       setContent('')
       setImage('')
-      setHashtags('')
+      setHashtagInput('')
+      setHashtagChips([])
       
       // Fechar popup
       onClose()
@@ -87,7 +116,8 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
     if (isSubmitting) return
     setContent('')
     setImage('')
-    setHashtags('')
+    setHashtagInput('')
+    setHashtagChips([])
     onClose()
   }
 
@@ -158,15 +188,38 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
             )}
 
             <HashtagSection>
-              <HashtagInput
-                value={hashtags}
-                onChange={(e) => setHashtags(e.target.value)}
-                placeholder="#treino #academia #fitness #musculos"
-                disabled={isSubmitting}
-              />
-              <HashtagIcon>
-                <FiHash />
-              </HashtagIcon>
+              {/* Chips de hashtags */}
+              {hashtagChips.length > 0 && (
+                <HashtagChipsContainer>
+                  {hashtagChips.map((tag, index) => (
+                    <HashtagChip key={index}>
+                      <span>{tag}</span>
+                      <RemoveHashtagButton
+                        type="button"
+                        onClick={() => removeHashtagChip(tag)}
+                        disabled={isSubmitting}
+                      >
+                        <FiX />
+                      </RemoveHashtagButton>
+                    </HashtagChip>
+                  ))}
+                </HashtagChipsContainer>
+              )}
+              
+              {/* Input para adicionar hashtags */}
+              <HashtagInputContainer>
+                <HashtagInput
+                  value={hashtagInput}
+                  onChange={(e) => setHashtagInput(e.target.value)}
+                  onKeyPress={handleHashtagKeyPress}
+                  onBlur={handleHashtagBlur}
+                  placeholder={hashtagChips.length === 0 ? "#treino #academia #fitness" : "Adicionar hashtag..."}
+                  disabled={isSubmitting}
+                />
+                <HashtagIcon>
+                  <FiHash />
+                </HashtagIcon>
+              </HashtagInputContainer>
             </HashtagSection>
 
             <ActionButtons>
@@ -556,6 +609,63 @@ const Spinner = styled.div`
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+`
+
+const HashtagChipsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+`
+
+const HashtagChip = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #E53935;
+  border-radius: 2rem;
+  padding: 0.6rem 1.2rem;
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 500;
+  
+  span {
+    color: #E53935;
+  }
+`
+
+const RemoveHashtagButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(229, 57, 53, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  svg {
+    font-size: 1.2rem;
+    color: #E53935;
+  }
+  
+  &:hover {
+    background: rgba(229, 57, 53, 0.4);
+    transform: scale(1.1);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`
+
+const HashtagInputContainer = styled.div`
+  position: relative;
 `
 
 export default CreatePostPopup

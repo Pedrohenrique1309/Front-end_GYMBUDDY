@@ -224,13 +224,6 @@ const Header = ({ isVisible = true }: HeaderProps) => {
                   }}
                 >
                   <ProfileCardImageContainer>
-                    {user?.foto ? (
-                      <ProfileCardImage src={user.foto} alt={user.nome || 'Usuário'} />
-                    ) : (
-                      <ProfileCardImagePlaceholder>
-                        <DefaultAvatar size={120} />
-                      </ProfileCardImagePlaceholder>
-                    )}
                     <ProfileCardImageOverlay />
                     
                     <ProfileCardInfo>
