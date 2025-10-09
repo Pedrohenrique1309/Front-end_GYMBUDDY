@@ -5,24 +5,23 @@ import { FiX, FiImage, FiSend, FiHash } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/default-avatar'
 
+const API_BASE_URL = '/api/v1/gymbuddy'
+
 interface CreatePostPopupProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit?: (postData: {
-    content: string
-    image?: string
-    hashtags: string[]
-  }) => void
+  onPostCreated?: () => void // Callback para recarregar posts
 }
 
-const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) => {
+const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProps) => {
   const { user } = useUser()
   const [content, setContent] = useState('')
   const [image, setImage] = useState<string>('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [hashtagInput, setHashtagInput] = useState<string>('')
   const [hashtagChips, setHashtagChips] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -34,23 +33,59 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
       }
       
       // Verificar tipo de arquivo
-      if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecione apenas arquivos de imagem.')
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/jfif']
+      if (!allowedTypes.includes(file.type)) {
+        alert('Tipo de arquivo não suportado! Use JPG, PNG, JFIF ou WebP.')
         return
       }
       
-      setUploadingImage(true)
+      // Armazenar arquivo original para upload
+      setSelectedFile(file)
       
+      // Criar preview
       const reader = new FileReader()
       reader.onloadend = () => {
         setImage(reader.result as string)
-        setUploadingImage(false)
-      }
-      reader.onerror = () => {
-        alert('Erro ao ler arquivo. Tente novamente.')
-        setUploadingImage(false)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  // Função para upload de imagem para Azure
+  const uploadImageToAzure = async (file: File): Promise<string | null> => {
+    try {
+      setUploadProgress(10)
+      
+      const formData = new FormData()
+      formData.append('foto', file)
+      
+      console.log('📤 Iniciando upload da imagem para Azure...')
+      
+      const response = await fetch(`${API_BASE_URL}/upload-foto`, {
+        method: 'POST',
+        body: formData,
+      })
+      
+      setUploadProgress(50)
+      
+      if (!response.ok) {
+        throw new Error(`Erro no upload: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      setUploadProgress(100)
+      
+      if (data.url) {
+        console.log('✅ Imagem enviada para Azure:', data.url)
+        return data.url
+      } else {
+        throw new Error('URL da imagem não retornada pela API')
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro no upload para Azure:', error)
+      setUploadProgress(0)
+      return null
     }
   }
 
@@ -95,34 +130,82 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
       return
     }
 
+    if (!user?.id) {
+      alert('Usuário não autenticado!')
+      return
+    }
+
     setIsSubmitting(true)
+    setUploadProgress(0)
     
     try {
-      const postData = {
-        content: content.trim(),
-        image: image || undefined,
-        hashtags: hashtagChips
+      console.log('🔄 Iniciando criação do post...')
+      
+      let imageUrl: string | undefined = undefined
+      
+      // Se há uma imagem selecionada, fazer upload primeiro
+      if (selectedFile) {
+        console.log('📤 Fazendo upload da imagem...')
+        imageUrl = await uploadImageToAzure(selectedFile) || undefined
+        
+        if (!imageUrl) {
+          alert('Erro ao fazer upload da imagem. Tente novamente.')
+          return
+        }
       }
-
-      // Chamar função de callback se fornecida
-      if (onSubmit) {
-        await onSubmit(postData)
+      
+      // Preparar dados do post para a API
+      const postPayload = {
+        id_usuario: user.id,
+        conteudo: content.trim(),
+        foto: imageUrl || null,
+        hashtags: hashtagChips.join(' ') // Transformar array em string
       }
-
+      
+      console.log('📝 Dados do post:', postPayload)
+      
+      // Enviar post para a API
+      const response = await fetch(`${API_BASE_URL}/publicacao`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postPayload)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`Erro na API: ${response.status} - ${errorData}`)
+      }
+      
+      const result = await response.json()
+      console.log('✅ Post criado com sucesso:', result)
+      
+      // Mostrar mensagem de sucesso
+      alert('Post publicado com sucesso!')
+      
       // Limpar formulário
       setContent('')
       setImage('')
+      setSelectedFile(null)
       setHashtagInput('')
       setHashtagChips([])
+      setUploadProgress(0)
+      
+      // Chamar callback para recarregar posts
+      if (onPostCreated) {
+        onPostCreated()
+      }
       
       // Fechar popup
       onClose()
       
     } catch (error) {
-      console.error('Erro ao criar post:', error)
-      alert('Erro ao criar post. Tente novamente.')
+      console.error('❌ Erro ao criar post:', error)
+      alert(`Erro ao criar post: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     } finally {
       setIsSubmitting(false)
+      setUploadProgress(0)
     }
   }
 
@@ -130,8 +213,10 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
     if (isSubmitting) return
     setContent('')
     setImage('')
+    setSelectedFile(null)
     setHashtagInput('')
     setHashtagChips([])
+    setUploadProgress(0)
     onClose()
   }
 
@@ -188,19 +273,22 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
               </CharacterCount>
             </ContentSection>
 
-            {uploadingImage && (
-              <UploadingContainer>
-                <Spinner />
-                <span>Processando imagem...</span>
-              </UploadingContainer>
-            )}
-
-            {image && !uploadingImage && (
+            {image && (
               <ImagePreview>
                 <img src={image} alt="Preview do post" />
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <UploadProgress>
+                    <ProgressBar progress={uploadProgress} />
+                    <ProgressText>{uploadProgress}%</ProgressText>
+                  </UploadProgress>
+                )}
                 <RemoveImageButton
                   type="button"
-                  onClick={() => setImage('')}
+                  onClick={() => {
+                    setImage('')
+                    setSelectedFile(null)
+                    setUploadProgress(0)
+                  }}
                   disabled={isSubmitting}
                 >
                   <FiX />
@@ -244,27 +332,18 @@ const CreatePostPopup = ({ isOpen, onClose, onSubmit }: CreatePostPopupProps) =>
             </HashtagSection>
 
             <ActionButtons>
-              <ImageUploadButton type="button" disabled={isSubmitting || uploadingImage}>
+              <ImageUploadButton type="button" disabled={isSubmitting}>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
                   id="image-upload"
-                  disabled={isSubmitting || uploadingImage}
+                  disabled={isSubmitting}
                 />
                 <label htmlFor="image-upload">
-                  {uploadingImage ? (
-                    <>
-                      <Spinner />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <FiImage />
-                      {image ? 'Trocar foto' : 'Adicionar foto'}
-                    </>
-                  )}
+                  <FiImage />
+                  Adicionar foto
                 </label>
               </ImageUploadButton>
 
@@ -698,18 +777,45 @@ const HashtagInputContainer = styled.div`
   position: relative;
 `
 
-const UploadingContainer = styled.div`
+const UploadProgress = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1rem;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px dashed rgba(229, 57, 53, 0.3);
-  border-radius: 1.5rem;
-  padding: 4rem 2rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1.6rem;
-  font-weight: 500;
+  justify-content: space-between;
+  border-radius: 0 0 1.5rem 1.5rem;
+`
+
+const ProgressBar = styled.div<{ progress: number }>`
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  margin-right: 1rem;
+  overflow: hidden;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: ${props => props.progress}%;
+    background: linear-gradient(90deg, #E53935, #FF5722);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+`
+
+const ProgressText = styled.span`
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 600;
 `
 
 export default CreatePostPopup

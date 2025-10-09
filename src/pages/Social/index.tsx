@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus, FiShare2 } from 'react-icons/fi'
+import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
@@ -279,38 +279,13 @@ const StatItem = styled.div`
   align-items: center;
   gap: 0.5rem;
   color: rgba(255, 255, 255, 0.6);
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  padding: 0.4rem 0.6rem;
-  cursor: pointer;
   
   svg {
     font-size: 18px;
-    transition: all 0.3s ease;
   }
   
   span {
     font-size: 1.3rem;
-  }
-  
-  &.like-button:hover {
-    color: #ff4757;
-    background: rgba(255, 71, 87, 0.1);
-    transform: scale(1.05);
-    
-    svg {
-      fill: #ff4757;
-    }
-  }
-  
-  &.comment-button:hover {
-    color: #3742fa;
-    background: rgba(55, 66, 250, 0.1);
-    transform: scale(1.05);
-  }
-  
-  &:hover {
-    color: rgba(255, 255, 255, 0.9);
   }
 `
 
@@ -618,17 +593,11 @@ interface Post {
     avatar?: string
     username: string
   }
-  image?: string
+  image: string
   description?: string
   hashtags: string[]
   likes: number
   comments: number
-  data_criacao?: string
-  id_usuario?: number
-  conteudo?: string // Para compatibilidade com API
-  imagem?: string // Para compatibilidade com API
-  curtidas?: number // Para compatibilidade com API
-  comentarios?: number // Para compatibilidade com API
 }
 
 // Component
@@ -661,49 +630,38 @@ const Social = () => {
 
   const loadPosts = async () => {
     try {
-      console.log('📡 Carregando posts da API...')
-      
+      console.log('🌐 Carregando posts da API...')
       const response = await fetch(`${API_BASE_URL}/publicacao`)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('📋 Dados dos posts da API:', data)
-        
-        if (data?.publicacoes && Array.isArray(data.publicacoes)) {
-          // Transformar dados da API para formato do componente
-          const apiPosts: Post[] = await Promise.all(
-            data.publicacoes.map(async (apiPost: any) => {
-              // Buscar dados do usuário que criou o post
-              const userData = users.find(u => u.id === apiPost.id_usuario)
-              
-              return {
-                id: apiPost.id,
-                user: {
-                  username: userData?.nickname || `@user${apiPost.id_usuario}`,
-                  avatar: userData?.foto || ''
-                },
-                image: apiPost.imagem || '',
-                description: apiPost.conteudo || '',
-                hashtags: apiPost.hashtags ? apiPost.hashtags.split(' ').filter((tag: string) => tag.startsWith('#')) : [],
-                likes: apiPost.curtidas || 0,
-                comments: apiPost.comentarios || 0,
-                data_criacao: apiPost.data_criacao,
-                id_usuario: apiPost.id_usuario
-              }
-            })
-          )
+        if (data?.publicacoes) {
+          console.log('✅ Posts carregados da API:', data.publicacoes.length, 'posts')
           
-          console.log('✅ Posts processados:', apiPosts.length)
+          // Mapear dados da API para o formato do componente
+          const apiPosts = data.publicacoes.map((pub: any) => ({
+            id: pub.id,
+            user: {
+              username: pub.usuario?.nickname || `@user${pub.id_usuario}`,
+              avatar: pub.usuario?.foto || ''
+            },
+            image: pub.foto || '',
+            description: pub.conteudo || '',
+            hashtags: pub.hashtags ? pub.hashtags.split(' ') : [],
+            likes: pub.curtidas || 0,
+            comments: pub.comentarios || 0
+          }))
+          
           setPosts(apiPosts)
           return
         }
       }
       
-      throw new Error('API não retornou posts válidos')
+      throw new Error('API não retornou dados válidos')
       
     } catch (error) {
       console.error('❌ Erro ao carregar posts da API:', error)
-      console.log('🔄 Usando posts mock...')
+      console.log('🔄 Usando fallback mock data...')
       
       // Mock data para posts com usernames sincronizados
       setPosts([
@@ -905,77 +863,6 @@ const Social = () => {
   }
   
 
-  // Função para curtir/descurtir posts
-  const handleLikePost = async (postId: number) => {
-    try {
-      console.log('💖 Curtindo post:', postId)
-      
-      const response = await fetch(`${API_BASE_URL}/curtida`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id_publicacao: postId,
-          id_usuario: user?.id
-        })
-      })
-      
-      if (response.ok) {
-        console.log('✅ Curtida enviada com sucesso')
-        // Recarregar posts para pegar contadores atualizados
-        loadPosts()
-      } else {
-        throw new Error('Erro na API de curtida')
-      }
-    } catch (error) {
-      console.error('❌ Erro ao curtir post:', error)
-      
-      // Fallback: atualizar localmente
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, likes: post.likes + 1 }
-          : post
-      ))
-    }
-  }
-
-  // Função para comentar em posts
-  const handleCommentPost = async (postId: number, comentario: string) => {
-    try {
-      console.log('💬 Comentando no post:', postId, comentario)
-      
-      const response = await fetch(`${API_BASE_URL}/comentario`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id_publicacao: postId,
-          id_usuario: user?.id,
-          conteudo: comentario
-        })
-      })
-      
-      if (response.ok) {
-        console.log('✅ Comentário enviado com sucesso')
-        // Recarregar posts para pegar contadores atualizados
-        loadPosts()
-      } else {
-        throw new Error('Erro na API de comentário')
-      }
-    } catch (error) {
-      console.error('❌ Erro ao comentar:', error)
-      
-      // Fallback: atualizar localmente
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, comments: post.comments + 1 }
-          : post
-      ))
-    }
-  }
-
   const handleAiSubmit = () => {
     if (!aiMessage.trim()) return
     // Aqui você pode implementar a lógica do chat da IA
@@ -989,112 +876,6 @@ const Social = () => {
     }
   }
 
-  const handleCreatePost = async (postData: {
-    content: string
-    image?: string
-    hashtags: string[]
-  }) => {
-    try {
-      console.log('📝 Iniciando criação de post...')
-      console.log('📄 Conteúdo:', postData.content)
-      console.log('🏷️ Hashtags:', postData.hashtags)
-      console.log('📸 Tem imagem:', !!postData.image)
-      
-      let imageUrl = ''
-      
-      // Se há uma imagem, fazer upload para Azure primeiro
-      if (postData.image) {
-        console.log('📤 Fazendo upload da imagem...')
-        
-        try {
-          // Converter base64 para Blob
-          const response = await fetch(postData.image)
-          const blob = await response.blob()
-          
-          // Criar FormData para enviar arquivo
-          const formData = new FormData()
-          formData.append('foto', blob, `post-${Date.now()}.jpg`)
-          
-          // Upload para Azure via API (endpoint específico para posts)
-          const uploadResponse = await fetch(`${API_BASE_URL}/publicacao/upload`, {
-            method: 'POST',
-            body: formData
-          })
-          
-          if (uploadResponse.ok) {
-            const uploadData = await uploadResponse.json()
-            imageUrl = uploadData.foto_url || uploadData.url || uploadData.foto
-            console.log('✅ Upload da imagem concluído:', imageUrl)
-          } else {
-            console.log('⚠️ Falha no upload, usando imagem local')
-            imageUrl = postData.image // Fallback para imagem local
-          }
-        } catch (uploadError) {
-          console.error('❌ Erro no upload da imagem:', uploadError)
-          imageUrl = postData.image // Fallback para imagem local
-        }
-      }
-      
-      // Criar post via API
-      try {
-        const apiPayload = {
-          id_usuario: user?.id,
-          conteudo: postData.content,
-          imagem: imageUrl || null,
-          hashtags: postData.hashtags.join(' ') // Converter array para string
-        }
-        
-        console.log('📡 Enviando post para API:', apiPayload)
-        
-        const apiResponse = await fetch(`${API_BASE_URL}/publicacao`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(apiPayload)
-        })
-        
-        if (apiResponse.ok) {
-          const responseData = await apiResponse.json()
-          console.log('✅ Post criado na API:', responseData)
-          
-          // Recarregar posts para pegar o novo post
-          loadPosts()
-          
-          return // Sair da função se API funcionou
-        } else {
-          const errorData = await apiResponse.text()
-          console.log('❌ Erro da API:', apiResponse.status, errorData)
-          throw new Error(`API Error: ${apiResponse.status}`)
-        }
-        
-      } catch (apiError) {
-        console.log('⚠️ API indisponível, criando post localmente:', apiError)
-      }
-      
-      // Fallback: criar post localmente se API falhar
-      const newPost: Post = {
-        id: posts.length + 1,
-        user: {
-          username: `@${user?.nickname || user?.email?.split('@')[0] || 'usuario'}`,
-          avatar: user?.foto || ''
-        },
-        image: imageUrl || postData.image || '',
-        description: postData.content,
-        hashtags: postData.hashtags,
-        likes: 0,
-        comments: 0
-      }
-
-      // Adicionar ao início da lista de posts
-      setPosts(prevPosts => [newPost, ...prevPosts])
-      
-      console.log('✅ Post criado localmente:', newPost)
-    } catch (error) {
-      console.error('❌ Erro geral ao criar post:', error)
-      throw error
-    }
-  }
 
   const handleOpenCreatePost = () => {
     setShowCreatePostPopup(true)
@@ -1204,11 +985,9 @@ const Social = () => {
           <PostsGrid>
             {filteredPosts.map((post) => (
               <PostCard key={post.id}>
-                {(post.image || post.imagem) && (
-                  <PostImage>
-                    <img src={post.image || post.imagem} alt="Post" />
-                  </PostImage>
-                )}
+                <PostImage>
+                  <img src={post.image} alt="Post" />
+                </PostImage>
                 <PostFooter>
                   <PostUser>
                     <UserAvatar>
@@ -1233,8 +1012,8 @@ const Social = () => {
                       }
                     }}>{post.user.username}</Username>
                   </PostUser>
-                  {(post.description || post.conteudo) && (
-                    <PostDescription>{post.description || post.conteudo}</PostDescription>
+                  {post.description && (
+                    <PostDescription>{post.description}</PostDescription>
                   )}
                   <PostHashtags>
                     {post.hashtags.map((tag, index) => (
@@ -1246,30 +1025,13 @@ const Social = () => {
                     ))}
                   </PostHashtags>
                   <PostStats>
-                    <StatItem 
-                      onClick={() => handleLikePost(post.id)}
-                      style={{ cursor: 'pointer' }}
-                      className="like-button"
-                    >
+                    <StatItem>
                       <FiHeart />
-                      <span>{post.likes || post.curtidas || 0}</span>
-                    </StatItem>
-                    <StatItem 
-                      onClick={() => {
-                        const comentario = prompt('Deixe seu comentário:')
-                        if (comentario?.trim()) {
-                          handleCommentPost(post.id, comentario)
-                        }
-                      }}
-                      style={{ cursor: 'pointer' }}
-                      className="comment-button"
-                    >
-                      <FiMessageCircle />
-                      <span>{post.comments || post.comentarios || 0}</span>
+                      <span>{post.likes}</span>
                     </StatItem>
                     <StatItem>
-                      <FiShare2 />
-                      <span>0</span>
+                      <FiMessageCircle />
+                      <span>{post.comments}</span>
                     </StatItem>
                   </PostStats>
                 </PostFooter>
@@ -1331,7 +1093,10 @@ const Social = () => {
       <CreatePostPopup
         isOpen={showCreatePostPopup}
         onClose={handleCloseCreatePost}
-        onSubmit={handleCreatePost}
+        onPostCreated={() => {
+          console.log('📱 Post criado, recarregando posts...')
+          loadPosts() // Recarregar posts após criação
+        }}
       />
     </Container>
   )
