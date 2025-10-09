@@ -208,6 +208,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
   };
 
   const handleNetworkAccess = () => {
+    // Função chamada apenas quando usuário está logado
     navigate('/social')
   }
 

@@ -104,22 +104,21 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
   return (
     <AnimatePresence>
       {estaAberto && (
-        <>
-          <FundoEscuro
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            onClick={aoFecharPopup}
-          />
+        <FundoEscuro
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          onClick={aoFecharPopup}
+        >
           {!popupEsqueciSenhaAberto && (
             <ContainerPopup
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <ConteudoPopup>
               <BotaoFechar onClick={aoFecharPopup}>
                 <FiX />
               </BotaoFechar>
@@ -194,7 +193,6 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
                 aoTrocarParaCadastro()
               }}>Criar conta</LinkCadastro>
             </TextoCadastro>
-              </ConteudoPopup>
             </ContainerPopup>
           )}
           
@@ -203,7 +201,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
             aoFechar={() => setPopupEsqueciSenhaAberto(false)}
             aoVoltarParaLogin={() => setPopupEsqueciSenhaAberto(false)}
           />
-        </>
+        </FundoEscuro>
       )}
     </AnimatePresence>
   )
@@ -215,34 +213,28 @@ const FundoEscuro = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
-  z-index: 9998;
-`
-
-const ContainerPopup = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  pointer-events: none;
 `
 
-const ConteudoPopup = styled.div`
+const ContainerPopup = styled(motion.div)`
   position: relative;
+  width: 90%;
+  max-width: 42rem;
+  margin: 0 auto;
+  z-index: 10001;
+  pointer-events: auto;
   background: #0A0A0A;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.6rem;
   padding: 3rem;
-  width: 90%;
-  max-width: 42rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  pointer-events: auto;
 `
 
 const BotaoFechar = styled.button`
