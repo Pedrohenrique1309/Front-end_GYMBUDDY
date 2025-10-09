@@ -8,6 +8,12 @@ import ImageEditor from '../ImageEditor'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
+// Configuração do Azure Storage (baseada na uploadParams)
+const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'
+const AZURE_STORAGE_URL = `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`
+const AZURE_CONTAINER = 'fotos'
+const AZURE_SAS_TOKEN = 'sp=cwl&st=2025-10-09T13:37:16Z&se=2025-10-09T20:30:00Z&sv=2024-11-04&sr=c&sig=fMGGqgAmqcMj%2BfF8dU7%2FRFwh6TtpqfpjB6cXX9hj6zo%3D'
+
 interface CreatePostPopupProps {
   isOpen: boolean
   onClose: () => void
@@ -25,29 +31,19 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
   const [uploadProgress, setUploadProgress] = useState(0)
   const [showImageEditor, setShowImageEditor] = useState(false)
 
-  // Desabilitar scroll quando o popup estiver aberto
-  useEffect(() => {
-    if (isOpen) {
-      // Salvar a posição atual do scroll
-      const scrollY = window.scrollY
-      
-      // Desabilitar scroll
-      document.body.style.position = 'fixed'
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = '100%'
-      document.body.style.overflow = 'hidden'
-      
-      return () => {
-        // Restaurar scroll ao fechar
-        const scrollY = document.body.style.top
-        document.body.style.position = ''
-        document.body.style.top = ''
-        document.body.style.width = ''
-        document.body.style.overflow = ''
-        window.scrollTo(0, parseInt(scrollY || '0') * -1)
-      }
+  // Função de configuração do upload (baseada na uploadParams)
+  const getUploadParams = (file: File) => {
+    return {
+      file,
+      storageAccount: AZURE_STORAGE_ACCOUNT,
+      sasToken: AZURE_SAS_TOKEN,
+      containerName: AZURE_CONTAINER,
+      fileName: `post_${user?.id}_${new Date().getTime()}.jpg`
     }
-  }, [isOpen])
+  }
+
+  // Permitir scroll quando popup estiver aberto (sem bloquear scroll)
+  // Removido o bloqueio de scroll para permitir navegação na página
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -77,19 +73,43 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
     }
   }
 
-  // Função para converter imagem para base64
-  const convertImageToBase64 = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const base64 = reader.result as string
-        // Remover o prefixo "data:image/...;base64," para enviar apenas o base64
-        const base64WithoutPrefix = base64.split(',')[1]
-        resolve(base64WithoutPrefix)
+  // Função para fazer upload da imagem para Azure (usando configurações corretas)
+  const uploadImageToAzure = async (file: File): Promise<string> => {
+    const uploadParams = getUploadParams(file)
+    const blobUrl = `${AZURE_STORAGE_URL}/${uploadParams.containerName}/${uploadParams.fileName}?${uploadParams.sasToken}`
+    
+    try {
+      console.log('📤 Enviando imagem para Azure Storage...')
+      console.log('🔧 Configurações:', {
+        storageAccount: uploadParams.storageAccount,
+        container: uploadParams.containerName,
+        fileName: uploadParams.fileName
+      })
+      
+      const response = await fetch(blobUrl, {
+        method: 'PUT',
+        headers: {
+          'x-ms-blob-type': 'BlockBlob',
+          'Content-Type': file.type || 'image/jpeg',
+        },
+        body: file,
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Erro detalhado:', errorText)
+        throw new Error(`Erro ao fazer upload: ${response.status} - ${errorText}`)
       }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
+      
+      // Retornar URL pública da imagem (sem o SAS token)
+      const publicUrl = `${AZURE_STORAGE_URL}/${uploadParams.containerName}/${uploadParams.fileName}`
+      console.log('✅ Imagem enviada para Azure:', publicUrl)
+      return publicUrl
+      
+    } catch (error) {
+      console.error('❌ Erro no upload para Azure:', error)
+      throw error
+    }
   }
 
   const handleHashtagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -151,33 +171,45 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
     try {
       console.log('🔄 Iniciando criação do post...')
       
-      let imageBase64: string | null = null
+      let imageUrl: string = ''
       
-      // Se há uma imagem selecionada, converter para base64
+      // Se há uma imagem selecionada, fazer upload para o Azure
       if (selectedFile) {
-        console.log('📤 Convertendo imagem para base64...')
+        console.log('📤 Fazendo upload da imagem para Azure...')
         setUploadProgress(50)
         
         try {
-          imageBase64 = await convertImageToBase64(selectedFile)
+          imageUrl = await uploadImageToAzure(selectedFile)
           setUploadProgress(100)
-          console.log('✅ Imagem convertida para base64')
+          console.log('✅ Imagem enviada para Azure:', imageUrl)
         } catch (error) {
-          console.error('❌ Erro ao converter imagem:', error)
-          alert('Erro ao processar a imagem. Tente novamente.')
-          return
+          console.error('❌ Erro ao enviar imagem para Azure:', error)
+          console.error('🔍 Detalhes do erro:', error)
+          // Continuar sem imagem em caso de erro no Azure
+          console.log('⚠️ Continuando sem imagem...')
+          imageUrl = ''
         }
       }
       
       // Preparar dados do post para a API (formato exato que funciona no Postman)
       const currentDate = new Date().toISOString().split('T')[0] // YYYY-MM-DD
       
+      // Enviar com URL da imagem do Azure
       const postPayload = {
-        imagem: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500", // URL ou data URL completa
-        descricao: `${content.trim()} ${hashtagChips.join(' ')}`.trim(),
+        imagem: imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500",
+        descricao: content.trim() + (hashtagChips.length > 0 ? ' ' + hashtagChips.join(' ') : ''),
         data: currentDate,
         localizacao: "Academia Iron Gym - São Paulo",
         id_user: userId
+      }
+      
+      // Validar se todos os campos são válidos
+      if (!postPayload.descricao || postPayload.descricao.trim() === '') {
+        throw new Error('Descrição não pode estar vazia')
+      }
+      
+      if (!postPayload.id_user || postPayload.id_user === 0) {
+        throw new Error('ID do usuário inválido')
       }
       
       // Log detalhado para comparar com Postman
@@ -189,57 +221,65 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       
       console.log('📝 Dados do post:', postPayload)
       
-      // Enviar post para a API (simulando exatamente o Postman)
-      console.log('🌐 Enviando para:', `${API_BASE_URL}/publicacao`)
-      console.log('📋 Headers:', { 'Content-Type': 'application/json' })
+      // Enviar post para a API (testando diferentes URLs)
+      const urls = [
+        `${API_BASE_URL}/publicacao`  // Usar apenas localhost:8080
+      ]
       
-      const response = await fetch(`${API_BASE_URL}/publicacao`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(postPayload)
-      })
-      
-      console.log('📡 Response status:', response.status, response.statusText)
-      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()))
-      
-      if (!response.ok) {
-        let errorMessage = `Erro ${response.status}`
+      for (const url of urls) {
         try {
-          const errorData = await response.json()
-          errorMessage = errorData.message || errorData.error || errorMessage
-          console.log('❌ Detalhes do erro:', errorData)
-        } catch {
-          const errorText = await response.text()
-          errorMessage = errorText || errorMessage
-          console.log('❌ Erro (texto):', errorText)
+          console.log('🌐 Tentando URL:', url)
+          console.log('📋 Headers:', { 'Content-Type': 'application/json' })
+          console.log('📤 Body:', JSON.stringify(postPayload))
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify(postPayload)
+          })
+          
+          console.log('📡 Response:', response.status, response.statusText)
+          console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()))
+          
+          if (response.ok) {
+            // Sucesso, processar resposta
+            const result = await response.json()
+            console.log('✅ Post criado com sucesso na URL:', url)
+            console.log('✅ Resultado:', result)
+            
+            // Sucesso - sair do loop
+            alert('Post publicado com sucesso!')
+            
+            // Limpar formulário
+            setContent('')
+            setImage('')
+            setSelectedFile(null)
+            setHashtagInput('')
+            setHashtagChips([])
+            setUploadProgress(0)
+            
+            // Chamar callback para recarregar posts
+            if (onPostCreated) {
+              onPostCreated()
+            }
+            
+            // Fechar popup
+            onClose()
+            return // Sair da função
+            
+          } else {
+            console.log(`❌ Falhou na URL ${url}:`, response.status)
+          }
+        } catch (urlError) {
+          console.log(`❌ Erro na URL ${url}:`, urlError)
         }
-        throw new Error(errorMessage)
       }
       
-      const result = await response.json()
-      console.log('✅ Post criado com sucesso:', result)
-      
-      // Mostrar mensagem de sucesso
-      alert('Post publicado com sucesso!')
-      
-      // Limpar formulário
-      setContent('')
-      setImage('')
-      setSelectedFile(null)
-      setHashtagInput('')
-      setHashtagChips([])
-      setUploadProgress(0)
-      
-      // Chamar callback para recarregar posts
-      if (onPostCreated) {
-        onPostCreated()
-      }
-      
-      // Fechar popup
-      onClose()
+      // Se chegou aqui, nenhuma URL funcionou
+      throw new Error('Nenhuma URL de API funcionou - verifique a conexão')
       
     } catch (error) {
       console.error('❌ Erro ao criar post:', error)
@@ -452,28 +492,72 @@ const PopupOverlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  z-index: 15000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
   padding: 2rem;
+  overflow-y: auto;
+  
+  /* Garantir que o popup seja sempre visível */
+  min-height: 100vh;
+  
+  /* Animação do fundo */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+      circle at center,
+      rgba(229, 57, 53, 0.05) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
 `
 
 const PopupContainer = styled(motion.div)`
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(26, 26, 26, 0.98);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 2rem;
   width: 100%;
   max-width: 60rem;
-  max-height: 90vh;
+  max-height: 85vh;
   overflow-y: auto;
+  margin: auto;
   box-shadow: 
-    0 25px 50px rgba(0, 0, 0, 0.5),
-    inset 0 0 30px rgba(229, 57, 53, 0.05);
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    0 10px 30px rgba(229, 57, 53, 0.1),
+    inset 0 0 40px rgba(229, 57, 53, 0.05);
   position: relative;
+  
+  /* Garantir centralização em telas menores */
+  @media (max-width: 768px) {
+    max-width: 95vw;
+    max-height: 95vh;
+    margin: 1rem auto;
+  }
+  
+  /* Scrollbar personalizada */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #E53935, #FF5722);
+    border-radius: 4px;
+  }
   
   &::before {
     content: '';

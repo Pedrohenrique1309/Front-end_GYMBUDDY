@@ -637,20 +637,70 @@ const Social = () => {
         const data = await response.json()
         if (data?.publicacoes) {
           console.log('✅ Posts carregados da API:', data.publicacoes.length, 'posts')
+          console.log('📄 Raw data from API:', data.publicacoes)
           
-          // Mapear dados da API para o formato do componente
-          const apiPosts = data.publicacoes.map((pub: any) => ({
-            id: pub.id,
-            user: {
-              username: pub.usuario?.nickname || `@user${pub.id_usuario}`,
-              avatar: pub.usuario?.foto || ''
-            },
-            image: pub.foto || '',
-            description: pub.conteudo || '',
-            hashtags: pub.hashtags ? pub.hashtags.split(' ') : [],
-            likes: pub.curtidas || 0,
-            comments: pub.comentarios || 0
+          // Mapear dados da API para o formato do componente (campos corretos)
+          const apiPosts = await Promise.all(data.publicacoes.map(async (pub: any) => {
+            // Extrair hashtags da descrição e localização
+            const fullText = `${pub.descricao || ''} ${pub.localizacao || ''}`
+            const hashtagMatches = fullText.match(/#\w+/g) || []
+            const uniqueHashtags = [...new Set(hashtagMatches)] // Remove duplicadas
+            
+            // Tentar buscar dados do usuário usando dados já carregados ou da API
+            let userInfo = {
+              username: `@user${pub.id_user}`,
+              avatar: ''
+            }
+            
+            // Primeiro: usar dados incluídos na publicação
+            if (pub.usuario) {
+              userInfo = {
+                username: pub.usuario.nickname || `@${pub.usuario.nome}` || `@user${pub.id_user}`,
+                avatar: pub.usuario.foto || ''
+              }
+            } else {
+              // Segundo: buscar nos usuários já carregados na página
+              const existingUser = users.find(u => u.id === pub.id_user)
+              if (existingUser) {
+                userInfo = {
+                  username: existingUser.nickname || `@${existingUser.nome}` || `@user${pub.id_user}`,
+                  avatar: existingUser.foto || ''
+                }
+                console.log(`👤 Usuário encontrado na lista: ${userInfo.username}`)
+              } else {
+                // Terceiro: usar dados do usuário logado se for o próprio post
+                if (user && user.id === pub.id_user) {
+                  userInfo = {
+                    username: user.nickname || `@${user.nome}` || `@user${pub.id_user}`,
+                    avatar: user.foto || ''
+                  }
+                  console.log(`👤 Post do usuário logado: ${userInfo.username}`)
+                } else {
+                  console.log(`⚠️ Dados do usuário ${pub.id_user} não encontrados`)
+                }
+              }
+            }
+            
+            // Log para debug
+            console.log(`📝 Post ${pub.id}:`, {
+              usuario: userInfo.username,
+              imagem: pub.imagem ? '✅ Tem imagem' : '❌ Sem imagem',
+              descricao: pub.descricao,
+              hashtags: uniqueHashtags
+            })
+            
+            return {
+              id: pub.id,
+              user: userInfo,
+              image: pub.imagem || '', // imagem em vez de foto
+              description: pub.descricao || '', // descricao em vez de conteudo  
+              hashtags: uniqueHashtags, // hashtags extraídas do texto
+              likes: pub.curtidas_count || 0, // curtidas_count
+              comments: pub.comentarios_count || 0 // comentarios_count
+            }
           }))
+          
+          console.log('🔄 Posts mapeados da API:', apiPosts)
           
           setPosts(apiPosts)
           return
@@ -982,12 +1032,49 @@ const Social = () => {
           
           <SectionTitle>Posts recentes</SectionTitle>
           
+          {/* Debug Info */}
+          {filteredPosts.length === 0 && (
+            <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>
+              <p>📄 Nenhum post encontrado</p>
+              <p>🔍 Posts carregados: {posts.length}</p>
+              <p>🔍 Query de busca: "{searchQuery}"</p>
+            </div>
+          )}
+          
           <PostsGrid>
             {filteredPosts.map((post) => (
               <PostCard key={post.id}>
-                <PostImage>
-                  <img src={post.image} alt="Post" />
-                </PostImage>
+                {/* Debug para cada post */}
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '5px', 
+                  left: '5px', 
+                  background: 'rgba(0,0,0,0.7)', 
+                  color: 'white', 
+                  padding: '4px', 
+                  fontSize: '10px',
+                  borderRadius: '4px',
+                  zIndex: 10
+                }}>
+                  ID: {post.id} | User: {post.user.username} | Img: {post.image ? '✅' : '❌'}
+                </div>
+                
+                {post.image && (
+                  <PostImage>
+                    <img 
+                      src={post.image} 
+                      alt="Post" 
+                      onError={(e) => {
+                        console.log('❌ Erro ao carregar imagem:', post.image?.substring(0, 50) + '...')
+                        const target = e.target as HTMLImageElement
+                        target.style.display = 'none'
+                      }}
+                      onLoad={() => {
+                        console.log('✅ Imagem carregada com sucesso para post', post.id)
+                      }}
+                    />
+                  </PostImage>
+                )}
                 <PostFooter>
                   <PostUser>
                     <UserAvatar>
@@ -1010,7 +1097,7 @@ const Social = () => {
                         console.log('❌ Usuário não encontrado para username:', post.user.username)
                         console.log('📋 Usuários disponíveis:', users.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
                       }
-                    }}>{post.user.username}</Username>
+                    }}>{post.user.username || '@usuário'}</Username>
                   </PostUser>
                   {post.description && (
                     <PostDescription>{post.description}</PostDescription>
@@ -1080,11 +1167,35 @@ const Social = () => {
       {/* Botão Flutuante de Criar Post */}
       <CreatePostButton
         onClick={handleOpenCreatePost}
-        whileHover={{ scale: 1.1, rotate: 90 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
+        initial={{ 
+          opacity: 0, 
+          scale: 0.3, 
+          rotate: -180 // Apenas girando, sem movimento vertical
+        }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1, 
+          rotate: 0 // Para de girar
+        }}
+        transition={{ 
+          duration: 1.2, 
+          delay: 0.5,
+          type: "spring",
+          stiffness: 120,
+          damping: 12,
+          // Efeito de "quique" ao chegar
+          bounce: 0.6
+        }}
+        whileHover={{ 
+          scale: 1.1, 
+          rotate: 15,
+          transition: { duration: 0.2 }
+        }}
+        whileTap={{ 
+          scale: 0.95,
+          transition: { duration: 0.1 }
+        }}
+        style={{ opacity: showCreatePostPopup ? 0 : 1, pointerEvents: showCreatePostPopup ? 'none' : 'auto' }}
       >
         <FiPlus />
       </CreatePostButton>
@@ -1105,8 +1216,8 @@ const Social = () => {
 // Botão Flutuante de Criar Post
 const CreatePostButton = styled(motion.button)`
   position: fixed;
-  bottom: 3rem;
-  right: 3rem;
+  bottom: 1.5rem;
+  right: 1.5rem;
   width: 6.5rem;
   height: 6.5rem;
   border-radius: 50%;
@@ -1117,6 +1228,7 @@ const CreatePostButton = styled(motion.button)`
   justify-content: center;
   cursor: pointer;
   z-index: 9999;
+  
   box-shadow: 
     0 15px 35px rgba(229, 57, 53, 0.4),
     0 5px 15px rgba(0, 0, 0, 0.3),
@@ -1193,8 +1305,8 @@ const CreatePostButton = styled(motion.button)`
   
   /* Responsivo */
   @media (max-width: 768px) {
-    bottom: 2rem;
-    right: 2rem;
+    bottom: 1rem;
+    right: 1rem;
     width: 5.5rem;
     height: 5.5rem;
     
