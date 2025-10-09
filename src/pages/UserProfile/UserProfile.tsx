@@ -49,10 +49,72 @@ const UserProfile = () => {
       setLoading(true)
       setError(null)
       
-      // Mock data para demonstração
+      // Primeiro tenta carregar da API real
+      try {
+        console.log('🌐 Tentando API específica:', `${API_BASE_URL}/usuario/${id}`)
+        const response = await fetch(`${API_BASE_URL}/usuario/${id}`)
+        
+        if (response.ok) {
+          const data = await response.json()
+          
+          if (data?.usuario) {
+            console.log('✅ Usuário carregado da API específica:', data.usuario)
+            setProfileUser({
+              id: data.usuario.id,
+              nome: data.usuario.nome,
+              nickname: data.usuario.nickname,
+              email: data.usuario.email,
+              foto: data.usuario.foto,
+              descricao: data.usuario.descricao,
+              localizacao: data.usuario.localizacao,
+              data_nascimento: data.usuario.data_nascimento,
+              peso: data.usuario.peso,
+              altura: data.usuario.altura,
+              imc: data.usuario.imc,
+              publicacoes: 0 // Pode ser calculado depois
+            })
+            return
+          }
+        }
+        
+        // Se não encontrou na API específica, tenta lista geral
+        console.log('🌐 Tentando API lista geral:', `${API_BASE_URL}/usuario`)
+        const usersResponse = await fetch(`${API_BASE_URL}/usuario`)
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json()
+          if (usersData?.usuarios) {
+            const foundUser = usersData.usuarios.find((u: any) => u.id === id)
+            if (foundUser) {
+              console.log('✅ Usuário encontrado na lista geral:', foundUser)
+              setProfileUser({
+                id: foundUser.id,
+                nome: foundUser.nome,
+                nickname: foundUser.nickname,
+                email: foundUser.email,
+                foto: foundUser.foto,
+                descricao: foundUser.descricao,
+                localizacao: foundUser.localizacao,
+                data_nascimento: foundUser.data_nascimento,
+                peso: foundUser.peso,
+                altura: foundUser.altura,
+                imc: foundUser.imc,
+                publicacoes: 0
+              })
+              return
+            }
+          }
+        }
+        
+        throw new Error('Usuário não encontrado na API')
+        
+      } catch (apiError) {
+        console.log('⚠️ API não disponível, usando mock data:', apiError)
+      }
+      
+      // Mock data como fallback (com IDs altos para não conflitar)
       const mockUsers: UserProfileData[] = [
         {
-          id: 2,
+          id: 1001,
           nome: 'João Silva',
           nickname: '@joaosilva',
           email: 'joao@example.com',
@@ -66,7 +128,7 @@ const UserProfile = () => {
           publicacoes: 45
         },
         {
-          id: 3,
+          id: 1002,
           nome: 'Maria Santos',
           nickname: '@mariafitness',
           email: 'maria@example.com',
@@ -120,22 +182,100 @@ const UserProfile = () => {
           altura: '1.85',
           imc: '26.4',
           publicacoes: 123
+        },
+        {
+          id: 7,
+          nome: 'Lucia Fernanda',
+          nickname: '@luciafernanda',
+          email: 'lucia@example.com',
+          foto: '',
+          descricao: 'Nutricionista esportiva 🥗 Consultoria online',
+          localizacao: 'Porto Alegre - RS',
+          data_nascimento: '1991-12-07',
+          peso: '60.2',
+          altura: '1.70',
+          imc: '20.8',
+          publicacoes: 78
+        },
+        {
+          id: 8,
+          nome: 'Rafael Almeida',
+          nickname: '@rafaelstrong',
+          email: 'rafael@example.com',
+          foto: '',
+          descricao: 'Powerlifter profissional. Records pessoais toda semana',
+          localizacao: 'Recife - PE',
+          data_nascimento: '1989-04-25',
+          peso: '95.0',
+          altura: '1.88',
+          imc: '26.9',
+          publicacoes: 156
+        },
+        {
+          id: 9,
+          nome: 'Camila Oliveira',
+          nickname: '@camilafit',
+          email: 'camila@example.com',
+          foto: '',
+          descricao: 'Transformação corporal é minha especialidade 🔥',
+          localizacao: 'Salvador - BA',
+          data_nascimento: '1993-08-14',
+          peso: '55.8',
+          altura: '1.63',
+          imc: '21.0',
+          publicacoes: 92
+        },
+        {
+          id: 10,
+          nome: 'Bruno Cardoso',
+          nickname: '@brunocardio',
+          email: 'bruno@example.com',
+          foto: '',
+          descricao: 'Corredor de maratôna. Vida ativa sempre! 🏃‍♂️',
+          localizacao: 'Curitiba - PR',
+          data_nascimento: '1990-01-30',
+          peso: '70.0',
+          altura: '1.75',
+          imc: '22.9',
+          publicacoes: 201
+        },
+        {
+          id: 11,
+          nome: 'Isabella Costa',
+          nickname: '@isabellacoach',
+          email: 'isabella@example.com',
+          foto: '',
+          descricao: 'Life Coach e Personal Trainer. Mente e corpo em equilíbrio',
+          localizacao: 'Fortaleza - CE',
+          data_nascimento: '1988-06-12',
+          peso: '63.5',
+          altura: '1.72',
+          imc: '21.5',
+          publicacoes: 134
         }
       ]
       
-      // Simula delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Delay removido - usando dados reais da API
       
       // Busca usuário no mock data
       console.log('🔄 Buscando usuário no mock data para ID:', id)
+      console.log('📋 IDs disponíveis:', mockUsers.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
+      
       const mockUser = mockUsers.find(u => u.id === id)
       
       if (mockUser) {
         console.log('✅ Usuário encontrado:', mockUser)
+        console.log('📝 Dados completos:', {
+          id: mockUser.id,
+          nome: mockUser.nome,
+          nickname: mockUser.nickname,
+          descricao: mockUser.descricao
+        })
         setProfileUser(mockUser)
       } else {
-        console.log('❌ Usuário não encontrado')
-        setError('Usuário não encontrado')
+        console.log('❌ Usuário não encontrado para ID:', id)
+        console.log('💡 Sugestão: Verifique se o ID está sendo passado corretamente na navegação')
+        setError(`Usuário com ID ${id} não encontrado`)
       }
       
     } catch (error) {

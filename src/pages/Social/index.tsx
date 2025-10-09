@@ -629,11 +629,11 @@ const Social = () => {
   }, [users])
 
   const loadPosts = () => {
-    // Mock data para posts com descrições
+    // Mock data para posts com usernames sincronizados
     setPosts([
       {
         id: 1,
-        user: { username: '@marcos_silva22', avatar: '' },
+        user: { username: '@joaosilva', avatar: '' },
         image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500',
         description: 'Treino de pernas hoje! Foco total na hipertrofia 💪',
         hashtags: ['#foco', '#treino', '#saude'],
@@ -642,7 +642,7 @@ const Social = () => {
       },
       {
         id: 2,
-        user: { username: '@ana_fitness', avatar: '' },
+        user: { username: '@mariafitness', avatar: '' },
         image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500',
         description: 'Motivação em alta! Nunca desista dos seus sonhos',
         hashtags: ['#gym', '#motivation'],
@@ -651,7 +651,7 @@ const Social = () => {
       },
       {
         id: 3,
-        user: { username: '@pedro_strong', avatar: '' },
+        user: { username: '@pedrocosta', avatar: '' },
         image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500',
         description: 'Pré-treino carregado! Hora de dar tudo de si',
         hashtags: ['#workout', '#fitness'],
@@ -660,7 +660,7 @@ const Social = () => {
       },
       {
         id: 4,
-        user: { username: '@julia_trainer', avatar: '' },
+        user: { username: '@anajulia', avatar: '' },
         image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500',
         description: 'Dicas de treino funcional para todos os níveis',
         hashtags: ['#training', '#healthy'],
@@ -669,7 +669,7 @@ const Social = () => {
       },
       {
         id: 5,
-        user: { username: '@carlos_body', avatar: '' },
+        user: { username: '@carlosfit', avatar: '' },
         image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500',
         description: 'Progresso é progresso, não importa quão pequeno seja',
         hashtags: ['#bodybuilding', '#progress'],
@@ -678,7 +678,7 @@ const Social = () => {
       },
       {
         id: 6,
-        user: { username: '@lucia_nutri', avatar: '' },
+        user: { username: '@luciafernanda', avatar: '' },
         image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500',
         description: 'Alimentação saudável é a base de tudo! 🥗',
         hashtags: ['#nutricao', '#saude', '#alimentacao'],
@@ -723,17 +723,28 @@ const Social = () => {
 
   const loadUsers = async () => {
     try {
+      console.log('🌐 Carregando usuários da API...')
       const response = await fetch(`${API_BASE_URL}/usuario`)
-      const data = await response.json()
-      if (data?.usuarios) {
-        setUsers(data.usuarios)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data?.usuarios) {
+          console.log('✅ Usuários carregados da API:', data.usuarios.length, 'usuários')
+          console.log('📋 Primeiros usuários:', data.usuarios.slice(0, 3).map((u: any) => `ID:${u.id} - ${u.nome} (${u.nickname})`))
+          setUsers(data.usuarios)
+          return // IMPORTANTE: sair aqui se API funcionou
+        }
       }
+      
+      throw new Error('API não retornou dados válidos')
+      
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
-      // Mock data expandido
+      console.error('❌ Erro ao carregar usuários da API:', error)
+      console.log('🔄 Usando fallback mock data...')
+      // Mock data com IDs altos para não conflitar com API real
       setUsers([
         {
-          id: 2,
+          id: 1001,
           nome: 'João Silva',
           nickname: '@joaosilva',
           foto: '',
@@ -741,7 +752,7 @@ const Social = () => {
           publicacoes: 45
         },
         {
-          id: 3,
+          id: 1002,
           nome: 'Maria Santos',
           nickname: '@mariafitness',
           foto: '',
@@ -749,7 +760,7 @@ const Social = () => {
           publicacoes: 89
         },
         {
-          id: 4,
+          id: 1003,
           nome: 'Pedro Costa',
           nickname: '@pedrocosta',
           foto: '',
@@ -757,7 +768,7 @@ const Social = () => {
           publicacoes: 34
         },
         {
-          id: 5,
+          id: 1004,
           nome: 'Ana Julia',
           nickname: '@anajulia',
           foto: '',
@@ -765,7 +776,7 @@ const Social = () => {
           publicacoes: 67
         },
         {
-          id: 6,
+          id: 1005,
           nome: 'Carlos Mendes',
           nickname: '@carlosfit',
           foto: '',
@@ -773,7 +784,7 @@ const Social = () => {
           publicacoes: 123
         },
         {
-          id: 7,
+          id: 1006,
           nome: 'Lucia Fernanda',
           nickname: '@luciafernanda',
           foto: '',
@@ -781,7 +792,7 @@ const Social = () => {
           publicacoes: 78
         },
         {
-          id: 8,
+          id: 1007,
           nome: 'Rafael Almeida',
           nickname: '@rafaelstrong',
           foto: '',
@@ -789,7 +800,7 @@ const Social = () => {
           publicacoes: 156
         },
         {
-          id: 9,
+          id: 1008,
           nome: 'Camila Oliveira',
           nickname: '@camilafit',
           foto: '',
@@ -797,7 +808,7 @@ const Social = () => {
           publicacoes: 92
         },
         {
-          id: 10,
+          id: 1009,
           nome: 'Bruno Cardoso',
           nickname: '@brunocardio',
           foto: '',
@@ -805,7 +816,7 @@ const Social = () => {
           publicacoes: 201
         },
         {
-          id: 11,
+          id: 1010,
           nome: 'Isabella Costa',
           nickname: '@isabellacoach',
           foto: '',
@@ -981,8 +992,17 @@ const Social = () => {
                     </UserAvatar>
                     <Username onClick={() => {
                       // Navegar para perfil do usuário que postou
-                      const userId = users.find(u => u.nickname === post.user.username)?.id
-                      if (userId) navigate(`/profile/${userId}`)
+                      console.log('🖱️ Clique no username:', post.user.username)
+                      const foundUser = users.find(u => u.nickname === post.user.username)
+                      console.log('🔍 Usuário encontrado:', foundUser)
+                      
+                      if (foundUser) {
+                        console.log('✅ Navegando para perfil ID:', foundUser.id)
+                        navigate(`/profile/${foundUser.id}`)
+                      } else {
+                        console.log('❌ Usuário não encontrado para username:', post.user.username)
+                        console.log('📋 Usuários disponíveis:', users.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
+                      }
                     }}>{post.user.username}</Username>
                   </PostUser>
                   {post.description && (
@@ -1026,7 +1046,11 @@ const Social = () => {
             {randomUsers.map((user) => (
               <FriendItem 
                 key={user.id}
-                onClick={() => navigate(`/profile/${user.id}`)}
+                onClick={() => {
+                  console.log('🖱️ Clique no usuário da sidebar:', user.nome, `(${user.nickname})`)
+                  console.log('✅ Navegando para perfil ID:', user.id)
+                  navigate(`/profile/${user.id}`)
+                }}
               >
                 <FriendAvatar>
                   {user.foto ? (
