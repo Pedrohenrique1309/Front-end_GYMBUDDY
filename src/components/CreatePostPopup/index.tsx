@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiImage, FiSend, FiHash } from 'react-icons/fi'
+import { FiX, FiImage, FiSend, FiHash, FiEdit3 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/default-avatar'
+import ImageEditor from '../ImageEditor'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
@@ -22,6 +23,31 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
   const [hashtagChips, setHashtagChips] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [showImageEditor, setShowImageEditor] = useState(false)
+
+  // Desabilitar scroll quando o popup estiver aberto
+  useEffect(() => {
+    if (isOpen) {
+      // Salvar a posição atual do scroll
+      const scrollY = window.scrollY
+      
+      // Desabilitar scroll
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+      document.body.style.overflow = 'hidden'
+      
+      return () => {
+        // Restaurar scroll ao fechar
+        const scrollY = document.body.style.top
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.width = ''
+        document.body.style.overflow = ''
+        window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      }
+    }
+  }, [isOpen])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -51,42 +77,19 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
     }
   }
 
-  // Função para upload de imagem para Azure
-  const uploadImageToAzure = async (file: File): Promise<string | null> => {
-    try {
-      setUploadProgress(10)
-      
-      const formData = new FormData()
-      formData.append('foto', file)
-      
-      console.log('📤 Iniciando upload da imagem para Azure...')
-      
-      const response = await fetch(`${API_BASE_URL}/upload-foto`, {
-        method: 'POST',
-        body: formData,
-      })
-      
-      setUploadProgress(50)
-      
-      if (!response.ok) {
-        throw new Error(`Erro no upload: ${response.status}`)
+  // Função para converter imagem para base64
+  const convertImageToBase64 = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const base64 = reader.result as string
+        // Remover o prefixo "data:image/...;base64," para enviar apenas o base64
+        const base64WithoutPrefix = base64.split(',')[1]
+        resolve(base64WithoutPrefix)
       }
-      
-      const data = await response.json()
-      setUploadProgress(100)
-      
-      if (data.url) {
-        console.log('✅ Imagem enviada para Azure:', data.url)
-        return data.url
-      } else {
-        throw new Error('URL da imagem não retornada pela API')
-      }
-      
-    } catch (error) {
-      console.error('❌ Erro no upload para Azure:', error)
-      setUploadProgress(0)
-      return null
-    }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 
   const handleHashtagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -135,47 +138,85 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       return
     }
 
+    // Validar dados obrigatórios
+    const userId = parseInt(user.id?.toString() || '0')
+    if (!userId || userId === 0) {
+      alert('ID do usuário inválido!')
+      return
+    }
+
     setIsSubmitting(true)
     setUploadProgress(0)
     
     try {
       console.log('🔄 Iniciando criação do post...')
       
-      let imageUrl: string | undefined = undefined
+      let imageBase64: string | null = null
       
-      // Se há uma imagem selecionada, fazer upload primeiro
+      // Se há uma imagem selecionada, converter para base64
       if (selectedFile) {
-        console.log('📤 Fazendo upload da imagem...')
-        imageUrl = await uploadImageToAzure(selectedFile) || undefined
+        console.log('📤 Convertendo imagem para base64...')
+        setUploadProgress(50)
         
-        if (!imageUrl) {
-          alert('Erro ao fazer upload da imagem. Tente novamente.')
+        try {
+          imageBase64 = await convertImageToBase64(selectedFile)
+          setUploadProgress(100)
+          console.log('✅ Imagem convertida para base64')
+        } catch (error) {
+          console.error('❌ Erro ao converter imagem:', error)
+          alert('Erro ao processar a imagem. Tente novamente.')
           return
         }
       }
       
-      // Preparar dados do post para a API
+      // Preparar dados do post para a API (formato exato que funciona no Postman)
+      const currentDate = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      
       const postPayload = {
-        id_usuario: user.id,
-        conteudo: content.trim(),
-        foto: imageUrl || null,
-        hashtags: hashtagChips.join(' ') // Transformar array em string
+        imagem: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500", // URL ou data URL completa
+        descricao: `${content.trim()} ${hashtagChips.join(' ')}`.trim(),
+        data: currentDate,
+        localizacao: "Academia Iron Gym - São Paulo",
+        id_user: userId
       }
+      
+      // Log detalhado para comparar com Postman
+      console.log('🔍 Comparando com Postman:')
+      console.log('📤 Payload Frontend:', JSON.stringify(postPayload, null, 2))
+      console.log('📏 Tamanho do payload:', JSON.stringify(postPayload).length, 'caracteres')
+      console.log('🆔 User ID:', typeof userId, userId)
+      console.log('📅 Data:', typeof currentDate, currentDate)
       
       console.log('📝 Dados do post:', postPayload)
       
-      // Enviar post para a API
+      // Enviar post para a API (simulando exatamente o Postman)
+      console.log('🌐 Enviando para:', `${API_BASE_URL}/publicacao`)
+      console.log('📋 Headers:', { 'Content-Type': 'application/json' })
+      
       const response = await fetch(`${API_BASE_URL}/publicacao`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify(postPayload)
       })
       
+      console.log('📡 Response status:', response.status, response.statusText)
+      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()))
+      
       if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`Erro na API: ${response.status} - ${errorData}`)
+        let errorMessage = `Erro ${response.status}`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+          console.log('❌ Detalhes do erro:', errorData)
+        } catch {
+          const errorText = await response.text()
+          errorMessage = errorText || errorMessage
+          console.log('❌ Erro (texto):', errorText)
+        }
+        throw new Error(errorMessage)
       }
       
       const result = await response.json()
@@ -282,17 +323,28 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
                     <ProgressText>{uploadProgress}%</ProgressText>
                   </UploadProgress>
                 )}
-                <RemoveImageButton
-                  type="button"
-                  onClick={() => {
-                    setImage('')
-                    setSelectedFile(null)
-                    setUploadProgress(0)
-                  }}
-                  disabled={isSubmitting}
-                >
-                  <FiX />
-                </RemoveImageButton>
+                <ImageActions>
+                  <EditImageButton
+                    type="button"
+                    onClick={() => setShowImageEditor(true)}
+                    disabled={isSubmitting}
+                    title="Editar imagem"
+                  >
+                    <FiEdit3 />
+                  </EditImageButton>
+                  <RemoveImageButton
+                    type="button"
+                    onClick={() => {
+                      setImage('')
+                      setSelectedFile(null)
+                      setUploadProgress(0)
+                    }}
+                    disabled={isSubmitting}
+                    title="Remover imagem"
+                  >
+                    <FiX />
+                  </RemoveImageButton>
+                </ImageActions>
               </ImagePreview>
             )}
 
@@ -369,6 +421,26 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
           </PostForm>
         </PopupContainer>
       </PopupOverlay>
+      
+      {/* Editor de Imagem */}
+      {showImageEditor && image && (
+        <ImageEditor
+          isOpen={showImageEditor}
+          imageUrl={image}
+          onClose={() => setShowImageEditor(false)}
+          onSave={(editedImageUrl) => {
+            setImage(editedImageUrl)
+            // Converter base64 para File se necessário
+            fetch(editedImageUrl)
+              .then(res => res.blob())
+              .then(blob => {
+                const file = new File([blob], "edited-image.jpg", { type: "image/jpeg" })
+                setSelectedFile(file)
+              })
+            setShowImageEditor(false)
+          }}
+        />
+      )}
     </AnimatePresence>
   )
 }
@@ -574,15 +646,21 @@ const ImagePreview = styled.div`
   }
 `
 
-const RemoveImageButton = styled.button`
+const ImageActions = styled.div`
   position: absolute;
   top: 1rem;
   right: 1rem;
-  width: 3rem;
-  height: 3rem;
+  display: flex;
+  gap: 0.8rem;
+`
+
+const EditImageButton = styled.button`
+  width: 3.5rem;
+  height: 3.5rem;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.7);
-  border: none;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,13 +668,49 @@ const RemoveImageButton = styled.button`
   transition: all 0.3s ease;
   
   svg {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
+    color: white;
+  }
+  
+  &:hover {
+    background: rgba(29, 78, 216, 0.8);
+    border-color: rgba(29, 78, 216, 0.5);
+    transform: scale(1.1);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`
+
+const RemoveImageButton = styled.button`
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  svg {
+    font-size: 1.8rem;
     color: white;
   }
   
   &:hover {
     background: rgba(229, 57, 53, 0.8);
+    border-color: rgba(229, 57, 53, 0.5);
     transform: scale(1.1);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `
 
