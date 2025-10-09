@@ -945,7 +945,7 @@ const CreatePostButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 9999;
+  z-index: 1000;
   box-shadow: 
     0 15px 35px rgba(229, 57, 53, 0.4),
     0 5px 15px rgba(0, 0, 0, 0.3),

@@ -36,22 +36,21 @@ const WeightHeightPopup = ({ isOpen, onClose, onSubmit, onSkip }: WeightHeightPo
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <Overlay
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleSkip}
-          />
+        <Overlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
           <PopupContainer
             initial={{ opacity: 0, scale: 0.9, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 50 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
-            <CloseButton onClick={handleSkip}>
-              <FiX />
-            </CloseButton>
+            <RequiredIndicator>
+              <RequiredDot />
+              <RequiredText>Obrigatório</RequiredText>
+            </RequiredIndicator>
 
             <PopupHeader>
               <IconWrapper>
@@ -112,7 +111,7 @@ const WeightHeightPopup = ({ isOpen, onClose, onSubmit, onSkip }: WeightHeightPo
               <SkipText>Você pode pular e adicionar depois nas configurações</SkipText>
             </Form>
           </PopupContainer>
-        </>
+        </Overlay>
       )}
     </AnimatePresence>
   );
@@ -124,16 +123,18 @@ const Overlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  z-index: 9998;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const PopupContainer = styled(motion.div)`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   width: 90%;
   max-width: 48rem;
   background: linear-gradient(135deg, rgba(25, 25, 30, 0.98), rgba(20, 20, 25, 0.95));
@@ -141,7 +142,7 @@ const PopupContainer = styled(motion.div)`
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 2.4rem;
   padding: 4rem 3rem;
-  z-index: 9999;
+  z-index: 99999;
   box-shadow: 
     0 24px 64px rgba(0, 0, 0, 0.5),
     0 12px 32px rgba(227, 6, 19, 0.1),
@@ -149,6 +150,7 @@ const PopupContainer = styled(motion.div)`
 
   @media (max-width: 768px) {
     padding: 3rem 2rem;
+    width: 95%;
   }
 `;
 
@@ -320,6 +322,46 @@ const SkipText = styled.p`
   font-size: 1.3rem;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 0.5rem;
+`;
+
+const RequiredIndicator = styled.div`
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: rgba(227, 6, 19, 0.1);
+  border: 1px solid rgba(227, 6, 19, 0.3);
+  border-radius: 2rem;
+  padding: 0.8rem 1.6rem;
+`;
+
+const RequiredDot = styled.div`
+  width: 0.8rem;
+  height: 0.8rem;
+  background: rgba(227, 6, 19, 0.9);
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+
+  @keyframes pulse-dot {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.2);
+    }
+  }
+`;
+
+const RequiredText = styled.span`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgba(227, 6, 19, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 export default WeightHeightPopup;
