@@ -342,7 +342,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
                       
                       <NetworkButton
                         as={Link}
-                        to="/rede"
+                        to="/social"
                         whileHover={{ 
                           backgroundColor: 'rgba(227, 6, 19, 0.15)',
                           x: 5,
@@ -501,18 +501,18 @@ const Logo = styled.div`
 `
 
 const LogoImage = styled.img`
-  height: 17rem;
+  height: 8rem;
   width: auto;
   object-fit: contain;
   transition: transform 0.3s ease;
-  margin-top: 64px;
+  margin-top: 0;
   
   &:hover {
     transform: scale(1.05);
   }
   
   @media (max-width: 768px) {
-    height: 12rem;
+    height: 6rem;
   }
 `
 

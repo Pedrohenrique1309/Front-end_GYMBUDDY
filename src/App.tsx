@@ -117,7 +117,7 @@ const AnimatedRoutes = () => {
           } 
         />
         <Route 
-          path="/rede" 
+          path="/social" 
           element={
             <motion.div
               initial="initial"
