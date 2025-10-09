@@ -12,8 +12,21 @@ import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/default-avatar'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
-// import { uploadImageToAzure } from './uploadImageToAzure'
-// import LiquidDatePicker from '../../components/LiquidDatePicker'
+import { uploadImageToAzure } from './uploadImageToAzure'
+import LiquidDatePicker from '../../components/LiquidDatePicker'
+
+
+const uploadParams = () => {
+  const fileInput = document.getElementById('avatar-upload') as HTMLInputElement;
+  const file = fileInput?.files?.[0];
+  
+  return {
+    file,
+    storageAccount: 'gymbuddystorage',
+    sasToken: 'sp=cwl&st=2025-10-09T13:37:16Z&se=2025-10-09T20:30:00Z&sv=2024-11-04&sr=c&sig=fMGGqgAmqcMj%2BfF8dU7%2FRFwh6TtpqfpjB6cXX9hj6zo%3D',
+    containerName: 'fotos',
+  };
+};
 
 
 const Profile = () => {
@@ -93,15 +106,9 @@ const Profile = () => {
     try {
       let finalFotoUrl = editedData.foto;
       
-      // Upload de foto será implementado posteriormente - por enquanto apenas visual
-      if (pendingAvatarFile) {
-        console.log('📸 Foto selecionada (upload estático - não enviado ao servidor)');
-        // A foto já foi processada visualmente no handleAvatarUpload
-        // finalFotoUrl já contém o preview local (base64)
-        
-        // Limpar arquivo pendente
-        setPendingAvatarFile(null);
-      }
+      // A foto já foi enviada para Azure no handleAvatarUpload
+      // finalFotoUrl já contém a URL da Azure ou dados do usuário
+      console.log('📸 URL da foto para salvar:', finalFotoUrl ? 'Foto disponível' : 'Sem foto');
       
       // Atualizar no backend se tiver ID do usuário
       if (user?.id) {
@@ -277,7 +284,7 @@ const Profile = () => {
     }
   }
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file && user) {
       // Verificar tamanho do arquivo (máximo 2MB)
@@ -291,28 +298,47 @@ const Profile = () => {
         fileSize: file.size
       })
       
-      // Armazenar arquivo para upload posterior
-      setPendingAvatarFile(file)
-      
-      // Mostrar preview local
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const avatarUrl = reader.result as string
-        console.log('📸 Preview da foto gerado:', avatarUrl ? 'Base64 criado com sucesso' : 'Erro ao gerar preview')
-        console.log('📸 Tamanho do base64:', avatarUrl?.length || 0)
-        console.log('📸 Preview URL (primeiros 100 chars):', avatarUrl?.substring(0, 100))
+      try {
+        // Mostrar preview local enquanto faz upload
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const previewUrl = reader.result as string
+          setEditedData(prev => ({ ...prev, foto: previewUrl }))
+        }
+        reader.readAsDataURL(file)
         
-        setEditedData(prev => {
-          const newData = { ...prev, foto: avatarUrl }
-          console.log('📸 Estado editedData atualizado:', { 
-            hadFotoBefore: !!prev.foto, 
-            hasFotoNow: !!newData.foto,
-            fotoLength: newData.foto?.length || 0
+        // Fazer upload para Azure Storage
+        console.log('☁️ Iniciando upload para Azure...')
+        const uploadParamsObj = uploadParams()
+        
+        // Criar novo FormData com o arquivo selecionado
+        const uploadData = {
+          ...uploadParamsObj,
+          file // Usar o arquivo selecionado
+        }
+        
+        const azureImageUrl = await uploadImageToAzure(uploadData)
+        
+        if (azureImageUrl) {
+          console.log('✅ Upload concluído! URL da Azure:', azureImageUrl)
+          
+          // Atualizar com a URL real da Azure
+          setEditedData(prev => {
+            const newData = { ...prev, foto: azureImageUrl }
+            console.log('📸 Foto atualizada com URL da Azure:', azureImageUrl)
+            return newData
           })
-          return newData
-        })
+          
+          // Limpar arquivo pendente já que foi enviado
+          setPendingAvatarFile(null)
+        } else {
+          console.log('❌ Falha no upload para Azure')
+          alert('Erro ao fazer upload da imagem. Tente novamente.')
+        }
+      } catch (error) {
+        console.error('❌ Erro no upload da foto:', error)
+        alert('Erro ao fazer upload da imagem. Tente novamente.')
       }
-      reader.readAsDataURL(file)
     }
   }
 
