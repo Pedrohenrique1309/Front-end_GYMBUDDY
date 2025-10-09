@@ -237,6 +237,19 @@ const Username = styled.span`
   font-size: 1.4rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  
+  &:hover {
+    color: #E53935;
+  }
+`
+
+const PostDescription = styled.p`
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+  margin: 0.8rem 0;
 `
 
 const PostHashtags = styled.div`
@@ -247,6 +260,12 @@ const PostHashtags = styled.div`
   span {
     color: #E53935;
     font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    
+    &:hover {
+      color: #FF5722;
+    }
   }
 `
 
@@ -369,6 +388,13 @@ const FriendStatus = styled.div`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   margin-top: 0.2rem;
+`
+
+const PostsCount = styled.div`
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.4rem;
+  font-weight: 500;
 `
 
 // AI Overlay Components
@@ -568,6 +594,7 @@ interface Post {
     username: string
   }
   image: string
+  description?: string
   hashtags: string[]
   likes: number
   comments: number
@@ -578,8 +605,10 @@ const Social = () => {
   const { user } = useUser()
   const navigate = useNavigate()
   const [users, setUsers] = useState<User[]>([])
+  const [randomUsers, setRandomUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<Post[]>([])
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [showAiOverlay, setShowAiOverlay] = useState(false)
   const [aiMessage, setAiMessage] = useState('')
   const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
@@ -589,13 +618,24 @@ const Social = () => {
     loadPosts()
   }, [])
 
+  useEffect(() => {
+    filterPosts()
+  }, [searchQuery, posts])
+
+  useEffect(() => {
+    if (users.length > 0) {
+      generateRandomUsers()
+    }
+  }, [users])
+
   const loadPosts = () => {
-    // Mock data para posts
+    // Mock data para posts com descrições
     setPosts([
       {
         id: 1,
         user: { username: '@marcos_silva22', avatar: '' },
         image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500',
+        description: 'Treino de pernas hoje! Foco total na hipertrofia 💪',
         hashtags: ['#foco', '#treino', '#saude'],
         likes: 1709,
         comments: 10
@@ -604,6 +644,7 @@ const Social = () => {
         id: 2,
         user: { username: '@ana_fitness', avatar: '' },
         image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500',
+        description: 'Motivação em alta! Nunca desista dos seus sonhos',
         hashtags: ['#gym', '#motivation'],
         likes: 892,
         comments: 23
@@ -612,6 +653,7 @@ const Social = () => {
         id: 3,
         user: { username: '@pedro_strong', avatar: '' },
         image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500',
+        description: 'Pré-treino carregado! Hora de dar tudo de si',
         hashtags: ['#workout', '#fitness'],
         likes: 567,
         comments: 15
@@ -620,24 +662,75 @@ const Social = () => {
         id: 4,
         user: { username: '@julia_trainer', avatar: '' },
         image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500',
+        description: 'Dicas de treino funcional para todos os níveis',
         hashtags: ['#training', '#healthy'],
         likes: 1234,
         comments: 45
+      },
+      {
+        id: 5,
+        user: { username: '@carlos_body', avatar: '' },
+        image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500',
+        description: 'Progresso é progresso, não importa quão pequeno seja',
+        hashtags: ['#bodybuilding', '#progress'],
+        likes: 445,
+        comments: 8
+      },
+      {
+        id: 6,
+        user: { username: '@lucia_nutri', avatar: '' },
+        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500',
+        description: 'Alimentação saudável é a base de tudo! 🥗',
+        hashtags: ['#nutricao', '#saude', '#alimentacao'],
+        likes: 678,
+        comments: 34
       }
     ])
   }
   
+  const filterPosts = () => {
+    if (!searchQuery.trim()) {
+      setFilteredPosts(posts)
+      return
+    }
+
+    const query = searchQuery.toLowerCase()
+    const filtered = posts.filter(post => {
+      // Busca por usuário que postou
+      const userMatch = post.user.username.toLowerCase().includes(query)
+      
+      // Busca por hashtags
+      const hashtagMatch = post.hashtags.some(tag => 
+        tag.toLowerCase().includes(query)
+      )
+      
+      // Busca por descrição
+      const descriptionMatch = post.description?.toLowerCase().includes(query) || false
+      
+      return userMatch || hashtagMatch || descriptionMatch
+    })
+    
+    setFilteredPosts(filtered)
+  }
+
+  const generateRandomUsers = () => {
+    // Filtrar usuário logado e embaralhar
+    const filteredUsers = users.filter(u => u.id !== user?.id)
+    const shuffled = [...filteredUsers].sort(() => Math.random() - 0.5)
+    // Mostrar apenas 6 usuários aleatórios
+    setRandomUsers(shuffled.slice(0, 6))
+  }
+
   const loadUsers = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/usuario`)
       const data = await response.json()
       if (data?.usuarios) {
-        const filteredUsers = data.usuarios.filter((u: User) => u.id !== user?.id)
-        setUsers(filteredUsers)
+        setUsers(data.usuarios)
       }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
-      // Mock data
+      // Mock data expandido
       setUsers([
         {
           id: 2,
@@ -686,6 +779,38 @@ const Social = () => {
           foto: '',
           descricao: 'Nutricionista esportiva 🥗 Consultoria online',
           publicacoes: 78
+        },
+        {
+          id: 8,
+          nome: 'Rafael Almeida',
+          nickname: '@rafaelstrong',
+          foto: '',
+          descricao: 'Powerlifter profissional. Records pessoais toda semana',
+          publicacoes: 156
+        },
+        {
+          id: 9,
+          nome: 'Camila Oliveira',
+          nickname: '@camilafit',
+          foto: '',
+          descricao: 'Transformação corporal é minha especialidade 🔥',
+          publicacoes: 92
+        },
+        {
+          id: 10,
+          nome: 'Bruno Cardoso',
+          nickname: '@brunocardio',
+          foto: '',
+          descricao: 'Corredor de maratôna. Vida ativa sempre! 🏃‍♂️',
+          publicacoes: 201
+        },
+        {
+          id: 11,
+          nome: 'Isabella Costa',
+          nickname: '@isabellacoach',
+          foto: '',
+          descricao: 'Life Coach e Personal Trainer. Mente e corpo em equilíbrio',
+          publicacoes: 134
         }
       ])
     }
@@ -840,7 +965,7 @@ const Social = () => {
           <SectionTitle>Posts recentes</SectionTitle>
           
           <PostsGrid>
-            {posts.map((post) => (
+            {filteredPosts.map((post) => (
               <PostCard key={post.id}>
                 <PostImage>
                   <img src={post.image} alt="Post" />
@@ -854,11 +979,22 @@ const Social = () => {
                         <DefaultAvatar size={32} />
                       )}
                     </UserAvatar>
-                    <Username>{post.user.username}</Username>
+                    <Username onClick={() => {
+                      // Navegar para perfil do usuário que postou
+                      const userId = users.find(u => u.nickname === post.user.username)?.id
+                      if (userId) navigate(`/profile/${userId}`)
+                    }}>{post.user.username}</Username>
                   </PostUser>
+                  {post.description && (
+                    <PostDescription>{post.description}</PostDescription>
+                  )}
                   <PostHashtags>
                     {post.hashtags.map((tag, index) => (
-                      <span key={index}>{tag}</span>
+                      <span 
+                        key={index} 
+                        onClick={() => setSearchQuery(tag)}
+                        style={{cursor: 'pointer'}}
+                      >{tag}</span>
                     ))}
                   </PostHashtags>
                   <PostStats>
@@ -887,7 +1023,7 @@ const Social = () => {
           <FriendsTitle>Amigos</FriendsTitle>
           
           <FriendsList>
-            {users.map((user) => (
+            {randomUsers.map((user) => (
               <FriendItem 
                 key={user.id}
                 onClick={() => navigate(`/profile/${user.id}`)}
@@ -902,6 +1038,7 @@ const Social = () => {
                 <FriendInfo>
                   <FriendName>{user.nickname}</FriendName>
                   <FriendStatus>{user.descricao}</FriendStatus>
+                  <PostsCount>{user.publicacoes} posts</PostsCount>
                 </FriendInfo>
               </FriendItem>
             ))}

@@ -7,6 +7,7 @@ import AboutUs from './components/AboutUs'
 import Resources from './components/Resources'
 import AppPage from './pages/App'
 import Profile from './pages/Profile'
+import UserProfile from './pages/UserProfile'
 import Network from './pages/Network'
 import Social from './pages/Social'
 import { UserProvider } from './contexts/UserContext'
@@ -113,6 +114,20 @@ const AnimatedRoutes = () => {
               transition={pageTransition}
             >
               <Profile />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/profile/:userId" 
+          element={
+            <motion.div
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <UserProfile />
             </motion.div>
           } 
         />
