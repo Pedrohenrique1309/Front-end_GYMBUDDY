@@ -4,8 +4,8 @@ import { useRef, useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
 import SignupPopup from '../SignupPopup'
 
-const AboutUs = () => {
-  const containerRef = useRef(null);
+const SobreNos = () => {
+  const containerRef = useRef(null)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const controls = useAnimationControls()
@@ -772,4 +772,4 @@ const HeroParticles = styled.div`
   }
 `;
 
-export default AboutUs
+export default SobreNos
