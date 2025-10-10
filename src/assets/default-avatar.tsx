@@ -1,11 +1,11 @@
 import React from 'react'
 
-interface DefaultAvatarProps {
+interface AvatarPadraoProp {
   size?: number
   className?: string
 }
 
-const DefaultAvatar: React.FC<DefaultAvatarProps> = ({ size = 40, className }) => {
+const AvatarPadrao: React.FC<AvatarPadraoProp> = ({ size = 40, className }) => {
   return (
     <svg 
       width={size} 
@@ -25,4 +25,4 @@ const DefaultAvatar: React.FC<DefaultAvatarProps> = ({ size = 40, className }) =
   )
 }
 
-export default DefaultAvatar
+export default AvatarPadrao
