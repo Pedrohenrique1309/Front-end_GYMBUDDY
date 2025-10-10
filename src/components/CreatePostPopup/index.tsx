@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiX, FiImage, FiSend, FiHash, FiEdit3 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
-import DefaultAvatar from '../../assets/default-avatar'
+import DefaultAvatar from '../../assets/avatarpadrao'
 import ImageEditor from '../ImageEditor'
 
 const API_BASE_URL = '/api/v1/gymbuddy'

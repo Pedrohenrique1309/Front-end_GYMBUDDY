@@ -8,7 +8,7 @@ import { BRAND } from '../../config/branding'
 import PopupLogin from '../LoginPopup'
 import SignupPopup from '../SignupPopup'
 import { useUser } from '../../contexts/UserContext'
-import DefaultAvatar from '../../assets/default-avatar'
+import DefaultAvatar from '../../assets/avatarpadrao'
 
 interface HeaderProps {
   isVisible?: boolean

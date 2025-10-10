@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
-import DefaultAvatar from '../../assets/default-avatar'
+import DefaultAvatar from '../../assets/avatarpadrao'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
 import { uploadImageToAzure } from './uploadImageToAzure'

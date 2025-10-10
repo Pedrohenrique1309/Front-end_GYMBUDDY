@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { motion } from 'framer-motion'
 import { FiArrowLeft, FiMapPin, FiCalendar, FiActivity, FiUser } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
-import DefaultAvatar from '../../assets/default-avatar'
+import DefaultAvatar from '../../assets/avatarpadrao'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 

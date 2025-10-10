@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import DefaultAvatar from '../../../assets/default-avatar'
+import DefaultAvatar from '../../../assets/avatarpadrao'
 import { User } from '../index'
 
 interface FriendsListProps {

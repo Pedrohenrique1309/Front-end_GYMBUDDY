@@ -2,7 +2,7 @@ import { useState } from 'react'
 import styled from 'styled-components'
 import { FiHeart, FiMessageCircle, FiShare2, FiMoreVertical, FiImage, FiSearch } from 'react-icons/fi'
 import { useUser } from '../../../contexts/UserContext'
-import DefaultAvatar from '../../../assets/default-avatar'
+import DefaultAvatar from '../../../assets/avatarpadrao'
 import { Post } from '../index'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
