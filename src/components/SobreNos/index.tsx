@@ -95,16 +95,16 @@ const SobreNos = () => {
   }
 
   return (
-    <AboutUsContainer ref={containerRef}>
+    <CaixaSobreNos ref={containerRef}>
       {/* seção home */}
-      <HeroSection>
-        <HeroParticles />
+      <SecaoPrincipal>
+        <CentroParticles />
         <motion.div
           variants={heroVariants}
           initial="hidden"
           animate="visible"
         >
-          <HeroTitle>
+          <TituloPrincipal>
             <motion.span
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
@@ -112,7 +112,7 @@ const SobreNos = () => {
             >
               Podemos ajudar você a
             </motion.span>{' '}
-            <GradientText>
+            <TextoComDegrade>
               <motion.span
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -120,8 +120,8 @@ const SobreNos = () => {
               >
                 cumprir todas as suas metas
               </motion.span>
-            </GradientText>
-          </HeroTitle>
+            </TextoComDegrade>
+          </TituloPrincipal>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -131,8 +131,8 @@ const SobreNos = () => {
               Faça parte desse projeto hoje mesmo!
             </HeroSubtitle>
           </motion.div>
-        </motion.div>
-      </HeroSection>
+          </motion.div>
+      </SecaoPrincipal>
 
       {/* conteudo home*/}
       <ContentSection>
@@ -274,7 +274,7 @@ const SobreNos = () => {
         onSwitchToLogin={handleSwitchToLogin}
       />
 
-      {/* Animated Background Elements */}
+      {/* elementos do fundo animado */}
       <AnimatedBackground>
         <ParticleField />
         <GridPattern 
@@ -284,11 +284,11 @@ const SobreNos = () => {
           }}
         />
       </AnimatedBackground>
-    </AboutUsContainer>
+    </CaixaSobreNos>
   )
 }
 
-const AboutUsContainer = styled.div`
+const CaixaSobreNos = styled.div`
   min-height: 100vh;
   background: var(--background);
   color: var(--white);
@@ -297,7 +297,7 @@ const AboutUsContainer = styled.div`
   overflow: hidden;
 `
 
-const HeroSection = styled.section`
+const SecaoPrincipal = styled.section`
   text-align: center;
   padding: 4rem 2rem 6rem;
   max-width: 120rem;
@@ -305,7 +305,7 @@ const HeroSection = styled.section`
   position: relative;
 `
 
-const HeroTitle = styled.h1`
+const TituloPrincipal = styled.h1`
   font-size: clamp(3rem, 5vw, 5.5rem);
   font-weight: 800;
   line-height: 1.1;
@@ -314,7 +314,7 @@ const HeroTitle = styled.h1`
   letter-spacing: -0.02em;
 `
 
-const GradientText = styled.span`
+const TextoComDegrade = styled.span`
   background: linear-gradient(135deg, #E30613 0%, #ff4757 50%, #ff6348 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -382,7 +382,7 @@ const CardImageBackground = styled(motion.div)`
     right: 0;
     opacity: 0.08;
   }
-`;
+`
 
 const CardContent = styled.div`
   position: relative;
@@ -392,11 +392,11 @@ const CardContent = styled.div`
   @media (max-width: 768px) {
     padding: 3rem 2rem;
   }
-`;
+`
 
 const ContentHeader = styled(motion.div)`
   margin-bottom: 4rem;
-`;
+`
 
 const HeaderLabel = styled.div`
   display: inline-block;
@@ -410,7 +410,7 @@ const HeaderLabel = styled.div`
   background: rgba(227, 6, 19, 0.1);
   border-radius: 2rem;
   border: 1px solid rgba(227, 6, 19, 0.3);
-`;
+`
 
 const HeaderTitle = styled.h2`
   font-size: clamp(2.5rem, 4vw, 3.5rem);
@@ -418,13 +418,13 @@ const HeaderTitle = styled.h2`
   color: var(--white);
   line-height: 1.2;
   margin: 0;
-`;
+`
 
 const TextItemsGrid = styled.div`
   display: grid;
   gap: 2.5rem;
   max-width: 60rem;
-`;
+`
 
 const ModernTextItem = styled(motion.div)`
   display: flex;
@@ -443,7 +443,7 @@ const ModernTextItem = styled(motion.div)`
     border-color: rgba(227, 6, 19, 0.3);
     box-shadow: 0 10px 30px rgba(227, 6, 19, 0.1);
   }
-`;
+`
 
 const IconBox = styled.div<{ gradient: string }>`
   position: relative;
@@ -463,7 +463,7 @@ const IconBox = styled.div<{ gradient: string }>`
   ${ModernTextItem}:hover & {
     transform: rotate(5deg) scale(1.1);
   }
-`;
+`
 
 const IconGlow = styled.div`
   position: absolute;
@@ -480,7 +480,7 @@ const IconGlow = styled.div`
   ${ModernTextItem}:hover & {
     opacity: 1;
   }
-`;
+`
 
 const pulseRing = keyframes`
   0% {
@@ -491,7 +491,7 @@ const pulseRing = keyframes`
     transform: scale(1.5);
     opacity: 0;
   }
-`;
+`
 
 const IconPulse = styled.div`
   position: absolute;
@@ -512,11 +512,11 @@ const IconPulse = styled.div`
     border-radius: inherit;
     animation: ${pulseRing} 3s ease-out infinite;
   }
-`;
+`
 
 const ItemContent = styled.div`
   flex: 1;
-`;
+`
 
 const ItemText = styled.p`
   font-size: 1.7rem;
@@ -524,7 +524,7 @@ const ItemText = styled.p`
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   margin: 0;
-`;
+`
 
 const ItemBar = styled.div<{ gradient: string }>`
   width: 0;
@@ -537,7 +537,7 @@ const ItemBar = styled.div<{ gradient: string }>`
   ${ModernTextItem}:hover & {
     width: 100%;
   }
-`;
+`
 
 const FloatingElement = styled(motion.div)`
   position: absolute;
@@ -561,14 +561,14 @@ const FloatingElement = styled(motion.div)`
     bottom: 10%;
     right: -10%;
   }
-`;
+`
 
 const CTASection = styled.section`
   text-align: center;
   padding: 6rem 2rem 8rem;
   max-width: 80rem;
   margin: 0 auto;
-`;
+`
 
 const CTAText = styled.h2`
   font-size: clamp(2.4rem, 4vw, 3.6rem);
@@ -576,7 +576,7 @@ const CTAText = styled.h2`
   line-height: 1.3;
   color: var(--white);
   margin: 0;
-`;
+`
 
 const CTAHighlight = styled(motion.span)`
   color: var(--primary);
@@ -594,7 +594,7 @@ const CTAHighlight = styled(motion.span)`
     filter: brightness(1.2);
     transform: scale(1.02);
   }
-`;
+`
 
 const sparkleAnimation = keyframes`
   0% {
@@ -609,7 +609,7 @@ const sparkleAnimation = keyframes`
     opacity: 0;
     transform: scale(0) rotate(360deg);
   }
-`;
+`
 
 const SparkleEffect = styled.div`
   position: absolute;
@@ -635,7 +635,7 @@ const SparkleEffect = styled.div`
     left: 8px;
     top: 8px;
   }
-`;
+`
 
 const floatingAnimation = keyframes`
   0%, 100% {
@@ -647,7 +647,7 @@ const floatingAnimation = keyframes`
   66% {
     transform: translateY(30px) translateX(-20px);
   }
-`;
+`
 
 const AnimatedBackground = styled.div`
   position: fixed;
@@ -658,7 +658,7 @@ const AnimatedBackground = styled.div`
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
-`;
+`
 
 const particleAnimation = keyframes`
   0% {
@@ -675,7 +675,7 @@ const particleAnimation = keyframes`
     transform: translateY(-100vh) scale(1);
     opacity: 0;
   }
-`;
+`
 
 const ParticleField = styled.div`
   position: absolute;
@@ -703,7 +703,7 @@ const ParticleField = styled.div`
     left: 70%;
     animation-delay: 10s;
   }
-`;
+`
 
 const GridPattern = styled(motion.div)`
   position: absolute;
@@ -717,9 +717,9 @@ const GridPattern = styled(motion.div)`
   background-size: 50px 50px;
   transform-origin: center;
   animation: ${floatingAnimation} 30s ease-in-out infinite;
-`;
+`
 
-const heroParticleAnimation = keyframes`
+const particlesCentroAnimation = keyframes`
   0% {
     transform: translateY(0) scale(0);
     opacity: 0;
@@ -736,9 +736,9 @@ const heroParticleAnimation = keyframes`
     transform: translateY(-100px) scale(0);
     opacity: 0;
   }
-`;
+`
 
-const HeroParticles = styled.div`
+const CentroParticles = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
@@ -753,7 +753,7 @@ const HeroParticles = styled.div`
     height: 6px;
     background: linear-gradient(135deg, var(--primary), #ff4757);
     border-radius: 50%;
-    animation: ${heroParticleAnimation} 8s ease-out infinite;
+    animation: ${particlesCentroAnimation} 8s ease-out infinite;
     box-shadow: 0 0 10px rgba(227, 6, 19, 0.5);
   }
   
@@ -770,6 +770,6 @@ const HeroParticles = styled.div`
     width: 4px;
     height: 4px;
   }
-`;
+`
 
 export default SobreNos
