@@ -8,30 +8,30 @@ import ImageEditor from '../ImageEditor'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
-// Configuração do Azure Storage (baseada na uploadParams)
+// Configuração do Azure Storage 
 const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'
 const AZURE_STORAGE_URL = `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`
 const AZURE_CONTAINER = 'fotos'
 const AZURE_SAS_TOKEN = 'sp=cwl&st=2025-10-09T13:37:16Z&se=2025-10-09T20:30:00Z&sv=2024-11-04&sr=c&sig=fMGGqgAmqcMj%2BfF8dU7%2FRFwh6TtpqfpjB6cXX9hj6zo%3D'
 
-interface CreatePostPopupProps {
+interface FerramentasPopUpCriarPost {
   isOpen: boolean
   onClose: () => void
   onPostCreated?: () => void // Callback para recarregar posts
 }
 
-const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProps) => {
+const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCriarPost) => {
   const { user } = useUser()
-  const [content, setContent] = useState('')
-  const [image, setImage] = useState<string>('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [hashtagInput, setHashtagInput] = useState<string>('')
-  const [hashtagChips, setHashtagChips] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [showImageEditor, setShowImageEditor] = useState(false)
+  const [conteudo, setConteudo] = useState('')
+  const [imagem, setImagem] = useState<string>('')
+  const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null)
+  const [entradaHashtag, setEntradaHashtag] = useState<string>('')
+  const [chipsHashtag, setChipsHashtag] = useState<string[]>([])
+  const [enviando, setEnviando] = useState(false)
+  const [progressoUpload, setProgressoUpload] = useState(0)
+  const [mostrarEditorImagem, setMostrarEditorImagem] = useState(false)
 
-  // Função de configuração do upload (baseada na uploadParams)
+  // Função de configuração do upload 
   const getUploadParams = (file: File) => {
     return {
       file,
@@ -42,13 +42,12 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
     }
   }
 
-  // Permitir scroll quando popup estiver aberto (sem bloquear scroll)
-  // Removido o bloqueio de scroll para permitir navegação na página
+  // dx dar scroll quando popup estiver aberto 
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Verificar tamanho do arquivo (máximo 5MB)
+      // verificar tamanho do arquivo (máx 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Imagem muito grande! Máximo 5MB permitido.')
         return
@@ -62,12 +61,12 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       }
       
       // Armazenar arquivo original para upload
-      setSelectedFile(file)
+      setArquivoSelecionado(file)
       
       // Criar preview
       const reader = new FileReader()
       reader.onloadend = () => {
-        setImage(reader.result as string)
+        setImagem(reader.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -79,8 +78,8 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
     const blobUrl = `${AZURE_STORAGE_URL}/${uploadParams.containerName}/${uploadParams.fileName}?${uploadParams.sasToken}`
     
     try {
-      console.log('📤 Enviando imagem para Azure Storage...')
-      console.log('🔧 Configurações:', {
+      console.log('Enviando imagem para Azure Storage')
+      console.log('Configurações:', {
         storageAccount: uploadParams.storageAccount,
         container: uploadParams.containerName,
         fileName: uploadParams.fileName
@@ -115,17 +114,13 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
   const handleHashtagKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      addHashtagChip()
+      adicionarChipHashtag()
     }
   }
 
-  const handleHashtagBlur = () => {
-    addHashtagChip()
-  }
-
-  const addHashtagChip = () => {
-    if (hashtagInput.trim()) {
-      let hashtag = hashtagInput.trim()
+  const adicionarChipHashtag = () => {
+    if (entradaHashtag.trim()) {
+      let hashtag = entradaHashtag.trim()
       
       // Adicionar # se não tiver
       if (!hashtag.startsWith('#')) {
@@ -133,22 +128,22 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       }
       
       // Verificar se não é duplicata e se é válida
-      if (!hashtagChips.includes(hashtag) && hashtag.length > 1) {
-        setHashtagChips(prev => [...prev, hashtag])
+      if (!chipsHashtag.includes(hashtag) && hashtag.length > 1) {
+        setChipsHashtag(prev => [...prev, hashtag])
       }
       
-      setHashtagInput('')
+      setEntradaHashtag('')
     }
   }
 
-  const removeHashtagChip = (tagToRemove: string) => {
-    setHashtagChips(prev => prev.filter(tag => tag !== tagToRemove))
+  const removerChipHashtag = (tagParaRemover: string) => {
+    setChipsHashtag(prev => prev.filter(tag => tag !== tagParaRemover))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!content.trim()) {
+    if (!conteudo.trim()) {
       alert('Por favor, adicione um conteúdo ao seu post!')
       return
     }
@@ -165,8 +160,8 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       return
     }
 
-    setIsSubmitting(true)
-    setUploadProgress(0)
+    setEnviando(true)
+    setProgressoUpload(0)
     
     try {
       console.log('🔄 Iniciando criação do post...')
@@ -174,13 +169,13 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       let imageUrl: string = ''
       
       // Se há uma imagem selecionada, fazer upload para o Azure
-      if (selectedFile) {
+      if (arquivoSelecionado) {
         console.log('📤 Fazendo upload da imagem para Azure...')
-        setUploadProgress(50)
+        setProgressoUpload(50)
         
         try {
-          imageUrl = await uploadImageToAzure(selectedFile)
-          setUploadProgress(100)
+          imageUrl = await uploadImageToAzure(arquivoSelecionado)
+          setProgressoUpload(100)
           console.log('✅ Imagem enviada para Azure:', imageUrl)
         } catch (error) {
           console.error('❌ Erro ao enviar imagem para Azure:', error)
@@ -197,7 +192,7 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       // Enviar com URL da imagem do Azure
       const postPayload = {
         imagem: imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500",
-        descricao: content.trim() + (hashtagChips.length > 0 ? ' ' + hashtagChips.join(' ') : ''),
+        descricao: conteudo.trim() + (chipsHashtag.length > 0 ? ' ' + chipsHashtag.join(' ') : ''),
         data: currentDate,
         localizacao: "Academia Iron Gym - São Paulo",
         id_user: userId
@@ -254,12 +249,12 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
             alert('Post publicado com sucesso!')
             
             // Limpar formulário
-            setContent('')
-            setImage('')
-            setSelectedFile(null)
-            setHashtagInput('')
-            setHashtagChips([])
-            setUploadProgress(0)
+            setConteudo('')
+            setImagem('')
+            setArquivoSelecionado(null)
+            setEntradaHashtag('')
+            setChipsHashtag([])
+            setProgressoUpload(0)
             
             // Chamar callback para recarregar posts
             if (onPostCreated) {
@@ -285,19 +280,19 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       console.error('❌ Erro ao criar post:', error)
       alert(`Erro ao criar post: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     } finally {
-      setIsSubmitting(false)
-      setUploadProgress(0)
+      setEnviando(false)
+      setProgressoUpload(0)
     }
   }
 
-  const handleClose = () => {
-    if (isSubmitting) return
-    setContent('')
-    setImage('')
-    setSelectedFile(null)
-    setHashtagInput('')
-    setHashtagChips([])
-    setUploadProgress(0)
+  const lidarComFechamento = () => {
+    if (enviando) return
+    setConteudo('')
+    setImagem('')
+    setArquivoSelecionado(null)
+    setEntradaHashtag('')
+    setChipsHashtag([])
+    setProgressoUpload(0)
     onClose()
   }
 
@@ -310,7 +305,7 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        onClick={handleClose}
+        onClick={lidarComFechamento}
       >
         <PopupContainer
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -321,9 +316,9 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
         >
           <PopupHeader>
             <HeaderTitle>Criar novo post</HeaderTitle>
-            <CloseButton onClick={handleClose}>
+            <BotaoFechar onClick={lidarComFechamento}>
               <FiX />
-            </CloseButton>
+            </BotaoFechar>
           </PopupHeader>
 
           <UserInfo>
@@ -343,31 +338,30 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
           <PostForm onSubmit={handleSubmit}>
             <ContentSection>
               <ContentInput
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
+                value={conteudo}
+                onChange={(e) => setConteudo(e.target.value)}
                 placeholder="O que você está fazendo na academia hoje? Compartilhe sua experiência..."
                 maxLength={500}
-                disabled={isSubmitting}
+                disabled={enviando}
               />
-              <CharacterCount $isNearLimit={content.length > 400}>
-                {content.length}/500
+              <CharacterCount $isNearLimit={conteudo.length > 400}>
+                {conteudo.length}/500
               </CharacterCount>
             </ContentSection>
 
-            {image && (
+            {imagem && (
               <ImagePreview>
-                <img src={image} alt="Preview do post" />
-                {uploadProgress > 0 && uploadProgress < 100 && (
+                <img src={imagem} alt="Preview do post" />
+                {progressoUpload > 0 && progressoUpload < 100 && (
                   <UploadProgress>
-                    <ProgressBar progress={uploadProgress} />
-                    <ProgressText>{uploadProgress}%</ProgressText>
+                    {progressoUpload}%
                   </UploadProgress>
                 )}
                 <ImageActions>
                   <EditImageButton
                     type="button"
-                    onClick={() => setShowImageEditor(true)}
-                    disabled={isSubmitting}
+                    onClick={() => setMostrarEditorImagem(true)}
+                    disabled={enviando}
                     title="Editar imagem"
                   >
                     <FiEdit3 />
@@ -375,11 +369,11 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
                   <RemoveImageButton
                     type="button"
                     onClick={() => {
-                      setImage('')
-                      setSelectedFile(null)
-                      setUploadProgress(0)
+                      setImagem('')
+                      setArquivoSelecionado(null)
+                      setProgressoUpload(0)
                     }}
-                    disabled={isSubmitting}
+                    disabled={enviando}
                     title="Remover imagem"
                   >
                     <FiX />
@@ -390,15 +384,15 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
 
             <HashtagSection>
               {/* Chips de hashtags */}
-              {hashtagChips.length > 0 && (
+              {chipsHashtag.length > 0 && (
                 <HashtagChipsContainer>
-                  {hashtagChips.map((tag, index) => (
+                  {chipsHashtag.map((tag, index) => (
                     <HashtagChip key={index}>
                       <span>{tag}</span>
                       <RemoveHashtagButton
                         type="button"
-                        onClick={() => removeHashtagChip(tag)}
-                        disabled={isSubmitting}
+                        onClick={() => removerChipHashtag(tag)}
+                        disabled={enviando}
                       >
                         <FiX />
                       </RemoveHashtagButton>
@@ -410,12 +404,11 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
               {/* Input para adicionar hashtags */}
               <HashtagInputContainer>
                 <HashtagInput
-                  value={hashtagInput}
-                  onChange={(e) => setHashtagInput(e.target.value)}
+                  value={entradaHashtag}
+                  onChange={(e) => setEntradaHashtag(e.target.value)}
                   onKeyPress={handleHashtagKeyPress}
-                  onBlur={handleHashtagBlur}
-                  placeholder={hashtagChips.length === 0 ? "#treino #academia #fitness" : "Adicionar hashtag..."}
-                  disabled={isSubmitting}
+                  placeholder={chipsHashtag.length === 0 ? "#treino #academia #fitness" : "Adicionar hashtag..."}
+                  disabled={enviando}
                 />
                 <HashtagIcon>
                   <FiHash />
@@ -424,14 +417,14 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
             </HashtagSection>
 
             <ActionButtons>
-              <ImageUploadButton type="button" disabled={isSubmitting}>
+              <ImageUploadButton type="button" disabled={enviando}>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
                   id="image-upload"
-                  disabled={isSubmitting}
+                  disabled={enviando}
                 />
                 <label htmlFor="image-upload">
                   <FiImage />
@@ -441,11 +434,11 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
 
               <SubmitButton
                 type="submit"
-                disabled={isSubmitting || !content.trim()}
+                disabled={enviando || !conteudo.trim()}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {isSubmitting ? (
+                {enviando ? (
                   <>
                     <Spinner />
                     Publicando...
@@ -463,21 +456,21 @@ const CreatePostPopup = ({ isOpen, onClose, onPostCreated }: CreatePostPopupProp
       </PopupOverlay>
       
       {/* Editor de Imagem */}
-      {showImageEditor && image && (
+      {mostrarEditorImagem && imagem && (
         <ImageEditor
-          isOpen={showImageEditor}
-          imageUrl={image}
-          onClose={() => setShowImageEditor(false)}
+          isOpen={mostrarEditorImagem}
+          imageUrl={imagem}
+          onClose={() => setMostrarEditorImagem(false)}
           onSave={(editedImageUrl) => {
-            setImage(editedImageUrl)
+            setImagem(editedImageUrl)
             // Converter base64 para File se necessário
             fetch(editedImageUrl)
               .then(res => res.blob())
               .then(blob => {
                 const file = new File([blob], "edited-image.jpg", { type: "image/jpeg" })
-                setSelectedFile(file)
+                setArquivoSelecionado(file)
               })
-            setShowImageEditor(false)
+            setMostrarEditorImagem(false)
           }}
         />
       )}
@@ -593,33 +586,25 @@ const HeaderTitle = styled.h2`
   -webkit-text-fill-color: transparent;
 `
 
-const CloseButton = styled.button`
-  width: 4rem;
-  height: 4rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const BotaoFechar = styled.button`
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-size: 2rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  
-  svg {
-    font-size: 2rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  z-index: 10;
+
   &:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(229, 57, 53, 0.3);
-    transform: scale(1.05);
-    
-    svg {
-      color: var(--white);
-    }
+    transform: scale(1.1);
   }
-`
+`;
 
 const UserInfo = styled.div`
   display: flex;
@@ -1016,4 +1001,4 @@ const ProgressText = styled.span`
   font-weight: 600;
 `
 
-export default CreatePostPopup
+export default PopupCriarPost

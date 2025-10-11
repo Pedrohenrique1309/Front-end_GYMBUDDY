@@ -5,7 +5,7 @@ import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus } fr
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/avatarpadrao'
-import CreatePostPopup from '../../components/CreatePostPopup'
+import CreatePostPopup from '../../components/PopUpCriarPost'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
