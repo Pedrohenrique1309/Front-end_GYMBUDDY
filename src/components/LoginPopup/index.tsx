@@ -5,7 +5,7 @@ import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { loginUser, LoginResponse } from '../../config/api'
 import { useUser } from '../../contexts/UserContext'
-import PopupEsqueciSenha from '../ForgotPasswordPopup'
+import PopupEsqueciSenha from '../PopUpEsqueciMinhaSenha'
 
 interface PropsPopupLogin {
   estaAberto: boolean
