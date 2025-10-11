@@ -96,17 +96,17 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ Erro detalhado:', errorText)
+        console.error('Erro detalhado:', errorText)
         throw new Error(`Erro ao fazer upload: ${response.status} - ${errorText}`)
       }
       
       // Retornar URL pública da imagem (sem o SAS token)
       const publicUrl = `${AZURE_STORAGE_URL}/${uploadParams.containerName}/${uploadParams.fileName}`
-      console.log('✅ Imagem enviada para Azure:', publicUrl)
+      console.log('Imagem enviada para Azure:', publicUrl)
       return publicUrl
       
     } catch (error) {
-      console.error('❌ Erro no upload para Azure:', error)
+      console.error('Erro no upload para Azure:', error)
       throw error
     }
   }
@@ -164,24 +164,24 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setProgressoUpload(0)
     
     try {
-      console.log('🔄 Iniciando criação do post...')
+      console.log('Iniciando criação do post...')
       
       let imageUrl: string = ''
       
       // Se há uma imagem selecionada, fazer upload para o Azure
       if (arquivoSelecionado) {
-        console.log('📤 Fazendo upload da imagem para Azure...')
+        console.log('Fazendo upload da imagem para Azure...')
         setProgressoUpload(50)
         
         try {
           imageUrl = await uploadImageToAzure(arquivoSelecionado)
           setProgressoUpload(100)
-          console.log('✅ Imagem enviada para Azure:', imageUrl)
+          console.log('Imagem enviada para Azure:', imageUrl)
         } catch (error) {
-          console.error('❌ Erro ao enviar imagem para Azure:', error)
-          console.error('🔍 Detalhes do erro:', error)
+          console.error('Erro ao enviar imagem para Azure:', error)
+          console.error('Detalhes do erro:', error)
           // Continuar sem imagem em caso de erro no Azure
-          console.log('⚠️ Continuando sem imagem...')
+          console.log('Continuando sem imagem...')
           imageUrl = ''
         }
       }
@@ -208,13 +208,13 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       }
       
       // Log detalhado para comparar com Postman
-      console.log('🔍 Comparando com Postman:')
-      console.log('📤 Payload Frontend:', JSON.stringify(postPayload, null, 2))
-      console.log('📏 Tamanho do payload:', JSON.stringify(postPayload).length, 'caracteres')
-      console.log('🆔 User ID:', typeof userId, userId)
-      console.log('📅 Data:', typeof currentDate, currentDate)
+      console.log('Comparando com Postman:')
+      console.log('Payload Frontend:', JSON.stringify(postPayload, null, 2))
+      console.log('Tamanho do payload:', JSON.stringify(postPayload).length, 'caracteres')
+      console.log('User ID:', typeof userId, userId)
+      console.log('Data:', typeof currentDate, currentDate)
       
-      console.log('📝 Dados do post:', postPayload)
+      console.log('Dados do post:', postPayload)
       
       // Enviar post para a API (testando diferentes URLs)
       const urls = [
@@ -223,9 +223,9 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       
       for (const url of urls) {
         try {
-          console.log('🌐 Tentando URL:', url)
-          console.log('📋 Headers:', { 'Content-Type': 'application/json' })
-          console.log('📤 Body:', JSON.stringify(postPayload))
+          console.log('Tentando URL:', url)
+          console.log('Headers:', { 'Content-Type': 'application/json' })
+          console.log('Body:', JSON.stringify(postPayload))
           
           const response = await fetch(url, {
             method: 'POST',
@@ -236,14 +236,14 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
             body: JSON.stringify(postPayload)
           })
           
-          console.log('📡 Response:', response.status, response.statusText)
-          console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()))
+          console.log('Response:', response.status, response.statusText)
+          console.log('Response headers:', Object.fromEntries(response.headers.entries()))
           
           if (response.ok) {
             // Sucesso, processar resposta
             const result = await response.json()
-            console.log('✅ Post criado com sucesso na URL:', url)
-            console.log('✅ Resultado:', result)
+            console.log('Post criado com sucesso na URL:', url)
+            console.log('Resultado:', result)
             
             // Sucesso - sair do loop
             alert('Post publicado com sucesso!')
@@ -266,10 +266,10 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
             return // Sair da função
             
           } else {
-            console.log(`❌ Falhou na URL ${url}:`, response.status)
+            console.log(`Falhou na URL ${url}:`, response.status)
           }
         } catch (urlError) {
-          console.log(`❌ Erro na URL ${url}:`, urlError)
+          console.log(`Erro na URL ${url}:`, urlError)
         }
       }
       
@@ -277,7 +277,7 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       throw new Error('Nenhuma URL de API funcionou - verifique a conexão')
       
     } catch (error) {
-      console.error('❌ Erro ao criar post:', error)
+      console.error('Erro ao criar post:', error)
       alert(`Erro ao criar post: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     } finally {
       setEnviando(false)
