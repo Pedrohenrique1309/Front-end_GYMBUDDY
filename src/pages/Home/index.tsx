@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import Hero from '../../components/Hero'
-import SignupPopup from '../../components/SignupPopup'
+import Hero from '../../components/Home'
+import SignupPopup from '../../components/CadastroPopUp'
 import LoginPopup from '../../components/LoginPopup'
 
 const Home = () => {

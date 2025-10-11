@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform, useAnimationControls } from 'framer-mo
 import { FaDumbbell, FaClipboardList, FaRobot, FaFire } from 'react-icons/fa'
 import { useRef, useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
-import SignupPopup from '../SignupPopup'
+import SignupPopup from '../CadastroPopUp'
 
 const SobreNos = () => {
   const containerRef = useRef(null)

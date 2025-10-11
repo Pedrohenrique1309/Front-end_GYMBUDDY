@@ -6,7 +6,7 @@ import styled from 'styled-components'
 import { signupUser, SignupResponse, checkEmailExists, checkUsernameExists } from '../../config/api'
 import { useUser } from '../../contexts/UserContext'
 
-// Styled Components
+// componentes estilizados
 const Overlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -21,7 +21,7 @@ const Overlay = styled(motion.div)`
   justify-content: center;
   z-index: 10000;
   backdrop-filter: blur(8px);
-`;
+`
 
 const PopupContainer = styled(motion.div)`
   position: relative;
@@ -35,9 +35,9 @@ const PopupContainer = styled(motion.div)`
   border-radius: 1.6rem;
   padding: 3rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-`;
+`
 
-const CloseButton = styled.button`
+const BotaoFechar = styled.button`
   position: absolute;
   top: 1.5rem;
   right: 1.5rem;
@@ -55,9 +55,9 @@ const CloseButton = styled.button`
     background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
   }
-`;
+`
 
-const LogoSection = styled.div`
+const LogoPopUp = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -82,28 +82,28 @@ const LogoSection = styled.div`
     height: 2px;
     background: var(--primary);
   }
-`;
+`
 
-const Title = styled.h1`
+const Titulo = styled.h1`
   color: var(--white);
   font-size: 2.4rem;
   font-weight: 800;
   text-align: center;
   margin-bottom: 3rem;
   letter-spacing: 0.05em;
-`;
+`
 
-const SignupForm = styled.form`
+const CaixaCadastro = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1.8rem;
-`;
+`
 
-const InputGroup = styled.div`
+const Inputs = styled.div`
   position: relative;
-`;
+`
 
-const ValidationMessage = styled.div`
+const MensagemValidacao = styled.div`
   font-size: 1.2rem;
   margin-top: 0.5rem;
   padding: 0.3rem 0;
@@ -111,7 +111,7 @@ const ValidationMessage = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-`;
+`
 
 const Input = styled.input<{ $isValid?: boolean | null }>`
   width: 100%;
@@ -144,9 +144,9 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
       'rgba(227, 6, 19, 0.2)'
     };
   }
-`;
+`
 
-const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>`
+const IconeValidacaoSenha = styled(motion.div)<{ $isValid?: boolean | null }>`
   position: absolute;
   left: -2.6rem;
   top: 30%;
@@ -205,9 +205,9 @@ const PasswordValidationIcon = styled(motion.div)<{ $isValid?: boolean | null }>
       transform: translate(-50%, -50%) scale(1.5);
     }
   }
-`;
+`
 
-const PasswordToggle = styled.button`
+const VerSenha = styled.button`
   position: absolute;
   right: 1.6rem;
   top: 50%;
@@ -232,9 +232,9 @@ const PasswordToggle = styled.button`
   svg {
     display: block;
   }
-`;
+`
 
-const PasswordTooltip = styled(motion.div)`
+const FerramentaDeSenha = styled(motion.div)`
   position: absolute;
   top: 50%;
   right: 120%;
@@ -356,9 +356,9 @@ const PasswordTooltip = styled(motion.div)`
       text-shadow: 0 0 4px rgba(227, 6, 19, 0.4);
     }
   }
-`;
+`
 
-const ErrorMessage = styled(motion.div)`
+const MensagemDeErro = styled(motion.div)`
   background: rgba(220, 38, 38, 0.1);
   border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: 0.8rem;
@@ -367,9 +367,9 @@ const ErrorMessage = styled(motion.div)`
   font-size: 1.4rem;
   text-align: center;
   margin: 1rem 0;
-`;
+`
 
-const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
+const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
   color: var(--white);
   border: none;
@@ -386,16 +386,16 @@ const SubmitButton = styled(motion.button)<{ disabled?: boolean }>`
     background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary-dark)'};
     box-shadow: ${props => props.disabled ? 'none' : '0 8px 24px rgba(227, 6, 19, 0.4)'};
   }
-`;
+`
 
-const LoginPrompt = styled.p`
+const EnviarParaLogin = styled.p`
   color: rgba(255, 255, 255, 0.7);
   font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;
-`;
+`
 
-const LoginLink = styled.a`
+const RedLogin = styled.a`
   color: var(--primary);
   text-decoration: none;
   font-weight: 600;
@@ -403,7 +403,7 @@ const LoginLink = styled.a`
   &:hover {
     text-decoration: underline;
   }
-`;
+`
 
 interface SignupPopupProps {
   isOpen: boolean
@@ -718,20 +718,20 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
             transition={{ duration: 0.4, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
           >
-              <CloseButton onClick={handleClose}>
+              <BotaoFechar onClick={handleClose}>
                 <FiX />
-              </CloseButton>
+              </BotaoFechar>
               
-              <LogoSection>
+              <LogoPopUp>
                 <FaDumbbell className="logo-icon" />
                 <h2>GYM BUDDY</h2>
                 <div className="divider" />
-              </LogoSection>
+              </LogoPopUp>
 
-              <Title>CADASTRAR-SE</Title>
+              <Titulo>CADASTRAR-SE</Titulo>
 
-              <SignupForm onSubmit={handleSubmit}>
-                <InputGroup>
+              <CaixaCadastro onSubmit={handleSubmit}>
+                <Inputs>
                   <Input
                     type="text"
                     name="username"
@@ -745,17 +745,17 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     }}
                   />
                   {isValidatingUsername && (
-                    <ValidationMessage style={{ color: '#888' }}>🔍 Verificando disponibilidade...</ValidationMessage>
+                    <MensagemValidacao style={{ color: '#888' }}>🔍 Verificando disponibilidade...</MensagemValidacao>
                   )}
                   {usernameExists === true && (
-                    <ValidationMessage style={{ color: '#ff4444' }}>❌ Nome de usuário já está em uso</ValidationMessage>
+                    <MensagemValidacao style={{ color: '#ff4444' }}>❌ Nome de usuário já está em uso</MensagemValidacao>
                   )}
                   {usernameExists === false && (
-                    <ValidationMessage style={{ color: '#44ff44' }}>✅ Nome de usuário disponível</ValidationMessage>
+                    <MensagemValidacao style={{ color: '#44ff44' }}>✅ Nome de usuário disponível</MensagemValidacao>
                   )}
-                </InputGroup>
+                </Inputs>
 
-                <InputGroup>
+                <Inputs>
                   <Input
                     type="text"
                     name="nickname"
@@ -764,9 +764,9 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     onChange={handleInputChange}
                     required
                   />
-                </InputGroup>
+                </Inputs>
 
-                <InputGroup>
+                <Inputs>
                   <Input
                     type="email"
                     name="email"
@@ -780,17 +780,17 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     }}
                   />
                   {isValidatingEmail && (
-                    <ValidationMessage style={{ color: '#888' }}>🔍 Verificando disponibilidade...</ValidationMessage>
+                    <MensagemValidacao style={{ color: '#888' }}>🔍 Verificando disponibilidade...</MensagemValidacao>
                   )}
                   {emailExists === true && (
-                    <ValidationMessage style={{ color: '#ff4444' }}>❌ Email já está cadastrado</ValidationMessage>
+                    <MensagemValidacao style={{ color: '#ff4444' }}>❌ Email já está cadastrado</MensagemValidacao>
                   )}
                   {emailExists === false && (
-                    <ValidationMessage style={{ color: '#44ff44' }}>✅ Email disponível</ValidationMessage>
+                    <MensagemValidacao style={{ color: '#44ff44' }}>✅ Email disponível</MensagemValidacao>
                   )}
-                </InputGroup>
+                </Inputs>
 
-                <InputGroup>
+                <Inputs>
                   <Input
                     type="email"
                     name="confirmEmail"
@@ -799,9 +799,9 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     onChange={handleInputChange}
                     required
                   />
-                </InputGroup>
+                </Inputs>
 
-                <InputGroup>
+                <Inputs>
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
@@ -811,7 +811,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     required
                     $isValid={isPasswordValid}
                   />
-                  <PasswordValidationIcon
+                  <IconeValidacaoSenha
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ 
                       scale: isPasswordValid !== null ? [0, 1.2, 0.9, 1.05, 1] : 0,
@@ -864,7 +864,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     {/* Tooltip para especificações de senha */}
                     <AnimatePresence>
                       {showTooltip && isPasswordValid === false && (
-                        <PasswordTooltip
+                        <FerramentaDeSenha
                           initial={{ 
                             opacity: 0, 
                             scale: 0.7, 
@@ -974,19 +974,19 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                               1 caractere especial
                             </motion.div>
                           </motion.div>
-                        </PasswordTooltip>
+                        </FerramentaDeSenha>
                       )}
                     </AnimatePresence>
-                  </PasswordValidationIcon>
-                  <PasswordToggle
+                  </IconeValidacaoSenha>
+                  <VerSenha
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <FiEyeOff /> : <FiEye />}
-                  </PasswordToggle>
-                </InputGroup>
+                  </VerSenha>
+                </Inputs>
 
-                <InputGroup>
+                <Inputs>
                   <Input
                     type={showConfirmPassword ? 'text' : 'password'}
                     name="confirmPassword"
@@ -995,40 +995,40 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
                     onChange={handleInputChange}
                     required
                   />
-                  <PasswordToggle
+                  <VerSenha
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-                  </PasswordToggle>
-                </InputGroup>
+                  </VerSenha>
+                </Inputs>
 
                 {error && (
-                  <ErrorMessage
+                  <MensagemDeErro
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                   >
                     {error}
-                  </ErrorMessage>
+                  </MensagemDeErro>
                 )}
 
-                <SubmitButton
+                <BotaoEnviar
                   type="submit"
                   disabled={isLoading}
                   whileHover={!isLoading ? { scale: 1.02 } : {}}
                   whileTap={!isLoading ? { scale: 0.98 } : {}}
                 >
                   {isLoading ? 'Cadastrando...' : 'Cadastrar'}
-                </SubmitButton>
-              </SignupForm>
+                </BotaoEnviar>
+              </CaixaCadastro>
 
-              <LoginPrompt>
-                Já possui uma conta? <LoginLink href="#" onClick={(e) => {
+              <EnviarParaLogin>
+                Já possui uma conta? <RedLogin href="#" onClick={(e) => {
                   e.preventDefault();
                   onSwitchToLogin();
-                }}>Fazer Login</LoginLink>
-              </LoginPrompt>
+                }}>Fazer Login</RedLogin>
+              </EnviarParaLogin>
           </PopupContainer>
         </Overlay>
       )}
@@ -1036,4 +1036,4 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
   );
 };
 
-export default SignupPopup;
+export default SignupPopup

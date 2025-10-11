@@ -6,7 +6,7 @@ import { Link, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
 import { BRAND } from '../../config/branding'
 import PopupLogin from '../LoginPopup'
-import SignupPopup from '../SignupPopup'
+import SignupPopup from '../CadastroPopUp'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/avatarpadrao'
 
