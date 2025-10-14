@@ -6,6 +6,8 @@ import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import CreatePostPopup from '../../components/PopUpCriarPost'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
@@ -23,7 +25,7 @@ const ChatSidebar = styled(motion.div)<{ isOpen?: boolean }>`
   left: ${props => props.isOpen ? '0' : '-380px'};
   top: 0;
   bottom: 0;
-  width: 420px;
+  width: 600px;
   background: linear-gradient(135deg, 
     rgba(26, 26, 26, 0.98) 0%,
     rgba(18, 18, 18, 0.98) 50%,
@@ -73,99 +75,68 @@ const ChatSidebar = styled(motion.div)<{ isOpen?: boolean }>`
 
 const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   position: fixed;
-  left: ${props => props.isOpen ? '400px' : '-15px'};
+  left: ${props => props.isOpen ? '590px' : '20px'};
   top: 50%;
   transform: translateY(-50%);
-  width: 70px;
-  height: 55px;
+  width: 60px;
+  height: 60px;
   background: linear-gradient(135deg, 
     #E53935 0%, 
-    #FF5722 40%,
+    #FF5722 50%,
     #E53935 100%
   );
-  /* Forma amassada e assimétrica */
-  border-radius: 0 50% 50% 0 / 0 60% 40% 0;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1001;
-  overflow: hidden;
-  
-  /* Efeito amassado com múltiplas sombras */
   box-shadow: 
-    0 8px 25px rgba(229, 57, 53, 0.4),
-    inset 3px 0 8px rgba(0, 0, 0, 0.2),
-    inset -2px 3px 6px rgba(255, 255, 255, 0.15),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.3);
-    
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    0 8px 32px rgba(229, 57, 53, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   
-  /* Textura amassada com pseudo-elemento */
   &::before {
     content: '';
     position: absolute;
-    top: 20%;
-    left: 15%;
-    width: 25px;
-    height: 20px;
-    background: radial-gradient(
-      ellipse at 30% 40%,
-      rgba(255, 255, 255, 0.2) 0%,
-      transparent 50%
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+      rgba(229, 57, 53, 0.3),
+      rgba(255, 87, 34, 0.3),
+      rgba(229, 57, 53, 0.3)
     );
     border-radius: 50%;
-    transform: rotate(-15deg);
-  }
-  
-  /* Sombra externa dinâmica */
-  &::after {
-    content: '';
-    position: absolute;
-    top: -3px;
-    left: -3px;
-    right: -8px;
-    bottom: -3px;
-    background: linear-gradient(45deg, 
-      rgba(229, 57, 53, 0.2),
-      rgba(255, 87, 34, 0.2),
-      rgba(229, 57, 53, 0.1)
-    );
-    border-radius: 0 50% 50% 0 / 0 60% 40% 0;
     z-index: -1;
     opacity: 0;
     transition: opacity 0.3s ease;
   }
   
   &:hover {
-    transform: translateY(-50%) scale(1.05);
-    left: ${props => props.isOpen ? '395px' : '-10px'};
+    transform: translateY(-50%) scale(1.1);
     box-shadow: 
-      0 15px 40px rgba(229, 57, 53, 0.6),
-      inset 4px 0 12px rgba(0, 0, 0, 0.3),
-      inset -3px 4px 10px rgba(255, 255, 255, 0.2),
-      inset 0 -4px 12px rgba(0, 0, 0, 0.4);
+      0 12px 48px rgba(229, 57, 53, 0.6),
+      inset 0 3px 6px rgba(255, 255, 255, 0.3),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.3);
       
-    &::after {
+    &::before {
       opacity: 1;
     }
   }
   
   &:active {
     transform: translateY(-50%) scale(0.95);
-    box-shadow: 
-      0 5px 15px rgba(229, 57, 53, 0.4),
-      inset 5px 0 15px rgba(0, 0, 0, 0.4),
-      inset -1px 2px 6px rgba(255, 255, 255, 0.1);
   }
   
   svg {
-    font-size: 20px;
+    font-size: 24px;
     color: white;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease;
     transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
-    margin-left: ${props => props.isOpen ? '0' : '8px'};
   }
 `
 
@@ -487,15 +458,15 @@ const PostsCount = styled.div`
 
 // Advanced AI Chat Components
 const ChatOverlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  z-index: 999;
-  cursor: pointer;
+position: fixed;
+top: 0;
+left: 600px;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.4);
+backdrop-filter: blur(8px);
+z-index: 999;
+cursor: pointer;
 `
 
 const ChatHeader = styled.div`
@@ -538,39 +509,18 @@ const ChatSubtitle = styled.p`
 `
 
 const Chat3DContainer = styled.div`
-  height: 200px;
+  width: 100%;
+  height: 300px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 2rem 0;
   position: relative;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(229, 57, 53, 0.1) 0%,
-    rgba(255, 87, 34, 0.05) 30%,
-    transparent 70%
-  );
-  border-radius: 20px;
-  border: 1px solid rgba(229, 57, 53, 0.2);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80px;
-    height: 80px;
-    border: 2px solid rgba(229, 57, 53, 0.4);
-    border-radius: 50%;
-    border-top-color: #E53935;
-    animation: spin 2s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
-  }
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin: 1rem 0;
 `
 
 const Chat3DPlaceholder = styled.div`
@@ -1167,7 +1117,21 @@ return (
       </ChatHeader>
       
       <Chat3DContainer>
-        <Chat3DPlaceholder>Elemento 3D será inserido aqui</Chat3DPlaceholder>
+        <Canvas camera={{ position: [0, 0, 4] }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <Sphere args={[1, 100, 200]} scale={1.5}>
+            <MeshDistortMaterial
+              color="#E53935"
+              attach="material"
+              distort={0.5}
+              speed={2}
+              roughness={0.2}
+              metalness={0.8}
+            />
+          </Sphere>
+          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1} />
+        </Canvas>
       </Chat3DContainer>
       
       <ChatContent>
@@ -1204,20 +1168,11 @@ return (
       onClick={toggleAiChat}
       initial={false}
       animate={{
-        x: showAiChat ? 415 : 0,
-        rotateY: showAiChat ? 10 : 0
+        x: showAiChat ? 570 : 20,
+        scale: showAiChat ? 0.9 : 1
       }}
-      transition={{ 
-        duration: 0.6, 
-        ease: [0.34, 1.56, 0.64, 1],
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }}
-      whileHover={{ 
-        scale: 1.05,
-        x: showAiChat ? 410 : 5
-      }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
+      whileHover={{ scale: showAiChat ? 1.0 : 1.1 }}
       whileTap={{ scale: 0.95 }}
     >
       <FiChevronRight />
@@ -1262,6 +1217,7 @@ return (
             {filteredPosts.map((post) => (
               <PostCard key={post.id}>
                 {/* Debug para cada post */}
+
                 <div style={{ 
                   position: 'absolute', 
                   top: '5px', 
