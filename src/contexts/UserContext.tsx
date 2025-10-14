@@ -23,9 +23,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     const savedUser = getUserFromStorage()
     const token = getTokenFromStorage()
     
+    console.log('🚨 DEBUG USERCONTEXT - Recuperando do storage:', {
+      savedUser,
+      userId: savedUser?.id,
+      userIdType: typeof savedUser?.id,
+      userIdValue: JSON.stringify(savedUser?.id),
+      token: token ? 'presente' : 'ausente'
+    });
+    
     if (savedUser && token) {
       setUser(savedUser)
-      console.log('Usuário recuperado do storage:', savedUser)
+      console.log('✅ Usuário recuperado e definido no contexto')
     }
   }, [])
 
@@ -57,9 +65,17 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   }
 
   const updateUser = (userData: UserData) => {
+    console.log('🚨 DEBUG USERCONTEXT - updateUser chamado:', {
+      userData,
+      userId: userData?.id,
+      userIdType: typeof userData?.id,
+      userIdValue: JSON.stringify(userData?.id),
+      userIdString: String(userData?.id)
+    });
+    
     setUser(userData)
     localStorage.setItem('userData', JSON.stringify(userData))
-    console.log('Dados do usuário atualizados:', userData)
+    console.log('✅ Dados do usuário atualizados e salvos no localStorage')
   }
 
   const value = {

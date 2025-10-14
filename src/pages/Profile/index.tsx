@@ -14,18 +14,30 @@ import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
 import { uploadImageToAzure } from './uploadImageToAzure'
 import LiquidDatePicker from '../../components/LiquidDatePicker'
+import { cleanCorruptedUserData, debugLocalStorageData, isValidUserId } from '../../utils/validateUserData'
 
 
-const uploadParams = () => {
-  const fileInput = document.getElementById('avatar-upload') as HTMLInputElement;
-  const file = fileInput?.files?.[0];
-  
-  return {
-    file,
-    storageAccount: 'gymbuddystorage',
-    sasToken: 'sp=cwl&st=2025-10-09T13:37:16Z&se=2025-10-09T20:30:00Z&sv=2024-11-04&sr=c&sig=fMGGqgAmqcMj%2BfF8dU7%2FRFwh6TtpqfpjB6cXX9hj6zo%3D',
-    containerName: 'fotos',
-  };
+// Função auxiliar para converter arquivo em base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+// Função para upload local (sem Azure)
+const uploadImageLocally = async (file: File): Promise<string> => {
+  try {
+    console.log('📷 Convertendo imagem para base64...');
+    const base64String = await fileToBase64(file);
+    console.log('✅ Imagem convertida com sucesso');
+    return base64String;
+  } catch (error) {
+    console.error('❌ Erro ao converter imagem:', error);
+    throw new Error('Erro ao processar imagem');
+  }
 };
 
 
@@ -55,7 +67,31 @@ const Profile = () => {
     if (!isLoggedIn) {
       navigate('/')
     }
-  }, [isLoggedIn, navigate])
+    
+    // Limpar dados corrompidos na inicialização
+    cleanCorruptedUserData();
+    
+    // Debug crítico dos dados do usuário na inicialização
+    debugLocalStorageData();
+    
+    console.log('🚨 DEBUG INICIAL - Profile Component:', {
+      isLoggedIn,
+      user: user,
+      userId: user?.id,
+      userIdType: typeof user?.id,
+      userIdValue: JSON.stringify(user?.id),
+      userIdString: String(user?.id),
+      isValidUserId: user?.id ? isValidUserId(user.id) : false
+    });
+    
+    // Se o usuário tem ID inválido, forçar logout
+    if (user && user.id && !isValidUserId(user.id)) {
+      console.error('🚨 ID do usuário corrompido detectado, fazendo logout...');
+      localStorage.clear();
+      navigate('/');
+      window.location.reload();
+    }
+  }, [isLoggedIn, navigate, user])
 
   // Verificar primeira visita e mostrar popup de peso/altura
   useEffect(() => {
@@ -88,11 +124,7 @@ const Profile = () => {
         foto: user.foto || ''
       }
       
-      console.log('🔄 Sincronizando editedData com user:', {
-        userFoto: !!user.foto,
-        newEditedDataFoto: !!newEditedData.foto,
-        userFotoLength: user.foto?.length || 0
-      })
+      // Sincronizado editedData com dados do usuário
       
       setEditedData(newEditedData);
     }
@@ -106,12 +138,23 @@ const Profile = () => {
     try {
       let finalFotoUrl = editedData.foto;
       
+      // Debug crítico para identificar problema de ID
+      console.log('🚨 DEBUG CRÍTICO - handleSave:', {
+        user: user,
+        userId: user?.id,
+        userIdType: typeof user?.id,
+        userIdValue: JSON.stringify(user?.id),
+        userIdString: String(user?.id),
+        isValidId: user?.id && typeof user.id === 'number' && user.id > 0
+      });
+      
       // A foto já foi enviada para Azure no handleAvatarUpload
       // finalFotoUrl já contém a URL da Azure ou dados do usuário
       console.log('📸 URL da foto para salvar:', finalFotoUrl ? 'Foto disponível' : 'Sem foto');
       
-      // Atualizar no backend se tiver ID do usuário
-      if (user?.id) {
+      // Atualizar no backend se tiver ID do usuário válido
+      if (user?.id && typeof user.id === 'number' && user.id > 0) {
+        console.log('✅ ID válido, prosseguindo com atualização');
         // Debug do user object completo
         console.log('🔍 Debug user object:', {
           user,
@@ -184,8 +227,19 @@ const Profile = () => {
 
   const handleWeightHeightSubmit = async (data: { peso: number | null; altura: number | null }) => {
     try {
-      // Atualizar no backend se tiver ID do usuário
-      if (user?.id) {
+      // Debug crítico para identificar problema de ID
+      console.log('🚨 DEBUG CRÍTICO - handleWeightHeightSubmit:', {
+        user: user,
+        userId: user?.id,
+        userIdType: typeof user?.id,
+        userIdValue: JSON.stringify(user?.id),
+        userIdString: String(user?.id),
+        isValidId: user?.id && typeof user.id === 'number' && user.id > 0
+      });
+      
+      // Atualizar no backend se tiver ID do usuário válido
+      if (user?.id && typeof user.id === 'number' && user.id > 0) {
+        console.log('✅ ID válido no WeightHeight, prosseguindo...');
         const updateData: any = {};
         
         // Adicionar apenas se tiver valores válidos
@@ -202,9 +256,11 @@ const Profile = () => {
           console.log(`📊 IMC calculado no popup: ${updateData.imc}`);
         }
         
-        // Só fazer update se tiver dados para atualizar
-        if (Object.keys(updateData).length > 0) {
+        // Só fazer update se tiver dados para atualizar E ID válido
+        if (Object.keys(updateData).length > 0 && user?.id && typeof user.id === 'number' && user.id > 0) {
           await updateUserAPI(user.id, updateData);
+        } else if (Object.keys(updateData).length > 0) {
+          console.warn('⚠️ ID do usuário inválido, pulando atualização no backend:', user?.id);
         }
       }
       
@@ -373,13 +429,6 @@ const Profile = () => {
               >
                 {(() => {
                   const fotoSrc = isEditing ? editedData.foto : user?.foto
-                  console.log('🖼️ Renderizando avatar:', {
-                    isEditing,
-                    editedDataFoto: !!editedData.foto,
-                    userFoto: !!user?.foto,
-                    fotoSrcSelected: !!fotoSrc,
-                    fotoSrcLength: fotoSrc?.length || 0
-                  })
                   
                   return fotoSrc ? (
                     <Avatar src={fotoSrc} alt={user.nome} />

@@ -58,6 +58,19 @@ export const listarUsuarios = async () => {
 
 // Buscar usuário por ID
 export const buscarUsuario = async (id: number | string) => {
+  // Validar ID antes de fazer requisição
+  if (!id || (typeof id !== 'number' && typeof id !== 'string') || id === '' || id === '0') {
+    console.error('❌ ID inválido em buscarUsuario:', { id, tipo: typeof id, valor: JSON.stringify(id) });
+    throw { message: 'ID do usuário inválido' };
+  }
+  
+  // Validar formato - detectar IDs malformados como "1:1"
+  const idString = String(id);
+  if (idString.includes(':') || idString.includes('undefined') || idString.includes('null')) {
+    console.error('❌ ID com formato inválido em buscarUsuario:', { id, idString });
+    throw { message: 'ID do usuário com formato inválido' };
+  }
+  
   try {
     const response = await api.get(`/v1/gymbuddy/usuario/${id}`);
     return response.data;
@@ -68,6 +81,19 @@ export const buscarUsuario = async (id: number | string) => {
 
 // Atualizar dados do usuário
 export const atualizarUsuario = async (id: number | string, userData: Partial<Usuario>) => {
+  // Validar ID antes de fazer requisição
+  if (!id || (typeof id !== 'number' && typeof id !== 'string') || id === '' || id === '0') {
+    console.error('❌ ID inválido em atualizarUsuario:', { id, tipo: typeof id, valor: JSON.stringify(id) });
+    throw { message: 'ID do usuário inválido para atualização' };
+  }
+  
+  // Validar formato - detectar IDs malformados como "1:1"
+  const idString = String(id);
+  if (idString.includes(':') || idString.includes('undefined') || idString.includes('null')) {
+    console.error('❌ ID com formato inválido em atualizarUsuario:', { id, idString });
+    throw { message: 'ID do usuário com formato inválido para atualização' };
+  }
+  
   try {
     const response = await api.put(`/v1/gymbuddy/usuario/${id}`, userData);
     return response.data;
@@ -78,6 +104,19 @@ export const atualizarUsuario = async (id: number | string, userData: Partial<Us
 
 // Excluir usuário
 export const excluirUsuario = async (id: number | string) => {
+  // Validar ID antes de fazer requisição
+  if (!id || (typeof id !== 'number' && typeof id !== 'string') || id === '' || id === '0') {
+    console.error('❌ ID inválido em excluirUsuario:', { id, tipo: typeof id, valor: JSON.stringify(id) });
+    throw { message: 'ID do usuário inválido para exclusão' };
+  }
+  
+  // Validar formato - detectar IDs malformados como "1:1"
+  const idString = String(id);
+  if (idString.includes(':') || idString.includes('undefined') || idString.includes('null')) {
+    console.error('❌ ID com formato inválido em excluirUsuario:', { id, idString });
+    throw { message: 'ID do usuário com formato inválido para exclusão' };
+  }
+  
   try {
     const response = await api.delete(`/v1/gymbuddy/usuario/${id}`);
     return response.data;
