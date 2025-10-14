@@ -511,15 +511,11 @@ const ChatSubtitle = styled.p`
 const Chat3DContainer = styled.div`
   width: 100%;
   height: 300px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
   margin: 1rem 0;
 `
 
