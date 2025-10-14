@@ -80,7 +80,6 @@ const Header = styled.header`
   align-items: center;
   padding: 0 3rem;
   z-index: 99;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 `
 
 const Logo = styled.div`
