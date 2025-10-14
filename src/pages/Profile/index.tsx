@@ -33,7 +33,7 @@ const uploadParams = () => {
 
 
 const Profile = () => {
-  const { user, isLoggedIn, updateUser } = useUser()
+  const { user, isLoggedIn, isLoading, updateUser } = useUser()
   const navigate = useNavigate()
   const { updateUser: updateUserAPI } = useUserActions()
   const [isEditing, setIsEditing] = useState(false)
@@ -68,8 +68,17 @@ const Profile = () => {
   const [isUpdatingPost, setIsUpdatingPost] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/')
+    // Não redirecionar se ainda está carregando
+    if (isLoading) {
+      console.log('🔄 UserContext ainda carregando...');
+      return;
+    }
+    
+    // Só redirecionar se terminou de carregar e não está logado
+    if (!isLoading && !isLoggedIn) {
+      console.log('⚠️ Usuário não logado após carregamento, redirecionando...');
+      navigate('/');
+      return;
     }
     
     // Limpar dados corrompidos na inicialização
@@ -79,6 +88,7 @@ const Profile = () => {
     debugLocalStorageData();
     
     console.log('🚨 DEBUG INICIAL - Profile Component:', {
+      isLoading,
       isLoggedIn,
       user: user,
       userId: user?.id,
@@ -95,7 +105,7 @@ const Profile = () => {
       navigate('/');
       window.location.reload();
     }
-  }, [isLoggedIn, navigate, user])
+  }, [isLoading, isLoggedIn, navigate, user])
 
   // Verificar primeira visita e mostrar popup de peso/altura
   useEffect(() => {
@@ -633,6 +643,22 @@ const Profile = () => {
     setPostToEdit(null);
   };
 
+  // Mostrar loading enquanto carrega
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        color: 'white',
+        fontSize: '1.2rem'
+      }}>
+        🔄 Carregando perfil...
+      </div>
+    );
+  }
+  
   if (!user) {
     return null
   }

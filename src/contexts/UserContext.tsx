@@ -4,6 +4,7 @@ import { UserData, getUserFromStorage, getTokenFromStorage, clearAuthData } from
 interface UserContextType {
   user: UserData | null
   isLoggedIn: boolean
+  isLoading: boolean
   login: (userData: UserData, token?: string) => void
   logout: () => void
   updateUser: (userData: UserData) => void
@@ -17,24 +18,39 @@ interface UserProviderProps {
 
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<UserData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   // se o usuario tiver logado recupera do localstorage
   useEffect(() => {
-    const savedUser = getUserFromStorage()
-    const token = getTokenFromStorage()
+    const initializeAuth = async () => {
+      setIsLoading(true);
+      
+      try {
+        const savedUser = getUserFromStorage()
+        const token = getTokenFromStorage()
+        
+        console.log('🚨 DEBUG USERCONTEXT - Recuperando do storage:', {
+          savedUser,
+          userId: savedUser?.id,
+          userIdType: typeof savedUser?.id,
+          userIdValue: JSON.stringify(savedUser?.id),
+          token: token ? 'presente' : 'ausente'
+        });
+        
+        if (savedUser && token) {
+          setUser(savedUser)
+          console.log('✅ Usuário recuperado e definido no contexto')
+        } else {
+          console.log('⚠️ Nenhum usuário salvo encontrado')
+        }
+      } catch (error) {
+        console.error('💥 Erro ao inicializar autenticação:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    console.log('🚨 DEBUG USERCONTEXT - Recuperando do storage:', {
-      savedUser,
-      userId: savedUser?.id,
-      userIdType: typeof savedUser?.id,
-      userIdValue: JSON.stringify(savedUser?.id),
-      token: token ? 'presente' : 'ausente'
-    });
-    
-    if (savedUser && token) {
-      setUser(savedUser)
-      console.log('✅ Usuário recuperado e definido no contexto')
-    }
+    initializeAuth();
   }, [])
 
   const login = (userData: UserData, token?: string) => {
@@ -81,6 +97,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const value = {
     user,
     isLoggedIn: !!user,
+    isLoading,
     login,
     logout,
     updateUser
