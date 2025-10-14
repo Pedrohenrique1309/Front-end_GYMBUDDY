@@ -974,13 +974,6 @@ const Social = () => {
         <Logo>
           <img src="/gymbuddy-logo.png" alt="GYM BUDDY" />
         </Logo>
-        <UserProfile onClick={() => navigate('/profile')}>
-          {user?.foto ? (
-            <img src={user.foto} alt={user.nome} />
-          ) : (
-            <DefaultAvatar size={40} />
-          )}
-        </UserProfile>
       </Header>
       
       {/* Conteúdo Principal */}
