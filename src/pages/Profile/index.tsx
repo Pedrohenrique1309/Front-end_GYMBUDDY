@@ -11,6 +11,7 @@ import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmDeletePopup } from '../../components/ConfirmDeletePopup'
 import { EditPostPopup } from '../../components/EditPostPopup'
+import { DebugUserState } from '../../components/DebugUserState'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
@@ -81,9 +82,6 @@ const Profile = () => {
       return;
     }
     
-    // Limpar dados corrompidos na inicialização
-    cleanCorruptedUserData();
-    
     // Debug crítico dos dados do usuário na inicialização
     debugLocalStorageData();
     
@@ -95,15 +93,23 @@ const Profile = () => {
       userIdType: typeof user?.id,
       userIdValue: JSON.stringify(user?.id),
       userIdString: String(user?.id),
-      isValidUserId: user?.id ? isValidUserId(user.id) : false
+      isValidUserId: user?.id ? isValidUserId(user.id) : false,
+      hasUserInStorage: !!localStorage.getItem('userData'),
+      hasTokenInStorage: !!localStorage.getItem('authToken')
     });
     
-    // Se o usuário tem ID inválido, forçar logout
+    // TEMPORARIAMENTE DESATIVADO: Validação de ID que estava causando logout
+    // Vamos debugar primeiro antes de forçar logout
     if (user && user.id && !isValidUserId(user.id)) {
-      console.error('🚨 ID do usuário corrompido detectado, fazendo logout...');
-      localStorage.clear();
-      navigate('/');
-      window.location.reload();
+      console.warn('⚠️ ID do usuário pode estar corrompido, mas NÃO fazendo logout para debug:', {
+        userId: user.id,
+        userIdType: typeof user.id,
+        userIdValue: JSON.stringify(user.id)
+      });
+      // NÃO forçar logout por enquanto:
+      // localStorage.clear();
+      // navigate('/');
+      // window.location.reload();
     }
   }, [isLoading, isLoggedIn, navigate, user])
 
@@ -1119,6 +1125,9 @@ const Profile = () => {
         onSave={handleSaveEditPost}
         isLoading={isUpdatingPost}
       />
+      
+      {/* DEBUG TEMPORÁRIO - REMOVER EM PRODUÇÃO */}
+      <DebugUserState />
     </ProfileContainer>
   )
 }
