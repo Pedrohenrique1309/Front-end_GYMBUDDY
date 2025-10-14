@@ -439,6 +439,38 @@ const Profile = () => {
     }
   }, [user?.id])
 
+  // Função para editar um post
+  const handleEditPost = (postId: number) => {
+    console.log('🖊️ Editando post:', postId)
+    // Navegar para a rede social com foco no post específico
+    navigate('/social', { state: { editPostId: postId } })
+  }
+
+  // Função para deletar um post
+  const handleDeletePost = async (postId: number) => {
+    if (window.confirm('Tem certeza que deseja deletar esta publicação?')) {
+      try {
+        console.log('🗑️ Deletando post:', postId)
+        
+        const response = await fetch(`http://localhost:3030/v1/gymbuddy/publicacao/${postId}`, {
+          method: 'DELETE',
+        })
+        
+        if (response.ok) {
+          console.log('✅ Post deletado com sucesso')
+          // Recarregar os posts após deletar
+          loadUserPosts()
+        } else {
+          console.error('❌ Erro ao deletar post:', response.status)
+          alert('Erro ao deletar a publicação. Tente novamente.')
+        }
+      } catch (error) {
+        console.error('❌ Erro ao deletar post:', error)
+        alert('Erro ao deletar a publicação. Tente novamente.')
+      }
+    }
+  }
+
   if (!user) {
     return null
   }
@@ -819,6 +851,29 @@ const Profile = () => {
                   >
                     <PhotoImage src={post.image} alt={`Publicação ${index + 1}`} />
                     <PhotoOverlay>
+                      <PostActions>
+                        <ActionButton
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            handleEditPost(post.id);
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FiEdit3 />
+                        </ActionButton>
+                        <ActionButton
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            handleDeletePost(post.id);
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          isDelete
+                        >
+                          <FiX />
+                        </ActionButton>
+                      </PostActions>
                       <PostStats>
                         <PostStat>
                           <FiHeart />
@@ -1718,6 +1773,175 @@ const EmptyPostsState = styled.div`
     line-height: 1.5;
     max-width: 300px;
     margin: 0;
+  }
+`
+
+// Styled Components para ações nas fotos
+const PostActions = styled.div`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
+`
+
+interface ActionButtonProps {
+  isDelete?: boolean;
+}
+
+const ActionButton = styled(motion.button)<ActionButtonProps>`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Base glass layer */
+  background: ${props => props.isDelete 
+    ? 'linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(220, 53, 69, 0.25))' 
+    : 'linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.25))'
+  };
+  
+  /* Advanced backdrop blur */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  /* Glass border with gradient */
+  border: 1px solid ${props => props.isDelete 
+    ? 'rgba(220, 53, 69, 0.3)' 
+    : 'rgba(40, 167, 69, 0.3)'
+  };
+  
+  /* Liquid glass shadow */
+  box-shadow: 
+    0 8px 32px ${props => props.isDelete 
+      ? 'rgba(220, 53, 69, 0.15)' 
+      : 'rgba(40, 167, 69, 0.15)'
+    },
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  
+  color: ${props => props.isDelete 
+    ? 'rgba(255, 255, 255, 0.9)' 
+    : 'rgba(255, 255, 255, 0.9)'
+  };
+  
+  /* Glass reflection effect */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.1) 30%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.05) 100%
+    );
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Liquid glow effect */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    background: ${props => props.isDelete 
+      ? 'conic-gradient(from 0deg, rgba(220, 53, 69, 0.3), rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.3))' 
+      : 'conic-gradient(from 0deg, rgba(40, 167, 69, 0.3), rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.3))'
+    };
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    animation: liquidRotate 4s linear infinite;
+  }
+  
+  svg {
+    font-size: 1.2rem;
+    z-index: 2;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+  }
+  
+  &:hover {
+    transform: scale(1.08) translateY(-1px);
+    
+    background: ${props => props.isDelete 
+      ? 'linear-gradient(135deg, rgba(220, 53, 69, 0.25), rgba(220, 53, 69, 0.4))' 
+      : 'linear-gradient(135deg, rgba(40, 167, 69, 0.25), rgba(40, 167, 69, 0.4))'
+    };
+    
+    border-color: ${props => props.isDelete 
+      ? 'rgba(220, 53, 69, 0.5)' 
+      : 'rgba(40, 167, 69, 0.5)'
+    };
+    
+    box-shadow: 
+      0 12px 40px ${props => props.isDelete 
+        ? 'rgba(220, 53, 69, 0.25)' 
+        : 'rgba(40, 167, 69, 0.25)'
+      },
+      0 4px 16px ${props => props.isDelete 
+        ? 'rgba(220, 53, 69, 0.2)' 
+        : 'rgba(40, 167, 69, 0.2)'
+      },
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    
+    &::before {
+      opacity: 0.8;
+    }
+    
+    &::after {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    
+    svg {
+      transform: scale(1.1);
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    }
+  }
+  
+  &:active {
+    transform: scale(1.02) translateY(0px);
+    
+    box-shadow: 
+      0 4px 16px ${props => props.isDelete 
+        ? 'rgba(220, 53, 69, 0.3)' 
+        : 'rgba(40, 167, 69, 0.3)'
+      },
+      inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    
+    &::after {
+      opacity: 0.7;
+      transform: scale(0.95);
+    }
+  }
+  
+  @keyframes liquidRotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `
 
