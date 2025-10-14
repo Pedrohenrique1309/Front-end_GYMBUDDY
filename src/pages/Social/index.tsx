@@ -17,18 +17,43 @@ const Container = styled.div`
   position: relative;
 `
 
-const Sidebar = styled.div`
+// AI Chat Sidebar Components
+const ChatSidebar = styled(motion.div)<{ isOpen?: boolean }>`
   position: fixed;
-  left: 0;
+  left: ${props => props.isOpen ? '0' : '-380px'};
   top: 0;
   bottom: 0;
-  width: 50px;
-  background: #E53935;
-  z-index: 100;
+  width: 420px;
+  background: linear-gradient(135deg, 
+    rgba(26, 26, 26, 0.98) 0%,
+    rgba(18, 18, 18, 0.98) 50%,
+    rgba(22, 22, 22, 0.98) 100%
+  );
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(229, 57, 53, 0.2);
+  box-shadow: ${props => props.isOpen ? '8px 0 32px rgba(0, 0, 0, 0.4)' : 'none'};
+  z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 2px 0 10px rgba(229, 57, 53, 0.3);
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: translateZ(0);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(229, 57, 53, 0.08) 0%,
+      transparent 30%,
+      transparent 70%,
+      rgba(255, 87, 34, 0.05) 100%
+    );
+    z-index: -1;
+  }
   
   &::after {
     content: '';
@@ -36,34 +61,111 @@ const Sidebar = styled.div`
     right: 0;
     top: 0;
     bottom: 0;
-    width: 2px;
+    width: 3px;
     background: linear-gradient(to bottom, 
-      rgba(255, 255, 255, 0.3) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.3) 100%
+      rgba(229, 57, 53, 0.8) 0%,
+      rgba(255, 87, 34, 0.6) 50%,
+      rgba(229, 57, 53, 0.8) 100%
     );
+    box-shadow: 0 0 20px rgba(229, 57, 53, 0.4);
   }
 `
 
-const SidebarIcon = styled.div`
-  color: white;
-  font-size: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
+  position: fixed;
+  left: ${props => props.isOpen ? '400px' : '-15px'};
+  top: 50%;
+  transform: translateY(-50%);
+  width: 70px;
+  height: 55px;
+  background: linear-gradient(135deg, 
+    #E53935 0%, 
+    #FF5722 40%,
+    #E53935 100%
+  );
+  /* Forma amassada e assimétrica */
+  border-radius: 0 50% 50% 0 / 0 60% 40% 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  cursor: pointer;
+  z-index: 1001;
+  overflow: hidden;
+  
+  /* Efeito amassado com múltiplas sombras */
+  box-shadow: 
+    0 8px 25px rgba(229, 57, 53, 0.4),
+    inset 3px 0 8px rgba(0, 0, 0, 0.2),
+    inset -2px 3px 6px rgba(255, 255, 255, 0.15),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.3);
+    
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Textura amassada com pseudo-elemento */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 15%;
+    width: 25px;
+    height: 20px;
+    background: radial-gradient(
+      ellipse at 30% 40%,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    );
+    border-radius: 50%;
+    transform: rotate(-15deg);
+  }
+  
+  /* Sombra externa dinâmica */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -8px;
+    bottom: -3px;
+    background: linear-gradient(45deg, 
+      rgba(229, 57, 53, 0.2),
+      rgba(255, 87, 34, 0.2),
+      rgba(229, 57, 53, 0.1)
+    );
+    border-radius: 0 50% 50% 0 / 0 60% 40% 0;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
+    transform: translateY(-50%) scale(1.05);
+    left: ${props => props.isOpen ? '395px' : '-10px'};
+    box-shadow: 
+      0 15px 40px rgba(229, 57, 53, 0.6),
+      inset 4px 0 12px rgba(0, 0, 0, 0.3),
+      inset -3px 4px 10px rgba(255, 255, 255, 0.2),
+      inset 0 -4px 12px rgba(0, 0, 0, 0.4);
+      
+    &::after {
+      opacity: 1;
+    }
   }
   
   &:active {
-    transform: scale(0.95);
+    transform: translateY(-50%) scale(0.95);
+    box-shadow: 
+      0 5px 15px rgba(229, 57, 53, 0.4),
+      inset 5px 0 15px rgba(0, 0, 0, 0.4),
+      inset -1px 2px 6px rgba(255, 255, 255, 0.1);
+  }
+  
+  svg {
+    font-size: 20px;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
+    margin-left: ${props => props.isOpen ? '0' : '8px'};
   }
 `
 
@@ -88,20 +190,7 @@ const Logo = styled.div`
   }
 `
 
-const UserProfile = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`
+
 
 const MainContent = styled.div`
   display: grid;
@@ -396,71 +485,188 @@ const PostsCount = styled.div`
   font-weight: 500;
 `
 
-// AI Overlay Components
-const OverlayBackground = styled(motion.div)`
+// Advanced AI Chat Components
+const ChatOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   z-index: 999;
   cursor: pointer;
 `
 
-const AiOverlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 33vw;
-  height: 100vh;
-  background: rgba(139, 69, 19, 0.15);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-  z-index: 1000;
+const ChatHeader = styled.div`
+  padding: 2.5rem 2rem 2rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 2rem;
+    right: 2rem;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%,
+      rgba(229, 57, 53, 0.5) 30%,
+      rgba(255, 87, 34, 0.5) 70%,
+      transparent 100%
+    );
+  }
+`
+
+const ChatTitle = styled.h2`
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #E53935 0%, #FF5722 50%, #FF8A65 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+`
+
+const ChatSubtitle = styled.p`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 300;
+`
+
+const Chat3DContainer = styled.div`
+  height: 200px;
   display: flex;
-  flex-direction: column;
-  padding: 2rem;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+  position: relative;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(229, 57, 53, 0.1) 0%,
+    rgba(255, 87, 34, 0.05) 30%,
+    transparent 70%
+  );
+  border-radius: 20px;
+  border: 1px solid rgba(229, 57, 53, 0.2);
   
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(229, 57, 53, 0.1) 0%,
-      rgba(139, 69, 19, 0.05) 50%,
-      rgba(183, 28, 28, 0.1) 100%
-    );
-    z-index: -1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(229, 57, 53, 0.4);
+    border-radius: 50%;
+    border-top-color: #E53935;
+    animation: spin 2s linear infinite;
   }
   
-  @media (max-width: 1024px) {
-    width: 50vw;
-  }
-  
-  @media (max-width: 768px) {
-    width: 80vw;
+  @keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
   }
 `
 
-const AiHeader = styled.div`
+const Chat3DPlaceholder = styled.div`
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+  text-align: center;
+  z-index: 1;
+`
+
+const ChatContent = styled.div`
+  flex: 1;
+  padding: 2rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 3rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-direction: column;
+  overflow-y: auto;
 `
 
-const AiTitle = styled.h2`
-  font-size: 2.2rem;
-  font-weight: 700;
+const ChatMessages = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+`
+
+const MessageBubble = styled.div<{ isUser?: boolean }>`
+  max-width: 80%;
+  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  align-self: ${props => props.isUser ? 'flex-end' : 'flex-start'};
+  background: ${props => props.isUser 
+    ? 'linear-gradient(135deg, #E53935 0%, #FF5722 100%)'
+    : 'rgba(255, 255, 255, 0.05)'
+  };
   color: white;
-  margin: 0;
+  border: ${props => props.isUser 
+    ? 'none' 
+    : '1px solid rgba(255, 255, 255, 0.1)'
+  };
+  box-shadow: ${props => props.isUser 
+    ? '0 4px 20px rgba(229, 57, 53, 0.3)'
+    : '0 4px 20px rgba(0, 0, 0, 0.2)'
+  };
+`
+
+const ChatInputContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  padding: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+`
+
+const ChatInput = styled.input`
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 25px;
+  padding: 1rem 1.5rem;
+  color: white;
+  font-size: 0.95rem;
+  outline: none;
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  &:focus {
+    border-color: rgba(229, 57, 53, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+  }
+`
+
+const ChatSendButton = styled(motion.button)`
+  background: linear-gradient(135deg, #E53935 0%, #FF5722 100%);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  box-shadow: 0 4px 20px rgba(229, 57, 53, 0.4);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(229, 57, 53, 0.6);
+  }
+  
+  svg {
+    font-size: 1.2rem;
+  }
 `
 
 const CloseButton = styled.button`
@@ -608,8 +814,11 @@ const Social = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [posts, setPosts] = useState<Post[]>([])
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
-  const [showAiOverlay, setShowAiOverlay] = useState(false)
-  const [aiMessage, setAiMessage] = useState('')
+  const [showAiChat, setShowAiChat] = useState(false)
+  const [chatMessage, setChatMessage] = useState('')
+  const [chatMessages, setChatMessages] = useState<{id: number, text: string, isUser: boolean}[]>([
+    { id: 1, text: 'Olá! Sou seu assistente pessoal do GymBuddy. Como posso ajudar com seus treinos hoje?', isUser: false },
+  ])
   const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
 
   useEffect(() => {
@@ -883,21 +1092,40 @@ const Social = () => {
   }
   
 
-  const handleAiSubmit = () => {
-    if (!aiMessage.trim()) return
-    // Aqui você pode implementar a lógica do chat da IA
-    console.log('Mensagem para IA:', aiMessage)
-    setAiMessage('')
+  const handleChatSubmit = () => {
+    if (!chatMessage.trim()) return
+
+    const newMessage = {
+      id: chatMessages.length + 1,
+      text: chatMessage,
+      isUser: true
+    }
+
+    setChatMessages(prev => [...prev, newMessage])
+    setChatMessage('')
+
+    // Simular resposta da IA após um delay
+    setTimeout(() => {
+      const aiResponse = {
+        id: chatMessages.length + 2,
+        text: 'Entendi! Vou ajudar você com isso. Que tipo de exercício você gostaria de focar hoje?',
+        isUser: false
+      }
+      setChatMessages(prev => [...prev, aiResponse])
+    }, 1000)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      setShowAiOverlay(false)
+      setShowAiChat(false)
     }
   }
 
+  const toggleAiChat = () => {
+    setShowAiChat(!showAiChat)
+  }
 
-  const handleOpenCreatePost = () => {
+  const handleCreatePost = () => {
     setShowCreatePostPopup(true)
   }
 
@@ -905,104 +1133,130 @@ const Social = () => {
     setShowCreatePostPopup(false)
   }
 
-  return (
-    <Container>
-      {/* Overlay de IA */}
-      <AnimatePresence>
-        {showAiOverlay && (
-          <>
-            <OverlayBackground 
-              onClick={handleOverlayClick}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            />
-            <AiOverlay
-              initial={{ x: -400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -400, opacity: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-            >
-            <AiHeader>
-              <AiTitle>Assistente IA</AiTitle>
-              <CloseButton onClick={() => setShowAiOverlay(false)}>×</CloseButton>
-            </AiHeader>
-            
-            <AiContent>
-              <AiMessage>
-                Em seu último treino você progrediu carga em 2 exercícios.
-              </AiMessage>
-              
-              <SuggestionTags>
-                <SuggestionTag>#Hipertrofia</SuggestionTag>
-                <SuggestionTag>Dieta</SuggestionTag>
-                <SuggestionTag>Cardio</SuggestionTag>
-              </SuggestionTags>
-            </AiContent>
-            
-            <AiInputContainer>
-              <AiInput
-                type="text"
-                placeholder="Me ajude no meu treino?"
-                value={aiMessage}
-                onChange={(e) => setAiMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAiSubmit()}
-              />
-              <SendButton
-                onClick={handleAiSubmit}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <FiSend />
-              </SendButton>
-            </AiInputContainer>
-            </AiOverlay>
-          </>
+  const handleOpenCreatePost = () => {
+    setShowCreatePostPopup(true)
+  }
+
+return (
+  <Container>
+    {/* Chat IA Moderno */}
+    <AnimatePresence>
+      {showAiChat && (
+        <ChatOverlay 
+          onClick={handleOverlayClick}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
+    </AnimatePresence>
+    
+    <ChatSidebar
+      isOpen={showAiChat}
+      initial={false}
+      animate={{
+        x: showAiChat ? 0 : -420,
+        opacity: showAiChat ? 1 : 0
+      }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
+    >
+      <ChatHeader>
+        <ChatTitle>GymBuddy AI</ChatTitle>
+        <ChatSubtitle>Seu assistente pessoal de treino</ChatSubtitle>
+      </ChatHeader>
+      
+      <Chat3DContainer>
+        <Chat3DPlaceholder>Elemento 3D será inserido aqui</Chat3DPlaceholder>
+      </Chat3DContainer>
+      
+      <ChatContent>
+        <ChatMessages>
+          {chatMessages.map((message) => (
+            <MessageBubble key={message.id} isUser={message.isUser}>
+              {message.text}
+            </MessageBubble>
+          ))}
+        </ChatMessages>
+        
+        <ChatInputContainer>
+          <ChatInput
+            type="text"
+            placeholder="Digite sua pergunta..."
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+          />
+          <ChatSendButton 
+            onClick={handleChatSubmit}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FiSend />
+          </ChatSendButton>
+        </ChatInputContainer>
+      </ChatContent>
+    </ChatSidebar>
+    
+    {/* Botão de Toggle do Chat */}
+    <ChatToggleButton
+      isOpen={showAiChat}
+      onClick={toggleAiChat}
+      initial={false}
+      animate={{
+        x: showAiChat ? 415 : 0,
+        rotateY: showAiChat ? 10 : 0
+      }}
+      transition={{ 
+        duration: 0.6, 
+        ease: [0.34, 1.56, 0.64, 1],
+        type: "spring",
+        stiffness: 300,
+        damping: 30
+      }}
+      whileHover={{ 
+        scale: 1.05,
+        x: showAiChat ? 410 : 5
+      }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <FiChevronRight />
+    </ChatToggleButton>
+    
+    {/* Cabeçalho */}
+    <Header>
+      <Logo>
+        <img src="/gymbuddy-logo.png" alt="GYM BUDDY" />
+      </Logo>
+    </Header>
+    
+    {/* Conteúdo Principal */}
+    <MainContent>
+      <ContentArea>
+        <MainTitle>
+          Como seus amigos estão<br/>treinando hoje?
+        </MainTitle>
+        
+        <SearchBar>
+          <FiSearch />
+          <input 
+            type="text" 
+            placeholder="Buscar"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </SearchBar>
+        
+        <SectionTitle>Posts recentes</SectionTitle>
+        
+        {/* Debug Info */}
+        {filteredPosts.length === 0 && (
+          <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>
+            <p>📄 Nenhum post encontrado</p>
+            <p>🔍 Posts carregados: {posts.length}</p>
+            <p>🔍 Query de busca: "{searchQuery}"</p>
+          </div>
         )}
-      </AnimatePresence>
-      
-      {/* Barra Lateral Vermelha */}
-      <Sidebar>
-        <SidebarIcon onClick={() => setShowAiOverlay(!showAiOverlay)}>
-          <FiChevronRight />
-        </SidebarIcon>
-      </Sidebar>
-      
-      {/* Cabeçalho */}
-      <Header>
-        <Logo>
-          <img src="/gymbuddy-logo.png" alt="GYM BUDDY" />
-        </Logo>
-      </Header>
-      
-      {/* Conteúdo Principal */}
-      <MainContent>
-        <ContentArea>
-          <MainTitle>
-            Como seus amigos estão<br/>treinando hoje?
-          </MainTitle>
-          
-          <SearchBar>
-            <FiSearch />
-            <input 
-              type="text" 
-              placeholder="Buscar"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </SearchBar>
-          
-          <SectionTitle>Posts recentes</SectionTitle>
-          
-          {/* Debug Info */}
-          {filteredPosts.length === 0 && (
-            <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>
-              <p>📄 Nenhum post encontrado</p>
-              <p>🔍 Posts carregados: {posts.length}</p>
-              <p>🔍 Query de busca: "{searchQuery}"</p>
-            </div>
-          )}
           
           <PostsGrid>
             {filteredPosts.map((post) => (
