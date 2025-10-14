@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiImage, FiSend, FiHash, FiEdit3 } from 'react-icons/fi'
+import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import ImageEditor from '../ImageEditor'
-
-const API_BASE_URL = '/api/v1/gymbuddy'
+import { usePublicationActions } from '../../hooks/usePublicationActions'
 
 // Configuração do Azure Storage 
 const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'
 const AZURE_STORAGE_URL = `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`
 const AZURE_CONTAINER = 'fotos'
-const AZURE_SAS_TOKEN = 'sp=cwl&st=2025-10-09T13:37:16Z&se=2025-10-09T20:30:00Z&sv=2024-11-04&sr=c&sig=fMGGqgAmqcMj%2BfF8dU7%2FRFwh6TtpqfpjB6cXX9hj6zo%3D'
+const AZURE_SAS_TOKEN = 'sp=acw&st=2025-10-14T14:56:35Z&se=2025-10-14T23:11:35Z&sv=2024-11-04&sr=c&sig=Ns2XcPokYRGKxN3HEagkTi%2F3lUHnwAUtWF7tTwa1uRk%3D'
 
 interface FerramentasPopUpCriarPost {
   isOpen: boolean
@@ -22,11 +21,30 @@ interface FerramentasPopUpCriarPost {
 
 const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCriarPost) => {
   const { user } = useUser()
+  const { createPublication, loading: publicationLoading } = usePublicationActions()
+  
+  // Função para formatar data por extenso em português
+  const formatarDataPorExtenso = () => {
+    const agora = new Date()
+    const meses = [
+      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    ]
+    const dias = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
+    
+    const diaSemana = dias[agora.getDay()]
+    const dia = agora.getDate()
+    const mes = meses[agora.getMonth()]
+    const ano = agora.getFullYear()
+    
+    return `${diaSemana}, ${dia} de ${mes} de ${ano}`
+  }
   const [conteudo, setConteudo] = useState('')
   const [imagem, setImagem] = useState<string>('')
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null)
   const [entradaHashtag, setEntradaHashtag] = useState<string>('')
   const [chipsHashtag, setChipsHashtag] = useState<string[]>([])
+  const [localizacao, setLocalizacao] = useState('Academia Iron Gym - São Paulo')
   const [enviando, setEnviando] = useState(false)
   const [progressoUpload, setProgressoUpload] = useState(0)
   const [mostrarEditorImagem, setMostrarEditorImagem] = useState(false)
@@ -153,9 +171,17 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       return
     }
 
-    // Validar dados obrigatórios
-    const userId = parseInt(user.id?.toString() || '0')
-    if (!userId || userId === 0) {
+    // Validar ID do usuário com verificação robusta
+    let userId: number = 0
+    if (typeof user.id === 'number') {
+      userId = user.id
+    } else if (typeof user.id === 'string') {
+      userId = parseInt(user.id, 10)
+    } else if (user.id) {
+      userId = parseInt(String(user.id), 10)
+    }
+    
+    if (!userId || userId === 0 || isNaN(userId)) {
       alert('ID do usuário inválido!')
       return
     }
@@ -164,120 +190,133 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setProgressoUpload(0)
     
     try {
-      console.log('Iniciando criação do post...')
+      console.log('🚀 Iniciando criação do post...')
       
       let imageUrl: string = ''
       
       // Se há uma imagem selecionada, fazer upload para o Azure
       if (arquivoSelecionado) {
-        console.log('Fazendo upload da imagem para Azure...')
+        console.log('🇺️ Fazendo upload da imagem para Azure...')
         setProgressoUpload(50)
         
         try {
           imageUrl = await uploadImageToAzure(arquivoSelecionado)
           setProgressoUpload(100)
-          console.log('Imagem enviada para Azure:', imageUrl)
+          console.log('✅ Imagem enviada para Azure:', imageUrl)
         } catch (error) {
-          console.error('Erro ao enviar imagem para Azure:', error)
-          console.error('Detalhes do erro:', error)
+          console.error('❌ Erro ao enviar imagem para Azure:', error)
           // Continuar sem imagem em caso de erro no Azure
-          console.log('Continuando sem imagem...')
+          console.log('⚠️ Continuando sem imagem...')
           imageUrl = ''
         }
       }
       
-      // Preparar dados do post para a API (formato exato que funciona no Postman)
-      const currentDate = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      // Preparar conteúdo com hashtags
+      const conteudoCompleto = conteudo.trim() + (chipsHashtag.length > 0 ? ' ' + chipsHashtag.join(' ') : '')
       
-      // Enviar com URL da imagem do Azure
-      const postPayload = {
-        imagem: imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500",
-        descricao: conteudo.trim() + (chipsHashtag.length > 0 ? ' ' + chipsHashtag.join(' ') : ''),
-        data: currentDate,
-        localizacao: "Academia Iron Gym - São Paulo",
-        id_user: userId
+      // Preparar dados mínimos (igual ao PostFeed que funciona)
+      const publicacaoData: any = {
+        id_usuario: Number(userId), // Garantir que é número
+        conteudo: conteudoCompleto.trim() // Garantir que não tem espaços extras
       }
       
-      // Validar se todos os campos são válidos
-      if (!postPayload.descricao || postPayload.descricao.trim() === '') {
-        throw new Error('Descrição não pode estar vazia')
+      // Adicionar foto apenas se existir (opcional)
+      if (imageUrl && imageUrl.trim() !== '') {
+        publicacaoData.foto = imageUrl
       }
       
-      if (!postPayload.id_user || postPayload.id_user === 0) {
-        throw new Error('ID do usuário inválido')
+      // Validar dados antes do envio
+      if (!publicacaoData.conteudo || publicacaoData.conteudo.trim() === '') {
+        throw new Error('Conteúdo não pode estar vazio')
       }
       
-      // Log detalhado para comparar com Postman
-      console.log('Comparando com Postman:')
-      console.log('Payload Frontend:', JSON.stringify(postPayload, null, 2))
-      console.log('Tamanho do payload:', JSON.stringify(postPayload).length, 'caracteres')
-      console.log('User ID:', typeof userId, userId)
-      console.log('Data:', typeof currentDate, currentDate)
-      
-      console.log('Dados do post:', postPayload)
-      
-      // Enviar post para a API (testando diferentes URLs)
-      const urls = [
-        `${API_BASE_URL}/publicacao`  // Usar apenas localhost:8080
-      ]
-      
-      for (const url of urls) {
-        try {
-          console.log('Tentando URL:', url)
-          console.log('Headers:', { 'Content-Type': 'application/json' })
-          console.log('Body:', JSON.stringify(postPayload))
-          
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify(postPayload)
-          })
-          
-          console.log('Response:', response.status, response.statusText)
-          console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-          
-          if (response.ok) {
-            // Sucesso, processar resposta
-            const result = await response.json()
-            console.log('Post criado com sucesso na URL:', url)
-            console.log('Resultado:', result)
-            
-            // Sucesso - sair do loop
-            alert('Post publicado com sucesso!')
-            
-            // Limpar formulário
-            setConteudo('')
-            setImagem('')
-            setArquivoSelecionado(null)
-            setEntradaHashtag('')
-            setChipsHashtag([])
-            setProgressoUpload(0)
-            
-            // Chamar callback para recarregar posts
-            if (onPostCreated) {
-              onPostCreated()
-            }
-            
-            // Fechar popup
-            onClose()
-            return // Sair da função
-            
-          } else {
-            console.log(`Falhou na URL ${url}:`, response.status)
-          }
-        } catch (urlError) {
-          console.log(`Erro na URL ${url}:`, urlError)
-        }
+      if (publicacaoData.conteudo.length > 500) {
+        throw new Error('Conteúdo muito longo (máximo 500 caracteres)')
       }
       
-      // Se chegou aqui, nenhuma URL funcionou
-      throw new Error('Nenhuma URL de API funcionou - verifique a conexão')
+      if (!publicacaoData.id_usuario || publicacaoData.id_usuario === 0 || isNaN(publicacaoData.id_usuario)) {
+        throw new Error(`ID do usuário inválido: ${publicacaoData.id_usuario}`)
+      }
+      
+      console.log('📝 Dados da publicação (formato correto):', {
+        id_usuario: publicacaoData.id_usuario,
+        id_usuario_type: typeof publicacaoData.id_usuario,
+        conteudo: publicacaoData.conteudo,
+        conteudo_length: publicacaoData.conteudo.length,
+        foto: publicacaoData.foto ? 'presente' : 'ausente',
+        data_publicacao: publicacaoData.data_publicacao,
+        dados_completos: publicacaoData
+      })
+      
+      // Enviar dados no formato exato que o backend espera (baseado no SQL)
+      console.log('📮 Enviando com estrutura correta do backend...')
+      
+      // CORRIGIDO: imagem é NOT NULL no banco!
+      console.log('🎯 Enviando com TODOS os campos obrigatórios')
+      
+      // CORRIGIDO: Incluir todos os campos necessários
+      console.log('✅ Enviando TODOS os campos necessários')
+      console.log('👤 ID do usuário logado:', user?.id, 'Tipo:', typeof user?.id)
+      console.log('🔑 user object completo:', user)
+      
+      const agora = new Date()
+      
+      // ✅ DADOS REAIS DO USUÁRIO (agora que funciona!)
+      const backendPayload: any = {
+        imagem: imageUrl || "https://via.placeholder.com/400x300.png?text=GymBuddy", 
+        descricao: conteudoCompleto.trim() || "Novo post no GymBuddy",
+        data: agora.toISOString().split('T')[0], // Data atual
+        localizacao: localizacao.trim() || "Academia GymBuddy",
+        id_user: Number(user?.id || userId) // ID real do usuário logado
+      }
+      
+      console.log('✅ Enviando dados reais do usuário!')
+      
+      console.log('🎯 Payload detalhado:')
+      console.log('- imagem:', backendPayload.imagem)
+      console.log('- descricao:', backendPayload.descricao) 
+      console.log('- data:', backendPayload.data)
+      console.log('- localizacao:', backendPayload.localizacao)
+      console.log('- id_user:', backendPayload.id_user, 'tipo:', typeof backendPayload.id_user)
+      console.log('- JSON completo:', JSON.stringify(backendPayload, null, 2))
+      
+      const response = await fetch('/api/v1/gymbuddy/publicacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backendPayload)
+      })
+      
+      console.log('📎 Resposta fetch direto:', response.status, response.statusText)
+      
+      if (!response.ok) {
+        const errorData = await response.text()
+        console.error('❌ Erro fetch direto:', errorData)
+        throw new Error(`Erro ${response.status}: ${errorData}`)
+      }
+      
+      const resultado = await response.json()
+      
+      console.log('✅ Post criado com sucesso!', resultado)
+      alert('Post publicado com sucesso!')
+      
+      // Limpar formulário
+      setConteudo('')
+      setImagem('')
+      setArquivoSelecionado(null)
+      setEntradaHashtag('')
+      setChipsHashtag([])
+      setProgressoUpload(0)
+      
+      // Chamar callback para recarregar posts
+      if (onPostCreated) {
+        onPostCreated()
+      }
+      
+      // Fechar popup
+      onClose()
       
     } catch (error) {
-      console.error('Erro ao criar post:', error)
+      console.error('❌ Erro ao criar post:', error)
       alert(`Erro ao criar post: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     } finally {
       setEnviando(false)
@@ -334,6 +373,11 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
               <UserNickname>@{user?.nickname || user?.email?.split('@')[0] || 'usuario'}</UserNickname>
             </UserDetails>
           </UserInfo>
+          
+          {/* Data da publicação */}
+          <DateDisplay>
+            📅 {formatarDataPorExtenso()}
+          </DateDisplay>
 
           <PostForm onSubmit={handleSubmit}>
             <ContentSection>
@@ -348,6 +392,20 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
                 {conteudo.length}/500
               </CharacterCount>
             </ContentSection>
+            
+            {/* Campo de localização */}
+            <LocationSection>
+              <LocationIcon>
+                <FiMapPin />
+              </LocationIcon>
+              <LocationInput
+                value={localizacao}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalizacao(e.target.value)}
+                placeholder="Adicione sua localização..."
+                maxLength={100}
+                disabled={enviando}
+              />
+            </LocationSection>
 
             {imagem && (
               <ImagePreview>
@@ -434,7 +492,7 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
 
               <SubmitButton
                 type="submit"
-                disabled={enviando || !conteudo.trim()}
+                disabled={enviando || publicationLoading || !conteudo.trim()}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -649,6 +707,31 @@ const UserNickname = styled.span`
   color: rgba(255, 255, 255, 0.6);
 `
 
+const DateDisplay = styled.div`
+  padding: 1.5rem 3rem 0;
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  
+  &::before {
+    content: '';
+    width: 3rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(229, 57, 53, 0.5));
+  }
+  
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(229, 57, 53, 0.5), transparent);
+  }
+`
+
 const PostForm = styled.form`
   padding: 2.5rem 3rem;
   display: flex;
@@ -816,6 +899,46 @@ const HashtagIcon = styled.div`
   transform: translateY(-50%);
   color: rgba(229, 57, 53, 0.7);
   font-size: 1.8rem;
+`
+
+const LocationSection = styled.div`
+  position: relative;
+  margin-bottom: 2rem;
+`
+
+const LocationIcon = styled.div`
+  position: absolute;
+  left: 1.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(229, 57, 53, 0.7);
+  font-size: 1.6rem;
+`
+
+const LocationInput = styled.input`
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 1.5rem 2rem 1.5rem 5.5rem;
+  font-size: 1.4rem;
+  color: var(--white);
+  transition: all 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: rgba(229, 57, 53, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `
 
 const ActionButtons = styled.div`

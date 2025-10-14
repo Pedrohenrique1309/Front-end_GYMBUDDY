@@ -630,77 +630,48 @@ const Social = () => {
 
   const loadPosts = async () => {
     try {
-      console.log('🌐 Carregando posts da API...')
-      const response = await fetch(`${API_BASE_URL}/publicacao`)
+      console.log('🌐 Carregando posts do feed: http://localhost:3030/v1/gymbuddy/view/feed')
+      const response = await fetch('http://localhost:3030/v1/gymbuddy/view/feed')
       
       if (response.ok) {
         const data = await response.json()
-        if (data?.publicacoes) {
-          console.log('✅ Posts carregados da API:', data.publicacoes.length, 'posts')
-          console.log('📄 Raw data from API:', data.publicacoes)
+        console.log('📄 Resposta completa do /view/feed:', data)
+        
+        if (data?.view && Array.isArray(data.view)) {
+          console.log('✅ Posts carregados do feed:', data.view.length, 'posts')
+          console.log('📊 Status:', data.status, 'Itens:', data.itens)
           
-          // Mapear dados da API para o formato do componente (campos corretos)
-          const apiPosts = await Promise.all(data.publicacoes.map(async (pub: any) => {
-            // Extrair hashtags da descrição e localização
-            const fullText = `${pub.descricao || ''} ${pub.localizacao || ''}`
-            const hashtagMatches = fullText.match(/#\w+/g) || []
-            const uniqueHashtags = [...new Set(hashtagMatches)] // Remove duplicadas
+          // ✅ Mapear dados do /view/feed (já vem com todos os dados!)
+          const apiPosts = data.view.map((pub: any) => {
+            // Extrair hashtags da descrição
+            const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
+            const uniqueHashtags = [...new Set(hashtagMatches)]
             
-            // Tentar buscar dados do usuário usando dados já carregados ou da API
-            let userInfo = {
-              username: `@user${pub.id_user}`,
-              avatar: ''
-            }
-            
-            // Primeiro: usar dados incluídos na publicação
-            if (pub.usuario) {
-              userInfo = {
-                username: pub.usuario.nickname || `@${pub.usuario.nome}` || `@user${pub.id_user}`,
-                avatar: pub.usuario.foto || ''
-              }
-            } else {
-              // Segundo: buscar nos usuários já carregados na página
-              const existingUser = users.find(u => u.id === pub.id_user)
-              if (existingUser) {
-                userInfo = {
-                  username: existingUser.nickname || `@${existingUser.nome}` || `@user${pub.id_user}`,
-                  avatar: existingUser.foto || ''
-                }
-                console.log(`👤 Usuário encontrado na lista: ${userInfo.username}`)
-              } else {
-                // Terceiro: usar dados do usuário logado se for o próprio post
-                if (user && user.id === pub.id_user) {
-                  userInfo = {
-                    username: user.nickname || `@${user.nome}` || `@user${pub.id_user}`,
-                    avatar: user.foto || ''
-                  }
-                  console.log(`👤 Post do usuário logado: ${userInfo.username}`)
-                } else {
-                  console.log(`⚠️ Dados do usuário ${pub.id_user} não encontrados`)
-                }
-              }
-            }
-            
-            // Log para debug
-            console.log(`📝 Post ${pub.id}:`, {
-              usuario: userInfo.username,
-              imagem: pub.imagem ? '✅ Tem imagem' : '❌ Sem imagem',
+            console.log(`📝 Post ${pub.id_publicacao}:`, {
+              usuario: pub.nome_usuario,
+              imagem: pub.imagem ? '✅ Tem' : '❌ Sem',
               descricao: pub.descricao,
-              hashtags: uniqueHashtags
+              hashtags: uniqueHashtags.length
             })
             
             return {
-              id: pub.id,
-              user: userInfo,
-              image: pub.imagem || '', // imagem em vez de foto
-              description: pub.descricao || '', // descricao em vez de conteudo  
-              hashtags: uniqueHashtags, // hashtags extraídas do texto
-              likes: pub.curtidas_count || 0, // curtidas_count
-              comments: pub.comentarios_count || 0 // comentarios_count
+              id: pub.id_publicacao, // 🔄 Campo correto
+              user: {
+                username: pub.nome_usuario || `@user${pub.id_user}`, // 🔄 Já vem pronto!
+                avatar: pub.foto_perfil || '' // 🔄 Já vem pronto!
+              },
+              image: pub.imagem || '', 
+              description: pub.descricao || '', 
+              hashtags: uniqueHashtags,
+              likes: pub.curtidas_count || 0,
+              comments: pub.comentarios_count || 0,
+              curtido: false, // TODO: verificar se usuário já curtiu
+              location: pub.localizacao || '',
+              date: pub.data_publicacao || ''
             }
-          }))
+          });
           
-          console.log('🔄 Posts mapeados da API:', apiPosts)
+          console.log('🔄 Posts mapeados da API:', apiPosts);
           
           setPosts(apiPosts)
           return

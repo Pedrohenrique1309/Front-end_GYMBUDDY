@@ -5,7 +5,7 @@ import {
   FiEdit3, FiCamera, FiPlus, FiX, FiCheck,
   FiUser, FiMail, FiMapPin, FiCalendar, FiTarget,
   FiActivity, FiAtSign, FiFileText, FiTrendingUp,
-  FiChevronDown, FiChevronUp
+  FiChevronDown, FiChevronUp, FiGrid, FiHeart, FiMessageCircle
 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
@@ -17,27 +17,16 @@ import LiquidDatePicker from '../../components/LiquidDatePicker'
 import { cleanCorruptedUserData, debugLocalStorageData, isValidUserId } from '../../utils/validateUserData'
 
 
-// Função auxiliar para converter arquivo em base64
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-// Função para upload local (sem Azure)
-const uploadImageLocally = async (file: File): Promise<string> => {
-  try {
-    console.log('📷 Convertendo imagem para base64...');
-    const base64String = await fileToBase64(file);
-    console.log('✅ Imagem convertida com sucesso');
-    return base64String;
-  } catch (error) {
-    console.error('❌ Erro ao converter imagem:', error);
-    throw new Error('Erro ao processar imagem');
-  }
+const uploadParams = () => {
+  const fileInput = document.getElementById('avatar-upload') as HTMLInputElement;
+  const file = fileInput?.files?.[0];
+  
+  return {
+    file,
+    storageAccount: 'gymbuddystorage',
+    sasToken: 'sp=acw&st=2025-10-14T14:56:35Z&se=2025-10-14T23:11:35Z&sv=2024-11-04&sr=c&sig=Ns2XcPokYRGKxN3HEagkTi%2F3lUHnwAUtWF7tTwa1uRk%3D',
+    containerName: 'fotos',
+  };
 };
 
 
@@ -59,9 +48,12 @@ const Profile = () => {
     imc: user?.imc || '',
     foto: user?.foto || '',
   })
-  const [photos, setPhotos] = useState<string[]>([])
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
+
+  // Estado para os posts do usuário
+  const [userPosts, setUserPosts] = useState<any[]>([])
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false)
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -328,18 +320,6 @@ const Profile = () => {
     setIsEditing(false)
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const newPhoto = reader.result as string;
-        setPhotos([...photos, newPhoto])
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file && user) {
@@ -397,6 +377,67 @@ const Profile = () => {
       }
     }
   }
+
+  // Função para carregar os posts do usuário
+  const loadUserPosts = async () => {
+    if (!user?.id) return
+    
+    setIsLoadingPosts(true)
+    try {
+      console.log('📲 Carregando posts do usuário:', user.id)
+      const response = await fetch('http://localhost:3030/v1/gymbuddy/view/feed')
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('📊 Resposta da API:', data)
+        
+        if (data?.view && Array.isArray(data.view)) {
+          // Filtrar apenas os posts do usuário atual
+          const userFilteredPosts = data.view.filter((pub: any) => pub.id_user === user.id)
+          
+          console.log('🔍 Posts filtrados do usuário:', userFilteredPosts)
+          
+          // Mapear os dados para o formato esperado
+          const mappedPosts = userFilteredPosts.map((pub: any) => {
+            const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
+            const uniqueHashtags = [...new Set(hashtagMatches)]
+            
+            return {
+              id: pub.id_publicacao,
+              image: pub.imagem || '',
+              description: pub.descricao || '',
+              hashtags: uniqueHashtags,
+              likes: pub.curtidas_count || 0,
+              comments: pub.comentarios_count || 0,
+              location: pub.localizacao || '',
+              date: pub.data_publicacao || ''
+            }
+          })
+          
+          setUserPosts(mappedPosts)
+          console.log('✅ Posts do usuário carregados:', mappedPosts.length)
+        } else {
+          console.log('⚠️ Nenhum post encontrado na resposta da API')
+          setUserPosts([])
+        }
+      } else {
+        console.error('❌ Erro na resposta da API:', response.status)
+        setUserPosts([])
+      }
+    } catch (error) {
+      console.error('❌ Erro ao carregar posts do usuário:', error)
+      setUserPosts([])
+    } finally {
+      setIsLoadingPosts(false)
+    }
+  }
+
+  // useEffect para carregar os posts quando o usuário estiver disponível
+  useEffect(() => {
+    if (user?.id) {
+      loadUserPosts()
+    }
+  }, [user?.id])
 
   if (!user) {
     return null
@@ -754,58 +795,62 @@ const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <SectionTitle>Fotos</SectionTitle>
-          <PhotoGrid>
-            <AnimatePresence>
-              {photos.map((photo, index) => (
-                <PhotoCard
-                  key={index}
-                  layoutId={`photo-${index}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ scale: 1.05, zIndex: 10 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <PhotoImage src={photo} alt={`Foto ${index + 1}`} />
-                  <PhotoOverlay>
-                    <DeletePhotoButton
-                      onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FiX />
-                    </DeletePhotoButton>
-                  </PhotoOverlay>
-                </PhotoCard>
+          <SectionTitle>Fotos ({userPosts.length})</SectionTitle>
+          
+          {isLoadingPosts ? (
+            <LoadingContainer>
+              <LoadingSpinner />
+              <span>Carregando fotos...</span>
+            </LoadingContainer>
+          ) : (
+            <PhotoGrid>
+              <AnimatePresence>
+                {userPosts.map((post, index) => (
+                  <PhotoCard
+                    key={post.id}
+                    layoutId={`photo-${index}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ scale: 1.05, zIndex: 10 }}
+                    transition={{ duration: 0.3 }}
+                    onClick={() => navigate('/social')} // Navegar para a rede social
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <PhotoImage src={post.image} alt={`Publicação ${index + 1}`} />
+                    <PhotoOverlay>
+                      <PostStats>
+                        <PostStat>
+                          <FiHeart />
+                          <span>{post.likes}</span>
+                        </PostStat>
+                        <PostStat>
+                          <FiMessageCircle />
+                          <span>{post.comments}</span>
+                        </PostStat>
+                      </PostStats>
+                    </PhotoOverlay>
+                  </PhotoCard>
+                ))}
+              </AnimatePresence>
+              
+              {/* Placeholder cards para manter o grid se houver poucas fotos */}
+              {Array.from({ length: Math.max(0, 6 - userPosts.length) }).map((_, index) => (
+                <PlaceholderCard key={`placeholder-${index}`} />
               ))}
-            </AnimatePresence>
-            
-            <AddPhotoCard>
-              <input
-                type="file"
-                id="photo-upload"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                style={{ display: 'none' }}
-              />
-              <label htmlFor="photo-upload">
-                <AddPhotoButton
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiPlus />
-                  <span>Adicionar Foto</span>
-                </AddPhotoButton>
-              </label>
-            </AddPhotoCard>
-            
-            {/* Placeholder cards para manter o grid */}
-            {Array.from({ length: Math.max(0, 5 - photos.length) }).map((_, index) => (
-              <PlaceholderCard key={`placeholder-${index}`} />
-            ))}
-          </PhotoGrid>
+            </PhotoGrid>
+          )}
+          
+          {!isLoadingPosts && userPosts.length === 0 && (
+            <EmptyPostsState>
+              <FiCamera size={48} />
+              <h3>Nenhuma foto ainda</h3>
+              <p>Suas fotos das publicações aparecerão aqui quando você compartilhar algo na rede social.</p>
+            </EmptyPostsState>
+          )}
         </PhotosSection>
+
+
       </ProfileContent>
 
       {/* Popup de Peso e Altura */}
@@ -1490,73 +1535,190 @@ const DeletePhotoButton = styled(motion.button)`
   }
 `
 
-const AddPhotoCard = styled.div`
-  aspect-ratio: 1;
-  border-radius: 1.8rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 3px dashed rgba(227, 6, 19, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0;
-    height: 0;
-    background: radial-gradient(
-      circle,
-      rgba(227, 6, 19, 0.1),
-      transparent
-    );
-    transition: all 0.5s;
-  }
-  
-  &:hover {
-    background: rgba(227, 6, 19, 0.05);
-    border-color: var(--primary);
-    transform: translateY(-3px);
-    
-    &::before {
-      width: 200%;
-      height: 200%;
-    }
-  }
-`
 
-const AddPhotoButton = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.5);
-  
-  svg {
-    font-size: 3rem;
-  }
-  
-  span {
-    font-size: 1.4rem;
-    font-weight: 500;
-  }
-  
-  &:hover {
-    color: var(--primary);
-  }
-`
 
 const PlaceholderCard = styled.div`
   aspect-ratio: 1;
   border-radius: 1.2rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
+`
+
+// Styled Components para a seção de posts
+const PostsSection = styled(motion.div)`
+  margin-top: 3rem;
+  padding: 0 2rem;
+`
+
+const PostsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+`
+
+const PostCard = styled(motion.div)`
+  background: rgba(20, 20, 20, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2rem;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    border-color: rgba(227, 6, 19, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+`
+
+const PostImage = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+`
+
+const PostOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 1rem;
+  
+  ${PostCard}:hover & {
+    opacity: 1;
+  }
+`
+
+const PostStats = styled.div`
+  display: flex;
+  gap: 1rem;
+`
+
+const PostStat = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.5rem 0.8rem;
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  
+  svg {
+    font-size: 1rem;
+  }
+`
+
+const PostInfo = styled.div`
+  padding: 1.5rem;
+`
+
+const PostDescription = styled.p`
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+`
+
+const PostHashtags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  
+  span {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+  }
+`
+
+const Hashtag = styled.span`
+  color: var(--primary) !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  
+  &:hover {
+    color: rgba(227, 6, 19, 0.8) !important;
+  }
+`
+
+const PostLocation = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  
+  svg {
+    font-size: 0.9rem;
+  }
+`
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: rgba(255, 255, 255, 0.7);
+  
+  span {
+    font-size: 1rem;
+  }
+`
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`
+
+const EmptyPostsState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  
+  svg {
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 0.5rem;
+  }
+  
+  h3 {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  
+  p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 300px;
+    margin: 0;
+  }
 `
 
 export default Profile
