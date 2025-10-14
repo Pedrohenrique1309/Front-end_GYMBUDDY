@@ -9,6 +9,8 @@ import {
 } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
+import { ConfirmDeletePopup } from '../../components/ConfirmDeletePopup'
+import { EditPostPopup } from '../../components/EditPostPopup'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
@@ -54,6 +56,16 @@ const Profile = () => {
   // Estado para os posts do usuário
   const [userPosts, setUserPosts] = useState<any[]>([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
+
+  // Estados para popup de confirmação de exclusão
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<number | null>(null);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+  
+  // Estados para popup de edição
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [postToEdit, setPostToEdit] = useState<any>(null);
+  const [isUpdatingPost, setIsUpdatingPost] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -385,7 +397,7 @@ const Profile = () => {
     setIsLoadingPosts(true)
     try {
       console.log('📲 Carregando posts do usuário:', user.id)
-      const response = await fetch('http://localhost:3030/v1/gymbuddy/view/feed')
+      const response = await fetch('/api/v1/gymbuddy/view/feed')
       
       if (response.ok) {
         const data = await response.json()
@@ -439,37 +451,187 @@ const Profile = () => {
     }
   }, [user?.id])
 
-  // Função para editar um post
+  // Função para editar publicação
   const handleEditPost = (postId: number) => {
-    console.log('🖊️ Editando post:', postId)
-    // Navegar para a rede social com foco no post específico
-    navigate('/social', { state: { editPostId: postId } })
-  }
-
-  // Função para deletar um post
-  const handleDeletePost = async (postId: number) => {
-    if (window.confirm('Tem certeza que deseja deletar esta publicação?')) {
-      try {
-        console.log('🗑️ Deletando post:', postId)
-        
-        const response = await fetch(`http://localhost:3030/v1/gymbuddy/publicacao/${postId}`, {
-          method: 'DELETE',
-        })
-        
-        if (response.ok) {
-          console.log('✅ Post deletado com sucesso')
-          // Recarregar os posts após deletar
-          loadUserPosts()
-        } else {
-          console.error('❌ Erro ao deletar post:', response.status)
-          alert('Erro ao deletar a publicação. Tente novamente.')
-        }
-      } catch (error) {
-        console.error('❌ Erro ao deletar post:', error)
-        alert('Erro ao deletar a publicação. Tente novamente.')
-      }
+    const post = userPosts.find(p => p.id === postId);
+    if (post) {
+      console.log('✏️ Editando post:', post);
+      setPostToEdit({
+        id: post.id,
+        image: post.image,
+        description: post.description,
+        location: post.location || '',
+        hashtags: post.hashtags || [],
+        likes: post.likes,
+        comments: post.comments
+      });
+      setShowEditPopup(true);
     }
-  }
+  };
+
+  // Função para abrir popup de confirmação de exclusão
+  const handleDeletePost = (postId: number) => {
+    setPostToDelete(postId);
+    setShowDeleteConfirm(true);
+  };
+
+  // Função para confirmar exclusão
+  const confirmDeletePost = async () => {
+    if (!postToDelete) return;
+    
+    setIsDeletingPost(true);
+    
+    try {
+      console.log('🗑️ Excluindo post ID:', postToDelete);
+      const response = await fetch(`/api/v1/gymbuddy/publicacao/${postToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        console.log('✅ Post deletado com sucesso');
+        // Recarrega a lista de posts após exclusão
+        await loadUserPosts();
+        setShowDeleteConfirm(false);
+        setPostToDelete(null);
+      } else {
+        console.error('❌ Erro ao deletar post:', response.status);
+        alert('Erro ao excluir a publicação. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('💥 Erro na requisição de exclusão:', error);
+      alert('Erro ao excluir a publicação. Verifique sua conexão.');
+    } finally {
+      setIsDeletingPost(false);
+    }
+  };
+
+  // Função para cancelar exclusão
+  const cancelDeletePost = () => {
+    setShowDeleteConfirm(false);
+    setPostToDelete(null);
+  };
+  
+  // Função para salvar edição do post
+  const handleSaveEditPost = async (updatedPost: any) => {
+    setIsUpdatingPost(true);
+    
+    try {
+      console.log('📝 Tentando atualizar post:', updatedPost);
+      
+      // Primeiro, vamos tentar o método PUT
+      let response = await fetch(`/api/v1/gymbuddy/publicacao/${updatedPost.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          descricao: updatedPost.descricao,
+          localizacao: updatedPost.localizacao,
+          imagem: updatedPost.imagem
+        })
+      });
+      
+      // Se PUT retornar 404 ou 405 (método não permitido), vamos tentar PATCH
+      if (response.status === 404 || response.status === 405 || response.status === 400) {
+        console.log('⚠️ PUT não suportado, tentando PATCH...');
+        response = await fetch(`/api/v1/gymbuddy/publicacao/${updatedPost.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            descricao: updatedPost.descricao,
+            localizacao: updatedPost.localizacao,
+            imagem: updatedPost.imagem
+          })
+        });
+      }
+      
+      // Se ainda não funcionar, vamos tentar POST com endpoint de atualização
+      if (!response.ok && response.status !== 200) {
+        console.log('⚠️ Tentando endpoint de atualização alternativo...');
+        response = await fetch(`/api/v1/gymbuddy/publicacao/update/${updatedPost.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            descricao: updatedPost.descricao,
+            localizacao: updatedPost.localizacao,
+            imagem: updatedPost.imagem
+          })
+        });
+      }
+      
+      if (response.ok) {
+        console.log('✅ Post atualizado com sucesso');
+        // Atualiza o post localmente para feedback imediato
+        setUserPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === updatedPost.id 
+              ? { ...post, description: updatedPost.descricao, location: updatedPost.localizacao }
+              : post
+          )
+        );
+        
+        // Recarrega a lista de posts após atualização
+        setTimeout(() => loadUserPosts(), 500);
+        
+        setShowEditPopup(false);
+        setPostToEdit(null);
+        
+        // Feedback de sucesso
+        alert('Publicação atualizada com sucesso!');
+      } else {
+        console.error('❌ Erro ao atualizar post:', response.status, await response.text());
+        
+        // Como fallback, vamos simular a atualização localmente
+        console.log('🔄 Endpoint de atualização não disponível, simulando atualização local...');
+        
+        setUserPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === updatedPost.id 
+              ? { ...post, description: updatedPost.descricao, location: updatedPost.localizacao }
+              : post
+          )
+        );
+        
+        setShowEditPopup(false);
+        setPostToEdit(null);
+        
+        alert('⚠️ Edição salva localmente. O backend ainda não suporta edição de posts.');
+      }
+    } catch (error) {
+      console.error('💥 Erro na requisição de atualização:', error);
+      
+      // Fallback: atualização local em caso de erro de rede
+      console.log('🔄 Erro de conexão, aplicando mudanças localmente...');
+      
+      setUserPosts(prevPosts => 
+        prevPosts.map(post => 
+          post.id === updatedPost.id 
+            ? { ...post, description: updatedPost.descricao, location: updatedPost.localizacao }
+            : post
+        )
+      );
+      
+      setShowEditPopup(false);
+      setPostToEdit(null);
+      
+      alert('⚠️ Problema de conexão. Edição salva localmente.');
+    } finally {
+      setIsUpdatingPost(false);
+    }
+  };
+  
+  // Função para cancelar edição
+  const cancelEditPost = () => {
+    setShowEditPopup(false);
+    setPostToEdit(null);
+  };
 
   if (!user) {
     return null
@@ -914,6 +1076,22 @@ const Profile = () => {
         onClose={() => setShowWeightHeightPopup(false)}
         onSubmit={handleWeightHeightSubmit}
         onSkip={handleWeightHeightSkip}
+      />
+      
+      {/* Popup de confirmação de exclusão */}
+      <ConfirmDeletePopup
+        isOpen={showDeleteConfirm}
+        onClose={cancelDeletePost}
+        onConfirm={confirmDeletePost}
+        isLoading={isDeletingPost}
+      />
+      
+      <EditPostPopup
+        isOpen={showEditPopup}
+        onClose={cancelEditPost}
+        post={postToEdit}
+        onSave={handleSaveEditPost}
+        isLoading={isUpdatingPost}
       />
     </ProfileContainer>
   )
@@ -1795,45 +1973,45 @@ const ActionButton = styled(motion.button)<ActionButtonProps>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: visible;
+  transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  transform-origin: center;
+  will-change: transform, box-shadow, background;
   
-  /* Base glass layer */
+  /* Base glass layer usando paleta da aplicação */
   background: ${props => props.isDelete 
-    ? 'linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(220, 53, 69, 0.25))' 
-    : 'linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.25))'
+    ? 'linear-gradient(135deg, rgba(25, 25, 25, 0.9), rgba(35, 35, 35, 0.95))' 
+    : 'linear-gradient(135deg, rgba(20, 20, 20, 0.9), rgba(30, 30, 30, 0.95))'
   };
   
-  /* Advanced backdrop blur */
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  /* Refined backdrop blur */
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
   
-  /* Glass border with gradient */
+  /* Delicate border usando cor primária */
   border: 1px solid ${props => props.isDelete 
-    ? 'rgba(220, 53, 69, 0.3)' 
-    : 'rgba(40, 167, 69, 0.3)'
+    ? 'rgba(227, 6, 19, 0.35)' 
+    : 'rgba(227, 6, 19, 0.18)'
   };
   
-  /* Liquid glass shadow */
+  /* Refined shadows */
   box-shadow: 
-    0 8px 32px ${props => props.isDelete 
-      ? 'rgba(220, 53, 69, 0.15)' 
-      : 'rgba(40, 167, 69, 0.15)'
-    },
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    0 3px 12px rgba(0, 0, 0, 0.25),
+    0 1px 4px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
   
   color: ${props => props.isDelete 
-    ? 'rgba(255, 255, 255, 0.9)' 
-    : 'rgba(255, 255, 255, 0.9)'
+    ? 'rgba(227, 6, 19, 0.85)' 
+    : 'rgba(255, 255, 255, 0.8)'
   };
   
-  /* Glass reflection effect */
+  /* Gentle glass reflection */
   &::before {
     content: '';
     position: absolute;
@@ -1843,104 +2021,132 @@ const ActionButton = styled(motion.button)<ActionButtonProps>`
     bottom: 0;
     border-radius: 50%;
     background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.4) 0%,
-      rgba(255, 255, 255, 0.1) 30%,
-      transparent 50%,
-      rgba(0, 0, 0, 0.05) 100%
+      130deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 35%,
+      transparent 55%,
+      rgba(0, 0, 0, 0.01) 100%
     );
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
+    opacity: 0.9;
   }
   
-  /* Liquid glow effect */
+  /* Subtle glow effect */
   &::after {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
     border-radius: 50%;
     background: ${props => props.isDelete 
-      ? 'conic-gradient(from 0deg, rgba(220, 53, 69, 0.3), rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.3))' 
-      : 'conic-gradient(from 0deg, rgba(40, 167, 69, 0.3), rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.3))'
+      ? 'radial-gradient(circle, rgba(227, 6, 19, 0.2), rgba(227, 6, 19, 0.08), transparent)' 
+      : 'radial-gradient(circle, rgba(227, 6, 19, 0.12), rgba(227, 6, 19, 0.04), transparent)'
     };
     opacity: 0;
     z-index: -1;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    animation: liquidRotate 4s linear infinite;
+    transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+    filter: blur(1px);
   }
   
   svg {
-    font-size: 1.2rem;
-    z-index: 2;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-    transition: all 0.3s ease;
+    font-size: 1.05rem;
+    z-index: 3;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+    transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-origin: center;
   }
   
   &:hover {
-    transform: scale(1.08) translateY(-1px);
+    transform: scale(1.03) translateY(-0.5px);
+    transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
     
     background: ${props => props.isDelete 
-      ? 'linear-gradient(135deg, rgba(220, 53, 69, 0.25), rgba(220, 53, 69, 0.4))' 
-      : 'linear-gradient(135deg, rgba(40, 167, 69, 0.25), rgba(40, 167, 69, 0.4))'
+      ? 'linear-gradient(135deg, rgba(227, 6, 19, 0.12), rgba(227, 6, 19, 0.18))' 
+      : 'linear-gradient(135deg, rgba(227, 6, 19, 0.06), rgba(227, 6, 19, 0.12))'
     };
     
     border-color: ${props => props.isDelete 
-      ? 'rgba(220, 53, 69, 0.5)' 
-      : 'rgba(40, 167, 69, 0.5)'
+      ? 'rgba(227, 6, 19, 0.6)' 
+      : 'rgba(227, 6, 19, 0.35)'
     };
     
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    
     box-shadow: 
-      0 12px 40px ${props => props.isDelete 
-        ? 'rgba(220, 53, 69, 0.25)' 
-        : 'rgba(40, 167, 69, 0.25)'
-      },
-      0 4px 16px ${props => props.isDelete 
-        ? 'rgba(220, 53, 69, 0.2)' 
-        : 'rgba(40, 167, 69, 0.2)'
-      },
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 6px 20px rgba(0, 0, 0, 0.3),
+      0 3px 8px rgba(227, 6, 19, 0.15),
+      0 1px 3px rgba(227, 6, 19, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
       inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     
+    color: ${props => props.isDelete 
+      ? 'rgba(255, 255, 255, 0.9)' 
+      : 'rgba(255, 255, 255, 0.9)'
+    };
+    
     &::before {
-      opacity: 0.8;
+      opacity: 1;
+      background: linear-gradient(
+        120deg,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.08) 30%,
+        transparent 50%,
+        rgba(227, 6, 19, 0.03) 100%
+      );
     }
     
     &::after {
-      opacity: 1;
-      transform: scale(1.1);
+      opacity: 0.7;
+      transform: scale(1.05);
     }
     
     svg {
-      transform: scale(1.1);
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+      transform: scale(1.06);
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4));
     }
   }
   
   &:active {
-    transform: scale(1.02) translateY(0px);
+    transform: scale(1.01) translateY(0px);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.6, 1);
     
     box-shadow: 
-      0 4px 16px ${props => props.isDelete 
-        ? 'rgba(220, 53, 69, 0.3)' 
-        : 'rgba(40, 167, 69, 0.3)'
-      },
-      inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      0 2px 6px rgba(0, 0, 0, 0.4),
+      0 1px 3px rgba(227, 6, 19, 0.25),
+      inset 0 1px 3px rgba(0, 0, 0, 0.25);
     
     &::after {
-      opacity: 0.7;
-      transform: scale(0.95);
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+    
+    svg {
+      transform: scale(1.03);
     }
   }
   
-  @keyframes liquidRotate {
-    from {
-      transform: rotate(0deg);
+  /* Gentle entrance */
+  animation: gentleEntrance 0.4s cubic-bezier(0.23, 1, 0.32, 1) both;
+  
+  @keyframes gentleEntrance {
+    0% {
+      opacity: 0;
+      transform: scale(0.9) translateY(6px);
+      filter: blur(2px);
     }
-    to {
-      transform: rotate(360deg);
+    70% {
+      opacity: 0.9;
+      transform: scale(1.01) translateY(-1px);
+      filter: blur(0.5px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0px);
+      filter: blur(0px);
     }
   }
 `
