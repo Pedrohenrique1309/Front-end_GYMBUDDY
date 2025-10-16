@@ -5,7 +5,7 @@ import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { loginUser, LoginResponse } from '../../config/api'
 import { useUser } from '../../contexts/UserContext'
-import PopupEsqueciSenha from '../PopUpEsqueciMinhaSenha'
+import { usePopup } from '../../contexts/PopupContext'
 
 interface PropsPopupLogin {
   estaAberto: boolean
@@ -17,13 +17,13 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [estaCarregando, setEstaCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [popupEsqueciSenhaAberto, setPopupEsqueciSenhaAberto] = useState(false)
   const [dadosFormulario, setDadosFormulario] = useState({
     email: '',
     senha: ''
   })
   
   const { login } = useUser()
+  const { switchToForgotPassword } = usePopup()
 
   // Função pra limpar o formulário
   const limparFormulario = () => {
@@ -104,14 +104,13 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
   return (
     <AnimatePresence>
       {estaAberto && (
-        <FundoEscuro
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          onClick={aoFecharPopup}
-        >
-          {!popupEsqueciSenhaAberto && (
+          <FundoEscuro
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={aoFecharPopup}
+          >
             <ContainerPopup
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -162,7 +161,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
 
               <LinkEsqueciSenha href="#" onClick={(e) => {
                 e.preventDefault()
-                setPopupEsqueciSenhaAberto(true)
+                switchToForgotPassword()
               }}>
                 Esqueci minha senha
               </LinkEsqueciSenha>
@@ -194,14 +193,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
               }}>Criar conta</LinkCadastro>
             </TextoCadastro>
             </ContainerPopup>
-          )}
-          
-          <PopupEsqueciSenha
-            estaAberto={popupEsqueciSenhaAberto}
-            aoFechar={() => setPopupEsqueciSenhaAberto(false)}
-            aoVoltarParaLogin={() => setPopupEsqueciSenhaAberto(false)}
-          />
-        </FundoEscuro>
+          </FundoEscuro>
       )}
     </AnimatePresence>
   )

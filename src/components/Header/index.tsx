@@ -7,7 +7,9 @@ import styled from 'styled-components'
 import { BRAND } from '../../config/branding'
 import PopupLogin from '../LoginPopup'
 import SignupPopup from '../CadastroPopUp'
+import PopupEsqueciSenha from '../PopUpEsqueciMinhaSenha'
 import { useUser } from '../../contexts/UserContext'
+import { usePopup } from '../../contexts/PopupContext'
 import DefaultAvatar from '../../assets/avatarpadrao'
 
 interface HeaderProps {
@@ -20,8 +22,6 @@ const Header = ({ isVisible = true }: HeaderProps) => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
   });
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
-  const [showSignupPopup, setShowSignupPopup] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -29,16 +29,20 @@ const Header = ({ isVisible = true }: HeaderProps) => {
   const location = useLocation();
   
   const { user, isLoggedIn, logout } = useUser();
-
-  const handleSwitchToSignup = () => {
-    setShowLoginPopup(false);
-    setShowSignupPopup(true);
-  };
-
-  const handleSwitchToLogin = () => {
-    setShowSignupPopup(false);
-    setShowLoginPopup(true);
-  };
+  const { 
+    showLoginPopup, 
+    showSignupPopup, 
+    showForgotPasswordPopup,
+    openLogin,
+    openSignup,
+    closeLogin,
+    closeSignup,
+    closeForgotPassword,
+    switchToSignup,
+    switchToLogin,
+    switchToForgotPassword,
+    returnToLoginFromForgotPassword
+  } = usePopup();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -372,8 +376,8 @@ const Header = ({ isVisible = true }: HeaderProps) => {
           </UserSection>
         ) : (
           <AuthButtons>
-            <LoginButton onClick={() => setShowLoginPopup(true)}>Login</LoginButton>
-            <SignUpButton onClick={() => setShowSignupPopup(true)}>Cadastro</SignUpButton>
+            <LoginButton onClick={openLogin}>Login</LoginButton>
+            <SignUpButton onClick={openSignup}>Cadastro</SignUpButton>
           </AuthButtons>
         )}
         
@@ -426,15 +430,21 @@ const Header = ({ isVisible = true }: HeaderProps) => {
       </div>
       
       <PopupLogin 
-        estaAberto={showLoginPopup} 
-        aoFechar={() => setShowLoginPopup(false)}
-        aoTrocarParaCadastro={handleSwitchToSignup}
+        estaAberto={showLoginPopup && !showForgotPasswordPopup} 
+        aoFechar={closeLogin}
+        aoTrocarParaCadastro={switchToSignup}
       />
       
       <SignupPopup 
         isOpen={showSignupPopup} 
-        onClose={() => setShowSignupPopup(false)}
-        onSwitchToLogin={handleSwitchToLogin}
+        onClose={closeSignup}
+        onSwitchToLogin={switchToLogin}
+      />
+      
+      <PopupEsqueciSenha
+        estaAberto={showForgotPasswordPopup}
+        aoFechar={closeForgotPassword}
+        aoVoltarParaLogin={returnToLoginFromForgotPassword}
       />
     </HeaderContainer>
   );

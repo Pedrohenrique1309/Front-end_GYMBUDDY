@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiEye, FiEyeOff, FiX, FiCheck, FiMail, FiKey, FiLock, FiArrowLeft } from 'react-icons/fi'
+import { FiX, FiCheck, FiMail, FiArrowLeft, FiKey, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import styled from 'styled-components'
-import { enviarCodigoRecuperacao, validarCodigoRecuperacao, alterarSenha } from '../../config/api'
+import { enviarCodigoRecuperacao, buscarUsuarioPorToken, alterarSenhaComId } from '../../config/api'
 
 interface PropsPopupEsqueciSenha {
   estaAberto: boolean
@@ -10,11 +10,10 @@ interface PropsPopupEsqueciSenha {
   aoVoltarParaLogin?: () => void
 }
 
-type Etapa = 'email' | 'codigo' | 'novaSenha'
+type Etapa = 'email' | 'codigo' | 'novaSenha' | 'sucesso'
 
 const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPopupEsqueciSenha) => {
   const [etapaAtual, setEtapaAtual] = useState<Etapa>('email')
-  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [estaCarregando, setEstaCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState<string | null>(null)
@@ -22,7 +21,8 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
   const [codigo, setCodigo] = useState('')
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
-  const [senhaValida, setSenhaValida] = useState<boolean | null>(null)
+  const [mostrarSenha, setMostrarSenha] = useState(false)
+  const [idUsuario, setIdUsuario] = useState<number | null>(null)
 
   const limparFormulario = () => {
     setEmail('')
@@ -34,22 +34,21 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
     setSucesso(null)
     setEstaCarregando(false)
     setEtapaAtual('email')
-    setSenhaValida(null)
+    setIdUsuario(null)
   }
 
   const aoFecharPopup = () => {
     limparFormulario()
     aoFechar()
   }
-
-  const validarSenha = (senha: string): boolean => {
-    const tamanhoMinimo = senha.length >= 8
-    const temMaiuscula = /[A-Z]/.test(senha)
-    const temNumero = /\d/.test(senha)
-    const temCaractereEspecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(senha)
-    
-    return tamanhoMinimo && temMaiuscula && temNumero && temCaractereEspecial
+  
+  const aoVoltarLogin = () => {
+    limparFormulario()
+    if (aoVoltarParaLogin) {
+      aoVoltarParaLogin()
+    }
   }
+
 
   const aoEnviarEmail = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,18 +58,18 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
     try {
       const resposta = await enviarCodigoRecuperacao(email)
 
-      if (resposta && resposta.status === true) {
+      if (resposta && (resposta.status === true || resposta.status_code === 200)) {
         setSucesso('Código enviado para seu email!')
         setTimeout(() => {
           setSucesso(null)
           setEtapaAtual('codigo')
         }, 1500)
       } else {
-        setErro(resposta?.message || 'Erro ao enviar código. Verifique o email.')
+        setErro(resposta?.message || 'Erro ao enviar código de recuperação. Verifique o email.')
       }
     } catch (erro) {
       console.error('Erro ao enviar email:', erro)
-      setErro('Erro ao enviar código. Tente novamente.')
+      setErro('Erro ao enviar código de recuperação. Tente novamente.')
     } finally {
       setEstaCarregando(false)
     }
@@ -82,25 +81,29 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
     setErro(null)
 
     try {
-      const resposta = await validarCodigoRecuperacao(email, codigo)
-
-      if (resposta && (resposta.status === true || resposta.isValid === true)) {
-        setSucesso('Código válido!')
-        setTimeout(() => {
-          setSucesso(null)
-          setEtapaAtual('novaSenha')
-        }, 1500)
+      const resposta = await buscarUsuarioPorToken(codigo)
+      
+      if (resposta && resposta.recupercoes_senha && resposta.recupercoes_senha[0]) {
+        const usuario = resposta.recupercoes_senha[0].user[0]
+        if (usuario && usuario.id) {
+          setIdUsuario(usuario.id)
+          setSucesso('Código válido!')
+          setTimeout(() => {
+            setSucesso(null)
+            setEtapaAtual('novaSenha')
+          }, 1500)
+        }
       } else {
         setErro('Código inválido. Verifique o código enviado ao seu email.')
       }
     } catch (erro) {
       console.error('Erro ao validar código:', erro)
-      setErro('Código inválido. Tente novamente.')
+      setErro('Erro ao validar código. Tente novamente.')
     } finally {
       setEstaCarregando(false)
     }
   }
-
+  
   const aoAlterarSenha = async (e: React.FormEvent) => {
     e.preventDefault()
     setEstaCarregando(true)
@@ -112,30 +115,25 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
       return
     }
 
-    if (!validarSenha(novaSenha)) {
-      setErro('A senha não atende aos requisitos mínimos.')
+    if (novaSenha.length < 6) {
+      setErro('A senha deve ter pelo menos 6 caracteres.')
       setEstaCarregando(false)
       return
     }
 
     try {
-      const resposta = await alterarSenha(email, novaSenha, codigo)
+      const resposta = await alterarSenhaComId(idUsuario!, novaSenha)
 
       if (resposta && resposta.status === true) {
-        if (resposta.message && resposta.message.toLowerCase().includes('mesma senha')) {
-          setErro('A nova senha não pode ser igual à senha anterior.')
-        } else {
-          setSucesso('Senha alterada com sucesso!')
-          setTimeout(() => {
-            aoFecharPopup()
-          }, 2000)
-        }
+        setEtapaAtual('sucesso')
+        setTimeout(() => {
+          aoFecharPopup()
+          if (aoVoltarParaLogin) {
+            aoVoltarParaLogin()
+          }
+        }, 2000)
       } else {
-        if (resposta?.message && resposta.message.toLowerCase().includes('mesma senha')) {
-          setErro('A nova senha não pode ser igual à senha anterior.')
-        } else {
-          setErro(resposta?.message || 'Erro ao alterar senha. Tente novamente.')
-        }
+        setErro(resposta?.message || 'Erro ao alterar senha. Tente novamente.')
       }
     } catch (erro) {
       console.error('Erro ao alterar senha:', erro)
@@ -145,14 +143,6 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
     }
   }
 
-  const aoMudarSenha = (valor: string) => {
-    setNovaSenha(valor)
-    if (valor === '') {
-      setSenhaValida(null)
-    } else {
-      setSenhaValida(validarSenha(valor))
-    }
-  }
 
   const renderizarEtapa = () => {
     switch (etapaAtual) {
@@ -211,9 +201,18 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
             >
               {estaCarregando ? 'Enviando...' : 'Enviar Código'}
             </BotaoEnviar>
+            
+            {aoVoltarParaLogin && (
+              <LinkVoltar
+                onClick={aoVoltarLogin}
+                style={{ marginTop: '1.5rem', display: 'block', textAlign: 'center' }}
+              >
+                Voltar para login
+              </LinkVoltar>
+            )}
           </FormularioEtapa>
         )
-
+        
       case 'codigo':
         return (
           <FormularioEtapa
@@ -228,7 +227,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
             </IconeEtapa>
             <TituloEtapa>Digite o Código</TituloEtapa>
             <DescricaoEtapa>
-              Enviamos um código para <strong>{email}</strong>
+              Enviamos um código de 6 dígitos para <strong>{email}</strong>
             </DescricaoEtapa>
 
             <GrupoCampo>
@@ -236,9 +235,10 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
                 type="text"
                 placeholder="Código de 6 dígitos"
                 value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
+                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
                 required
+                style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '0.5rem' }}
               />
             </GrupoCampo>
 
@@ -251,7 +251,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
                 {erro}
               </MensagemErro>
             )}
-
+            
             {sucesso && (
               <MensagemSucesso
                 initial={{ opacity: 0, y: -10 }}
@@ -264,25 +264,26 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
 
             <BotaoEnviar
               type="submit"
-              disabled={estaCarregando}
+              disabled={estaCarregando || codigo.length !== 6}
               whileHover={!estaCarregando ? { scale: 1.02 } : {}}
               whileTap={!estaCarregando ? { scale: 0.98 } : {}}
             >
               {estaCarregando ? 'Validando...' : 'Validar Código'}
             </BotaoEnviar>
-
+            
             <LinkVoltar
               onClick={() => {
                 setEtapaAtual('email')
                 setCodigo('')
                 setErro(null)
               }}
+              style={{ marginTop: '1.5rem', display: 'block', textAlign: 'center' }}
             >
               Voltar
             </LinkVoltar>
           </FormularioEtapa>
         )
-
+        
       case 'novaSenha':
         return (
           <FormularioEtapa
@@ -297,7 +298,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
             </IconeEtapa>
             <TituloEtapa>Nova Senha</TituloEtapa>
             <DescricaoEtapa>
-              Crie uma senha forte para sua conta
+              Crie uma nova senha para sua conta
             </DescricaoEtapa>
 
             <GrupoCampo>
@@ -305,15 +306,9 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
                 type={mostrarSenha ? 'text' : 'password'}
                 placeholder="Nova senha"
                 value={novaSenha}
-                onChange={(e) => aoMudarSenha(e.target.value)}
-                $isValid={senhaValida}
+                onChange={(e) => setNovaSenha(e.target.value)}
                 required
               />
-              {senhaValida !== null && (
-                <IconeValidacao $isValid={senhaValida}>
-                  {senhaValida ? <FiCheck /> : <FiX />}
-                </IconeValidacao>
-              )}
               <BotaoMostrarSenha
                 type="button"
                 onClick={() => setMostrarSenha(!mostrarSenha)}
@@ -321,22 +316,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
                 {mostrarSenha ? <FiEyeOff /> : <FiEye />}
               </BotaoMostrarSenha>
             </GrupoCampo>
-
-            <RequisitosSenha>
-              <RequisitoItem $atendido={novaSenha.length >= 8}>
-                • Mínimo 8 caracteres
-              </RequisitoItem>
-              <RequisitoItem $atendido={/[A-Z]/.test(novaSenha)}>
-                • 1 letra maiúscula
-              </RequisitoItem>
-              <RequisitoItem $atendido={/\d/.test(novaSenha)}>
-                • 1 número
-              </RequisitoItem>
-              <RequisitoItem $atendido={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(novaSenha)}>
-                • 1 caractere especial
-              </RequisitoItem>
-            </RequisitosSenha>
-
+            
             <GrupoCampo>
               <Campo
                 type={mostrarSenha ? 'text' : 'password'}
@@ -357,16 +337,6 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
               </MensagemErro>
             )}
 
-            {sucesso && (
-              <MensagemSucesso
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {sucesso}
-              </MensagemSucesso>
-            )}
-
             <BotaoEnviar
               type="submit"
               disabled={estaCarregando}
@@ -377,29 +347,61 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
             </BotaoEnviar>
           </FormularioEtapa>
         )
+
+      case 'sucesso':
+        return (
+          <FormularioEtapa
+            as={motion.div}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <IconeEtapa style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: '#10B981' }}>
+              <FiCheck style={{ color: '#10B981' }} />
+            </IconeEtapa>
+            <TituloEtapa>Senha Alterada!</TituloEtapa>
+            <DescricaoEtapa>
+              Sua senha foi alterada com sucesso!
+            </DescricaoEtapa>
+            <DescricaoEtapa style={{ marginTop: '1rem' }}>
+              Você já pode fazer login com sua nova senha.
+            </DescricaoEtapa>
+
+            <BotaoEnviar
+              as={motion.button}
+              type="button"
+              onClick={aoFecharPopup}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ marginTop: '2rem' }}
+            >
+              Fechar
+            </BotaoEnviar>
+          </FormularioEtapa>
+        )
     }
   }
 
   return (
     <AnimatePresence>
       {estaAberto && (
-        <>
-          <FundoEscuro
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            onClick={aoFecharPopup}
-          />
+        <FundoEscuro
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          onClick={aoFecharPopup}
+        >
           <ContainerPopup
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
+            onClick={(e) => e.stopPropagation()}
           >
             <ConteudoPopup>
               {etapaAtual === 'email' && aoVoltarParaLogin && (
-                <BotaoVoltar onClick={aoVoltarParaLogin}>
+                <BotaoVoltar onClick={aoVoltarLogin}>
                   <FiArrowLeft />
                 </BotaoVoltar>
               )}
@@ -414,7 +416,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
               </AnimatePresence>
             </ConteudoPopup>
           </ContainerPopup>
-        </>
+        </FundoEscuro>
       )}
     </AnimatePresence>
   )
@@ -426,22 +428,20 @@ const FundoEscuro = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
-  z-index: 9998;
-`
-
-const ContainerPopup = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  z-index: 10100;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  pointer-events: none;
+`
+
+const ContainerPopup = styled(motion.div)`
+  position: relative;
+  z-index: 10101;
+  pointer-events: auto;
 `
 
 const ConteudoPopup = styled.div`
@@ -450,29 +450,10 @@ const ConteudoPopup = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.6rem;
   padding: 3rem;
-  width: 90%;
+  width: 90vw;
   max-width: 42rem;
+  margin: 0 auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  pointer-events: auto;
-`
-
-const BotaoFechar = styled.button`
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  background: transparent;
-  border: none;
-  color: var(--white);
-  font-size: 2rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
-  }
 `
 
 const SecaoLogo = styled.div`
@@ -539,14 +520,10 @@ const GrupoCampo = styled.div`
   position: relative;
 `
 
-const Campo = styled.input<{ $isValid?: boolean | null }>`
+const Campo = styled.input`
   width: 100%;
   background: transparent;
-  border: 1px solid ${props => 
-    props.$isValid === true ? '#10B981' : 
-    props.$isValid === false ? '#EF4444' : 
-    'rgba(255, 255, 255, 0.2)'
-  };
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.8rem;
   padding: 1.4rem 1.6rem;
   color: var(--white);
@@ -559,71 +536,11 @@ const Campo = styled.input<{ $isValid?: boolean | null }>`
   
   &:focus {
     outline: none;
-    border-color: ${props => 
-      props.$isValid === true ? '#10B981' : 
-      props.$isValid === false ? '#EF4444' : 
-      'var(--primary)'
-    };
-    box-shadow: 0 0 0 2px ${props => 
-      props.$isValid === true ? 'rgba(16, 185, 129, 0.2)' : 
-      props.$isValid === false ? 'rgba(239, 68, 68, 0.2)' : 
-      'rgba(227, 6, 19, 0.2)'
-    };
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
   }
 `
 
-const IconeValidacao = styled.div<{ $isValid?: boolean }>`
-  position: absolute;
-  right: 4.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: ${props => 
-    props.$isValid ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'
-  };
-  color: ${props => props.$isValid ? '#10B981' : '#EF4444'};
-  font-size: 1.2rem;
-  font-weight: 700;
-`
-
-const BotaoMostrarSenha = styled.button`
-  position: absolute;
-  right: 1.6rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 1.8rem;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  
-  &:hover {
-    color: var(--white);
-  }
-`
-
-const RequisitosSenha = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-`
-
-const RequisitoItem = styled.div<{ $atendido: boolean }>`
-  color: ${props => props.$atendido ? '#10B981' : 'rgba(255, 255, 255, 0.5)'};
-  font-size: 1.3rem;
-  transition: all 0.3s ease;
-  font-weight: ${props => props.$atendido ? '600' : '400'};
-`
 
 const MensagemErro = styled(motion.div)`
   background: rgba(220, 38, 38, 0.1);
@@ -663,20 +580,6 @@ const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   }
 `
 
-const LinkVoltar = styled.button`
-  background: transparent;
-  border: none;
-  color: var(--primary);
-  font-size: 1.3rem;
-  text-align: center;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  
-  &:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-  }
-`
 
 const BotaoVoltar = styled.button`
   position: absolute;
@@ -694,6 +597,37 @@ const BotaoVoltar = styled.button`
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
+  }
+`
+
+const LinkVoltar = styled.button`
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+  }
+`
+
+const BotaoMostrarSenha = styled.button`
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  
+  &:hover {
+    color: var(--white);
   }
 `
 

@@ -307,14 +307,22 @@ export interface RecoveryResponse {
   message: string
   status_code?: number
   isValid?: boolean
+  token?: string
+  user?: UserData
+  id_user?: number
+  recupercoes_senha?: Array<{
+    id?: number
+    token?: string
+    user?: UserData[]
+  }>
 }
 
-// função para enviar código de recuperação
-export const enviarCodigoRecuperacao = async (email: string): Promise<RecoveryResponse> => {
+// função para enviar token de recuperação por email
+export const enviarTokenRecuperacao = async (email: string): Promise<RecoveryResponse> => {
   try {
-    const url = `${API_BASE_URL}/usuario/forgot-password`
+    const url = `${API_BASE_URL}/recuperar-senha/${encodeURIComponent(email)}`
     
-    console.log('🔄 Enviando código de recuperação:', { email, url })
+    console.log('🔄 Enviando token de recuperação para:', { email, url })
     
     const response = await fetch(url, {
       method: 'POST',
@@ -322,11 +330,10 @@ export const enviarCodigoRecuperacao = async (email: string): Promise<RecoveryRe
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-      },
-      body: JSON.stringify({ email })
+      }
     })
 
-    console.log('📧 Resposta do envio de código:', {
+    console.log('📧 Resposta do envio de token:', {
       status: response.status,
       statusText: response.statusText
     })
@@ -336,7 +343,7 @@ export const enviarCodigoRecuperacao = async (email: string): Promise<RecoveryRe
     
     if (contentType && contentType.includes('application/json')) {
       data = await response.json()
-      console.log('✅ Resposta JSON do código:', data)
+      console.log('✅ Resposta JSON do token:', data)
     } else {
       const responseText = await response.text()
       console.error('❌ Resposta não é JSON:', responseText)
@@ -350,76 +357,84 @@ export const enviarCodigoRecuperacao = async (email: string): Promise<RecoveryRe
 
     return data
   } catch (error) {
-    console.error('❌ Erro ao enviar código:', error)
+    console.error('❌ Erro ao enviar token:', error)
     throw error
   }
 }
 
-// função para validar código de recuperação
+// mantém compatibilidade com nome antigo
+export const enviarCodigoRecuperacao = enviarTokenRecuperacao
+
+// função para buscar usuário pelo token
+export const buscarUsuarioPorToken = async (token: string): Promise<RecoveryResponse> => {
+  try {
+    const url = `${API_BASE_URL}/recuperar-senha/${encodeURIComponent(token)}`
+    
+    console.log('🔄 Buscando usuário pelo token:', { token, url })
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    })
+
+    console.log('🔍 Resposta da busca:', {
+      status: response.status,
+      statusText: response.statusText
+    })
+
+    const contentType = response.headers.get('content-type')
+    let data: RecoveryResponse
+    
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json()
+      console.log('✅ Resposta JSON da busca:', data)
+    } else {
+      const responseText = await response.text()
+      console.error('❌ Resposta não é JSON:', responseText)
+      
+      if (response.status === 500) {
+        throw new Error(`Erro interno do servidor. Verifique se o backend está rodando.`)
+      }
+      
+      throw new Error(`Erro na API. Status: ${response.status}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error('❌ Erro ao buscar usuário:', error)
+    throw error
+  }
+}
+
+// função antiga mantida para compatibilidade (adapta para novo fluxo)
 export const validarCodigoRecuperacao = async (email: string, codigo: string): Promise<RecoveryResponse> => {
-  try {
-    const url = `${API_BASE_URL}/usuario/validate-recovery-code`
-    
-    console.log('🔄 Validando código de recuperação:', { email, codigo, url })
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ email, code: codigo })
-    })
-
-    console.log('🔍 Resposta da validação:', {
-      status: response.status,
-      statusText: response.statusText
-    })
-
-    const contentType = response.headers.get('content-type')
-    let data: RecoveryResponse
-    
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json()
-      console.log('✅ Resposta JSON da validação:', data)
-    } else {
-      const responseText = await response.text()
-      console.error('❌ Resposta não é JSON:', responseText)
-      
-      if (response.status === 500) {
-        throw new Error(`Erro interno do servidor. Verifique se o backend está rodando.`)
-      }
-      
-      throw new Error(`Erro na API. Status: ${response.status}`)
-    }
-
-    return data
-  } catch (error) {
-    console.error('❌ Erro ao validar código:', error)
-    throw error
-  }
+  return buscarUsuarioPorToken(codigo)
 }
 
-// função para alterar senha
-export const alterarSenha = async (email: string, novaSenha: string, codigo: string): Promise<RecoveryResponse> => {
+// função para alterar senha com id_user
+export const alterarSenhaComId = async (id_user: number, novaSenha: string): Promise<RecoveryResponse> => {
   try {
-    const url = `${API_BASE_URL}/usuario/reset-password`
+    const url = `${API_BASE_URL}/senha/usuario`
     
-    console.log('🔄 Alterando senha:', { email, url })
+    const payload = {
+      id_user: id_user,
+      senha: novaSenha
+    }
+    
+    console.log('🔄 Alterando senha:', { id_user, url })
     
     const response = await fetch(url, {
-      method: 'POST',
+      method: 'PUT',
       mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({ 
-        email, 
-        newPassword: novaSenha, 
-        code: codigo 
-      })
+      body: JSON.stringify(payload)
     })
 
     console.log('🔐 Resposta da alteração de senha:', {
@@ -449,4 +464,17 @@ export const alterarSenha = async (email: string, novaSenha: string, codigo: str
     console.error('❌ Erro ao alterar senha:', error)
     throw error
   }
+}
+
+// função antiga para compatibilidade (adapta para novo fluxo)
+export const alterarSenha = async (email: string, novaSenha: string, codigo: string): Promise<RecoveryResponse> => {
+  // primeiro busca o usuário pelo token para pegar o id_user
+  const userResponse = await buscarUsuarioPorToken(codigo)
+  
+  if (!userResponse || !userResponse.id_user) {
+    throw new Error('Token inválido ou usuário não encontrado')
+  }
+  
+  // agora altera a senha com o id_user
+  return alterarSenhaComId(userResponse.id_user, novaSenha)
 }

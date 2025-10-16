@@ -319,14 +319,26 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     transition={{ delay: index * 0.1 }}
                   >
                     <CommentAvatar>
-                      {/* Acessar o array user[0] ao invés de usuario direto */}
-                      {comment.user && Array.isArray(comment.user) && comment.user[0]?.foto ? (
-                        <img src={comment.user[0].foto} alt={comment.user[0].nome} />
-                      ) : comment.usuario?.foto ? (
-                        <img src={comment.usuario.foto} alt={comment.usuario.nome} />
-                      ) : (
-                        <DefaultAvatar size={40} />
-                      )}
+                      {/* Mostrar foto do usuário do comentário */}
+                      {(() => {
+                        // Se o comentário for do usuário logado, usar sua foto do contexto
+                        if (user && Number(comment.id_user) === Number(user.id)) {
+                          return user.foto ? (
+                            <img src={user.foto} alt={user.nome} />
+                          ) : (
+                            <DefaultAvatar size={40} />
+                          )
+                        }
+                        
+                        // Para outros usuários, usar dados do comentário
+                        if (comment.user && Array.isArray(comment.user) && comment.user[0]?.foto) {
+                          return <img src={comment.user[0].foto} alt={comment.user[0].nome} />
+                        } else if (comment.usuario?.foto) {
+                          return <img src={comment.usuario.foto} alt={comment.usuario.nome} />
+                        } else {
+                          return <DefaultAvatar size={40} />
+                        }
+                      })()}
                     </CommentAvatar>
                     
                     <CommentContent>

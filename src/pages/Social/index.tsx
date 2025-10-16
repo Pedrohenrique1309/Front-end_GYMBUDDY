@@ -1038,6 +1038,7 @@ export interface User {
 
 interface Post {
   id: number
+  id_user?: number // ID do usuário que criou o post
   user: {
     avatar?: string
     username: string
@@ -1093,6 +1094,105 @@ const Social = () => {
       generateRandomUsers()
     }
   }, [users])
+
+  // Enriquecer posts com dados completos dos usuários
+  const enriquecerPostsComUsuarios = async (posts: any[]): Promise<Post[]> => {
+    console.log('🔄 Iniciando enriquecimento de posts com dados dos usuários...')
+    console.log('📋 Posts para enriquecer:', posts.map(p => `Post ${p.id}: user ${p.id_user}`))
+    
+    // Primeiro, buscar TODOS os usuários da API de uma vez
+    let todosUsuarios: any[] = []
+    try {
+      console.log('📥 Buscando todos os usuários da API...')
+      const usersResponse = await fetch(`${API_BASE_URL}/usuario`)
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json()
+        todosUsuarios = usersData.usuarios || usersData || []
+        console.log('✅ Usuários carregados:', todosUsuarios.length)
+        console.log('👥 IDs dos usuários:', todosUsuarios.map(u => `${u.id}: ${u.nome}`))
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar lista de usuários:', error)
+    }
+    
+    return await Promise.all(
+      posts.map(async (post) => {
+        try {
+          // Extrair ID do usuário do post
+          let userId = post.id_user
+          
+          if (!userId) {
+            // Tentar extrair do username se estiver no formato @userXX
+            const userIdMatch = post.user?.username?.match(/@user(\d+)/)
+            if (userIdMatch) {
+              userId = parseInt(userIdMatch[1])
+            }
+          }
+          
+          console.log(`🔍 Post ${post.id}: buscando dados do usuário ID ${userId}`)
+          
+          if (!userId) {
+            console.warn(`⚠️ Post ${post.id}: ID do usuário não encontrado`)
+            return post
+          }
+          
+          // Primeiro tentar encontrar na lista de todos os usuários
+          let userData = todosUsuarios.find(u => u.id === userId || u.id === Number(userId))
+          
+          // Se não encontrou na lista, tentar buscar individualmente
+          if (!userData) {
+            console.log(`🔎 Usuário ${userId} não encontrado na lista, buscando individualmente...`)
+            try {
+              const userResponse = await fetch(`${API_BASE_URL}/usuario/${userId}`)
+              if (userResponse.ok) {
+                const responseData = await userResponse.json()
+                userData = responseData.usuario || responseData
+                console.log(`✅ Usuário ${userId} encontrado individualmente`)
+              }
+            } catch (apiError) {
+              console.warn(`⚠️ Erro ao buscar usuário ${userId} individualmente:`, apiError)
+            }
+          }
+          
+          if (userData) {
+            console.log(`📝 Dados do usuário ${userId}:`, {
+              id: userData.id,
+              nome: userData.nome,
+              nickname: userData.nickname,
+              foto: userData.foto ? 'tem foto' : 'sem foto'
+            })
+            
+            // Priorizar nome completo sobre nickname
+            const nomeExibir = userData.nome || userData.nickname || `Usuário ${userId}`
+            const foto = userData.foto || ''
+            
+            console.log(`✅ Post ${post.id}: nome definido como "${nomeExibir}", foto: ${foto ? 'sim' : 'não'}`)
+            
+            return {
+              ...post,
+              user: {
+                username: nomeExibir,
+                avatar: foto
+              }
+            }
+          }
+          
+          // Fallback se não encontrar o usuário
+          console.log(`⚠️ Post ${post.id}: usuário ${userId} não encontrado, usando fallback`)
+          return {
+            ...post,
+            user: {
+              username: `Usuário ${userId}`,
+              avatar: ''
+            }
+          }
+        } catch (error) {
+          console.error(`💥 Erro ao processar post ${post.id}:`, error)
+          return post
+        }
+      })
+    )
+  }
 
   const loadPosts = async () => {
     console.log('🚀 ======= INICIANDO CARREGAMENTO DE POSTS =======')
@@ -1168,9 +1268,11 @@ const Social = () => {
             
             return {
               id: pub.id,
+              id_user: pub.id_user, // Preservar ID do usuário para enriquecimento
               user: {
-                username: pub.usuario?.nickname || pub.usuario?.nome || `@user${pub.id_user}`,
-                avatar: pub.usuario?.foto || ''
+                // SEMPRE usar fallback genérico para ser substituído pelo enriquecimento
+                username: `@user${pub.id_user}`,
+                avatar: ''
               },
               image: pub.imagem || '', 
               description: pub.descricao || '', 
@@ -1183,7 +1285,12 @@ const Social = () => {
           })
           
           console.log('🔄 Posts mapeados da API:', apiPosts)
-          setPosts(apiPosts)
+          
+          // Enriquecer posts com dados dos usuários
+          console.log('🚀 Iniciando enriquecimento dos posts...')
+          const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
+          console.log('✅ Posts enriquecidos:', postsEnriquecidos.map(p => `${p.id}: ${p.user.username}`))
+          setPosts(postsEnriquecidos)
           return
         } else {
           console.log('❌ Nenhuma estrutura de posts válida encontrada na resposta da API')
@@ -1207,9 +1314,11 @@ const Social = () => {
             
             return {
               id: pub.id_publicacao,
+              id_user: pub.id_user, // Preservar ID do usuário para enriquecimento
               user: {
-                username: pub.nome_usuario || `@user${pub.id_user}`,
-                avatar: pub.foto_perfil || ''
+                // SEMPRE usar fallback genérico para ser substituído pelo enriquecimento
+                username: `@user${pub.id_user}`,
+                avatar: ''
               },
               image: pub.imagem || '', 
               description: pub.descricao || '', 
@@ -1222,7 +1331,11 @@ const Social = () => {
           })
           
           console.log('🔄 Posts mapeados do feed:', apiPosts)
-          setPosts(apiPosts)
+          
+          // Enriquecer posts com dados dos usuários
+          const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
+          console.log('✅ Posts enriquecidos do feed:', postsEnriquecidos.map(p => `${p.id}: ${p.user.username}`))
+          setPosts(postsEnriquecidos)
           return
         }
       }

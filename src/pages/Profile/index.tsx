@@ -342,20 +342,78 @@ const Profile = () => {
     
     setIsLoadingPosts(true)
     try {
-      console.log('📲 Carregando posts do usuário:', user.id)
-      const response = await fetch('/api/v1/gymbuddy/view/feed')
+      console.log('📲 Carregando posts do usuário ID:', user.id, typeof user.id)
+      
+      // Tentar primeiro o endpoint de publicações direto
+      let response = await fetch('/api/v1/gymbuddy/publicacao')
       
       if (response.ok) {
         const data = await response.json()
-        console.log('📊 Resposta da API:', data)
+        console.log('📊 Resposta do endpoint /publicacao:', data)
+        
+        let allPosts: any[] = []
+        
+        // Extrair posts de diferentes estruturas
+        if (data?.publicacao && Array.isArray(data.publicacao)) {
+          allPosts = data.publicacao
+        } else if (Array.isArray(data)) {
+          allPosts = data
+        }
+        
+        if (allPosts.length > 0) {
+          // Filtrar posts do usuário atual (converter IDs para números para garantir comparação correta)
+          const userId = Number(user.id)
+          const userFilteredPosts = allPosts.filter((pub: any) => {
+            const postUserId = Number(pub.id_user)
+            const match = postUserId === userId
+            console.log(`Post ${pub.id}: user ${postUserId} === ${userId}? ${match}`)
+            return match
+          })
+          
+          console.log(`🔍 Posts do usuário ${userId}:`, userFilteredPosts.length, 'de', allPosts.length, 'posts totais')
+          
+          const mappedPosts = userFilteredPosts.map((pub: any) => {
+            const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
+            const uniqueHashtags = [...new Set(hashtagMatches)]
+            
+            return {
+              id: pub.id,
+              image: pub.imagem || '',
+              description: pub.descricao || '',
+              hashtags: uniqueHashtags,
+              likes: pub.curtidas || 0,
+              comments: pub.comentarios || 0,
+              location: pub.localizacao || '',
+              date: pub.data_publicacao || pub.data || ''
+            }
+          })
+          
+          setUserPosts(mappedPosts)
+          console.log('✅ Posts do usuário carregados:', mappedPosts.length)
+          return
+        }
+      }
+      
+      // Se falhar, tentar o endpoint view/feed
+      console.log('🔄 Tentando endpoint alternativo /view/feed')
+      response = await fetch('/api/v1/gymbuddy/view/feed')
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('📊 Resposta do /view/feed:', data)
         
         if (data?.view && Array.isArray(data.view)) {
-          // Filtrar apenas os posts do usuário atual
-          const userFilteredPosts = data.view.filter((pub: any) => pub.id_user === user.id)
+          // Filtrar posts do usuário atual (converter IDs para números)
+          const userId = Number(user.id)
+          const userFilteredPosts = data.view.filter((pub: any) => {
+            const postUserId = Number(pub.id_user)
+            const match = postUserId === userId
+            console.log(`Post ${pub.id_publicacao}: user ${postUserId} === ${userId}? ${match}`)
+            return match
+          })
           
-          console.log('🔍 Posts filtrados do usuário:', userFilteredPosts)
+          console.log(`🔍 Posts do usuário ${userId}:`, userFilteredPosts.length, 'posts')
           
-          // Mapear os dados para o formato esperado
           const mappedPosts = userFilteredPosts.map((pub: any) => {
             const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
             const uniqueHashtags = [...new Set(hashtagMatches)]
@@ -373,9 +431,9 @@ const Profile = () => {
           })
           
           setUserPosts(mappedPosts)
-          console.log('✅ Posts do usuário carregados:', mappedPosts.length)
+          console.log('✅ Posts do usuário carregados do feed:', mappedPosts.length)
         } else {
-          console.log('⚠️ Nenhum post encontrado na resposta da API')
+          console.log('⚠️ Nenhum post encontrado na resposta')
           setUserPosts([])
         }
       } else {

@@ -10,8 +10,10 @@ import Profile from './pages/Profile'
 import UserProfile from './pages/UserProfile'
 import Network from './pages/Network'
 import Social from './pages/Social'
+import ResetarSenha from './pages/ResetarSenha'
 import { UserProvider } from './contexts/UserContext'
 import { HeaderProvider, useHeader } from './contexts/HeaderContext'
+import { PopupProvider } from './contexts/PopupContext'
 
 const pageVariants = {
   initial: {
@@ -145,6 +147,20 @@ const AnimatedRoutes = () => {
             </motion.div>
           } 
         />
+        <Route 
+          path="/resetar-senha/:token" 
+          element={
+            <motion.div
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <ResetarSenha />
+            </motion.div>
+          } 
+        />
       </Routes>
     </AnimatePresence>
   )
@@ -153,11 +169,13 @@ const AnimatedRoutes = () => {
 function App() {
   return (
     <UserProvider>
-      <HeaderProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </HeaderProvider>
+      <PopupProvider>
+        <HeaderProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </HeaderProvider>
+      </PopupProvider>
     </UserProvider>
   )
 }
