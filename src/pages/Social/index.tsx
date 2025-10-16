@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus } from 'react-icons/fi'
+import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus, FiX } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import CreatePostPopup from '../../components/PopUpCriarPost'
+import CommentsModal from '../../components/CommentsModal'
+import { curtidaService, type LikeUser } from '../../services/socialService'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei'
 
@@ -396,6 +398,252 @@ const StatItem = styled.div`
   span {
     font-size: 1.3rem;
   }
+`
+
+// Novos styled components para curtidas e comentários
+const LikeButton = styled.button<{ $isLiked?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: ${props => props.$isLiked ? '#E30613' : 'rgba(255, 255, 255, 0.6)'};
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-size: 1.4rem;
+  font-weight: 500;
+  
+  svg {
+    transition: all 0.3s ease;
+    fill: ${props => props.$isLiked ? '#E30613' : 'transparent'};
+    stroke: ${props => props.$isLiked ? '#E30613' : 'rgba(255, 255, 255, 0.6)'};
+  }
+  
+  &:hover:not(:disabled) {
+    background: rgba(227, 6, 19, 0.1);
+    color: #E30613;
+    transform: translateY(-2px);
+    
+    svg {
+      stroke: #E30613;
+      transform: scale(1.1);
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.95);
+  }
+`
+
+const CommentButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  font-size: 1.4rem;
+  font-weight: 500;
+  
+  svg {
+    transition: all 0.3s ease;
+    stroke: rgba(255, 255, 255, 0.6);
+  }
+  
+  &:hover {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+    transform: translateY(-2px);
+    
+    svg {
+      stroke: #4A90E2;
+      transform: scale(1.1);
+    }
+  }
+  
+  &:active {
+    transform: translateY(0) scale(0.95);
+  }
+`
+
+const LikesCount = styled.span`
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(227, 6, 19, 0.1);
+    color: #E30613;
+    transform: scale(1.05);
+  }
+`
+
+const CommentsCount = styled.span`
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.3rem;
+  font-weight: 600;
+`
+
+// Styled components para Modal de Likes
+const LikesModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+`
+
+const LikesModalContent = styled(motion.div)`
+  background: linear-gradient(135deg,
+    rgba(26, 26, 26, 0.98) 0%,
+    rgba(18, 18, 18, 0.98) 100%
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(227, 6, 19, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+`
+
+const LikesModalHeader = styled.div`
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg,
+    rgba(227, 6, 19, 0.1) 0%,
+    transparent 50%,
+    rgba(227, 6, 19, 0.05) 100%
+  );
+  
+  h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      transform: rotate(90deg);
+    }
+  }
+`
+
+const LikesUsersList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(227, 6, 19, 0.3);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(227, 6, 19, 0.5);
+  }
+`
+
+const LikesUserItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+`
+
+const LikesUserAvatar = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid rgba(227, 6, 19, 0.2);
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`
+
+const UserInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+`
+
+const UserName = styled.span`
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`
+
+const UserUsername = styled.span`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `
 
 const FriendsSidebar = styled.div`
@@ -816,6 +1064,13 @@ const Social = () => {
     { id: 1, text: 'Olá! Sou seu assistente pessoal do GymBuddy. Como posso ajudar com seus treinos hoje?', isUser: false },
   ])
   const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
+  
+  // Estados para comentários e curtidas
+  const [showCommentsModal, setShowCommentsModal] = useState(false)
+  const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null)
+  const [postLikes, setPostLikes] = useState<{ [postId: number]: { count: number, liked: boolean } }>({})
+  const [hoveredLikes, setHoveredLikes] = useState<{ [postId: number]: LikeUser[] }>({})
+  const [showLikesModal, setShowLikesModal] = useState<{ postId: number, users: LikeUser[] } | null>(null)
 
   useEffect(() => {
     loadUsers()
@@ -1133,6 +1388,85 @@ const Social = () => {
     setShowCreatePostPopup(true)
   }
 
+  // Funções para comentários
+  const handleOpenComments = (post: Post) => {
+    setSelectedPostForComments(post)
+    setShowCommentsModal(true)
+  }
+
+  const handleCloseComments = () => {
+    setShowCommentsModal(false)
+    setSelectedPostForComments(null)
+  }
+
+  // Funções para curtidas
+  const handleLikePost = async (postId: number) => {
+    if (!user?.id) {
+      alert('Você precisa estar logado para curtir!')
+      return
+    }
+
+    try {
+      const result = await curtidaService.toggleCurtidaPost({
+        id_user: Number(user.id),
+        id_publicacao: postId
+      })
+
+      // Atualizar estado local
+      setPostLikes(prev => ({
+        ...prev,
+        [postId]: {
+          count: result.total,
+          liked: result.curtiu
+        }
+      }))
+
+      // Atualizar posts com nova contagem
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes: result.total }
+          : post
+      ))
+      
+      setFilteredPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes: result.total }
+          : post
+      ))
+    } catch (error) {
+      console.error('Erro ao curtir post:', error)
+      alert('Erro ao curtir post. Tente novamente.')
+    }
+  }
+
+  const handleShowLikesUsers = async (postId: number) => {
+    try {
+      const users = await curtidaService.buscarUsuariosCurtiramPost(postId)
+      setShowLikesModal({ postId, users })
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error)
+    }
+  }
+
+  const handleLikesHover = async (postId: number, isEntering: boolean) => {
+    if (isEntering && !hoveredLikes[postId]) {
+      try {
+        const users = await curtidaService.buscarUsuariosCurtiramPost(postId)
+        setHoveredLikes(prev => ({ ...prev, [postId]: users }))
+        
+        // Auto-show modal após 1.5s
+        setTimeout(() => {
+          const post = posts.find(p => p.id === postId)
+          if (post && (post.likes || 0) > 0) {
+            setShowLikesModal({ postId, users })
+          }
+        }, 1500)
+      } catch (error) {
+        console.error('Erro ao carregar usuários:', error)
+      }
+    }
+  }
+
 return (
   <Container>
     {/* Chat IA Moderno */}
@@ -1316,14 +1650,31 @@ return (
                     ))}
                   </PostHashtags>
                   <PostStats>
-                    <StatItem>
-                      <FiHeart />
-                      <span>{post.likes}</span>
-                    </StatItem>
-                    <StatItem>
-                      <FiMessageCircle />
-                      <span>{post.comments}</span>
-                    </StatItem>
+                    <LikeButton 
+                      onClick={() => handleLikePost(post.id)}
+                      $isLiked={postLikes[post.id]?.liked || false}
+                      disabled={!user}
+                    >
+                      <FiHeart size={22} />
+                      {(postLikes[post.id]?.count !== undefined ? postLikes[post.id].count : post.likes) > 0 && (
+                        <LikesCount
+                          onMouseEnter={() => handleLikesHover(post.id, true)}
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation()
+                            handleShowLikesUsers(post.id)
+                          }}
+                        >
+                          {postLikes[post.id]?.count !== undefined ? postLikes[post.id].count : post.likes}
+                        </LikesCount>
+                      )}
+                    </LikeButton>
+                    
+                    <CommentButton onClick={() => handleOpenComments(post)}>
+                      <FiMessageCircle size={22} />
+                      {post.comments > 0 && (
+                        <CommentsCount>{post.comments}</CommentsCount>
+                      )}
+                    </CommentButton>
                   </PostStats>
                 </PostFooter>
               </PostCard>
@@ -1413,6 +1764,58 @@ return (
           loadPosts() // Recarregar posts após criação
         }}
       />
+      
+      {/* Modal de Comentários */}
+      {selectedPostForComments && (
+        <CommentsModal
+          isOpen={showCommentsModal}
+          onClose={handleCloseComments}
+          postId={selectedPostForComments.id}
+          postAuthor={selectedPostForComments.user.username}
+        />
+      )}
+      
+      {/* Modal de Usuários que Curtiram */}
+      {showLikesModal && (
+        <LikesModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowLikesModal(null)}
+        >
+          <LikesModalContent
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          >
+            <LikesModalHeader>
+              <h3>Curtidas</h3>
+              <button onClick={() => setShowLikesModal(null)}>
+                <FiX size={20} />
+              </button>
+            </LikesModalHeader>
+            
+            <LikesUsersList>
+              {showLikesModal.users.map((likeUser) => (
+                <LikesUserItem key={likeUser.id}>
+                  <LikesUserAvatar>
+                    {likeUser.foto ? (
+                      <img src={likeUser.foto} alt={likeUser.nome} />
+                    ) : (
+                      <DefaultAvatar size={32} />
+                    )}
+                  </LikesUserAvatar>
+                  <UserInfo>
+                    <UserName>{likeUser.nome}</UserName>
+                    <UserUsername>@{likeUser.username}</UserUsername>
+                  </UserInfo>
+                </LikesUserItem>
+              ))}
+            </LikesUsersList>
+          </LikesModalContent>
+        </LikesModalOverlay>
+      )}
     </Container>
   )
 }
