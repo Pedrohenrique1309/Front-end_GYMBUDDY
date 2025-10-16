@@ -148,7 +148,7 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
 
 const IconeValidacaoSenha = styled(motion.div)<{ $isValid?: boolean | null }>`
   position: absolute;
-  left: -2.6rem;
+  left: -2.5rem;
   top: 30%;
   transform: translateY(-50%);
   display: flex;

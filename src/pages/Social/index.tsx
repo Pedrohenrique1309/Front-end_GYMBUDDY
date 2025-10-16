@@ -1089,8 +1089,8 @@ const Social = () => {
 
   const loadPosts = async () => {
     try {
-      console.log('🌐 Carregando posts do feed: http://localhost:3030/v1/gymbuddy/view/feed')
-      const response = await fetch('http://localhost:3030/v1/gymbuddy/view/feed')
+      console.log('🌐 Carregando posts do feed: /api/v1/gymbuddy/view/feed')
+      const response = await fetch('/api/v1/gymbuddy/view/feed')
       
       if (response.ok) {
         const data = await response.json()
