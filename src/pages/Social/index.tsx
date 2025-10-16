@@ -81,9 +81,9 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   width: 60px;
   height: 60px;
   background: linear-gradient(135deg, 
-    #E53935 0%, 
-    #FF5722 50%,
-    #E53935 100%
+    #E30613 0%, 
+    #B91C1C 50%,
+    #E30613 100%
   );
   border-radius: 50%;
   display: flex;
@@ -92,7 +92,7 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   cursor: pointer;
   z-index: 1001;
   box-shadow: 
-    0 8px 32px rgba(229, 57, 53, 0.4),
+    0 8px 32px rgba(227, 6, 19, 0.4),
     inset 0 2px 4px rgba(255, 255, 255, 0.2),
     inset 0 -2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -105,9 +105,9 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
     right: -2px;
     bottom: -2px;
     background: linear-gradient(45deg, 
-      rgba(229, 57, 53, 0.3),
-      rgba(255, 87, 34, 0.3),
-      rgba(229, 57, 53, 0.3)
+      rgba(227, 6, 19, 0.3),
+      rgba(185, 28, 28, 0.3),
+      rgba(227, 6, 19, 0.3)
     );
     border-radius: 50%;
     z-index: -1;
@@ -118,7 +118,7 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   &:hover {
     transform: translateY(-50%) scale(1.1);
     box-shadow: 
-      0 12px 48px rgba(229, 57, 53, 0.6),
+      0 12px 48px rgba(227, 6, 19, 0.6),
       inset 0 3px 6px rgba(255, 255, 255, 0.3),
       inset 0 -3px 6px rgba(0, 0, 0, 0.3);
       
@@ -1390,7 +1390,7 @@ const CreatePostButton = styled(motion.button)`
   width: 6.5rem;
   height: 6.5rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #E53935, #FF5722);
+  background: linear-gradient(135deg, #E30613, #B91C1C);
   border: none;
   display: flex;
   align-items: center;
@@ -1399,7 +1399,7 @@ const CreatePostButton = styled(motion.button)`
   z-index: 998;
   
   box-shadow: 
-    0 15px 35px rgba(229, 57, 53, 0.4),
+    0 15px 35px rgba(227, 6, 19, 0.4),
     0 5px 15px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1411,7 +1411,7 @@ const CreatePostButton = styled(motion.button)`
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(135deg, #E53935, #FF5722, #E53935);
+    background: linear-gradient(135deg, #E30613, #B91C1C, #E30613);
     border-radius: 50%;
     z-index: -1;
     opacity: 0;
