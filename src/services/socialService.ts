@@ -219,12 +219,28 @@ export const comentarioService = {
           return false
         }
         
-        // Acessar o ID da publicação dentro do objeto publicacao
-        let publicacaoId = null
+        // Acessar o ID da publicação dentro do objeto/array publicacao
+        let publicacaoId: any = null
+        let publicacaoObj: any = null
         
-        if (c.publicacao && typeof c.publicacao === 'object') {
-          // Tentar diferentes nomes de campo dentro do objeto publicacao
-          publicacaoId = c.publicacao.id || c.publicacao.id_publicacao || c.publicacao.publicacao_id
+        if (c.publicacao) {
+          // Verificar se publicacao é um array
+          if (Array.isArray(c.publicacao) && c.publicacao.length > 0) {
+            publicacaoObj = c.publicacao[0] // Pegar o primeiro item do array
+            console.log(`  - publicacao é um array, objeto[0]:`, publicacaoObj)
+          } else if (typeof c.publicacao === 'object') {
+            publicacaoObj = c.publicacao // É um objeto direto
+            console.log(`  - publicacao é um objeto direto:`, publicacaoObj)
+          }
+          
+          // Agora tentar diferentes nomes de campo no objeto da publicação
+          if (publicacaoObj && typeof publicacaoObj === 'object') {
+            publicacaoId = publicacaoObj.id || publicacaoObj.id_publicacao || publicacaoObj.publicacao_id
+            console.log(`  - Chaves disponíveis no objeto publicacao:`, Object.keys(publicacaoObj))
+            Object.keys(publicacaoObj).forEach(key => {
+              console.log(`    ${key}: ${publicacaoObj[key]} (tipo: ${typeof publicacaoObj[key]})`)
+            })
+          }
         }
         
         // Também tentar campos diretos (caso o backend mude)
@@ -233,8 +249,13 @@ export const comentarioService = {
         }
         
         console.log(`🔍 Comentário ${c.id}:`)
-        console.log(`  - publicacao.id: ${c.publicacao?.id}`)
-        console.log(`  - publicacao.id_publicacao: ${c.publicacao?.id_publicacao}`)
+        if (Array.isArray(c.publicacao)) {
+          console.log(`  - publicacao[0].id: ${c.publicacao[0]?.id}`)
+          console.log(`  - publicacao[0].id_publicacao: ${c.publicacao[0]?.id_publicacao}`)
+        } else {
+          console.log(`  - publicacao.id: ${c.publicacao?.id}`)
+          console.log(`  - publicacao.id_publicacao: ${c.publicacao?.id_publicacao}`)
+        }
         console.log(`  - id_publicacao direto: ${c.id_publicacao}`)
         console.log(`  - ID encontrado: ${publicacaoId}`)
         console.log(`  - Comparando ${publicacaoId} === ${id_publicacao}`)
