@@ -132,15 +132,28 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
   }
 
   const handleDeleteComment = async (commentId: number) => {
-    if (!confirm('Tem certeza que deseja excluir este comentário?')) return
+    console.log('🗑️ MODAL: Iniciando deleção do comentário ID:', commentId)
+    
+    if (!confirm('Tem certeza que deseja excluir este comentário?')) {
+      console.log('❌ Usuário cancelou a deleção')
+      return
+    }
 
+    console.log('✅ Usuário confirmou - chamando serviço...')
+    
     try {
+      console.log('🚀 Chamando comentarioService.deletarComentario...')
       await comentarioService.deletarComentario(commentId)
+      
+      console.log('🔄 Removendo comentário da lista local...')
       setComments(prev => prev.filter(comment => comment.id !== commentId))
-      console.log('✅ Comentário deletado com sucesso')
+      
+      console.log('✅ MODAL: Comentário deletado com sucesso!')
+      alert('Comentário deletado com sucesso!')
+      
     } catch (error) {
-      console.error('Erro ao deletar comentário:', error)
-      alert('Erro ao deletar comentário.')
+      console.error('💥 MODAL: Erro ao deletar comentário:', error)
+      alert(`Erro ao deletar comentário: ${error}`)
     }
   }
 

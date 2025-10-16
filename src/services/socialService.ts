@@ -355,10 +355,13 @@ export const comentarioService = {
 
   // Deletar comentário
   async deletarComentario(id: number): Promise<void> {
-    console.log('🗑️ Deletando comentário:', id)
+    console.log('🗑️ INICIANDO DELETE - Comentário ID:', id)
     console.log('🔗 URL DELETE:', `${API_BASE_URL}/comentario/${id}`)
+    console.log('📌 Timestamp:', new Date().toISOString())
     
     try {
+      console.log('🚀 Fazendo requisição DELETE...')
+      
       const response = await fetch(`${API_BASE_URL}/comentario/${id}`, {
         method: 'DELETE',
         headers: {
@@ -366,17 +369,31 @@ export const comentarioService = {
         }
       })
       
-      console.log('📊 Status DELETE:', response.status)
-
+      console.log('📊 Status DELETE recebido:', response.status)
+      console.log('📊 Response OK:', response.ok)
+      
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('💥 Erro ao deletar comentário:', errorText)
+        console.error('💥 Erro ao deletar - Status:', response.status)
+        console.error('💥 Erro ao deletar - Texto:', errorText)
+        console.error('💥 Response headers:', response.headers)
         throw new Error(`Erro ao deletar comentário: ${response.status} - ${errorText}`)
       }
       
-      console.log('✅ Comentário deletado com sucesso')
+      // Tentar ler response mesmo que seja vazio
+      try {
+        const responseData = await response.text()
+        console.log('📝 Response body:', responseData)
+      } catch (e) {
+        console.log('📝 Response body vazio ou inválido')
+      }
+      
+      console.log('✅ DELETE CONCLUÍDO COM SUCESSO!')
     } catch (error: any) {
-      console.error('💥 Erro na requisição DELETE:', error)
+      console.error('💥 ERRO GERAL na requisição DELETE:')
+      console.error('💥 Tipo do erro:', typeof error)
+      console.error('💥 Mensagem:', error.message)
+      console.error('💥 Stack:', error.stack)
       throw error
     }
   }
