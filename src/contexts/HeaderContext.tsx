@@ -3,6 +3,8 @@ import { createContext, useContext, useState, ReactNode } from 'react'
 interface HeaderContextType {
   isHeaderVisible: boolean
   setHeaderVisible: (visible: boolean) => void
+  isAiChatOpen: boolean
+  setAiChatOpen: (open: boolean) => void
 }
 
 const HeaderContext = createContext<HeaderContextType | undefined>(undefined)
@@ -21,13 +23,23 @@ interface HeaderProviderProps {
 
 export const HeaderProvider = ({ children }: HeaderProviderProps) => {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false)
 
   const setHeaderVisible = (visible: boolean) => {
     setIsHeaderVisible(visible)
   }
 
+  const setAiChatOpen = (open: boolean) => {
+    setIsAiChatOpen(open)
+  }
+
   return (
-    <HeaderContext.Provider value={{ isHeaderVisible, setHeaderVisible }}>
+    <HeaderContext.Provider value={{ 
+      isHeaderVisible, 
+      setHeaderVisible,
+      isAiChatOpen,
+      setAiChatOpen
+    }}>
       {children}
     </HeaderContext.Provider>
   )
