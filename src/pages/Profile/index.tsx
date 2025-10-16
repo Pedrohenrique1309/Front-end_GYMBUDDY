@@ -11,13 +11,12 @@ import { useUser } from '../../contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmDeletePopup } from '../../components/ConfirmDeletePopup'
 import { EditPostPopup } from '../../components/EditPostPopup'
-import { DebugUserState } from '../../components/DebugUserState'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import WeightHeightPopup from '../../components/WeightHeightPopup'
 import { useUserActions } from '../../hooks/useUserActions'
 import { uploadImageToAzure } from './uploadImageToAzure'
 import LiquidDatePicker from '../../components/LiquidDatePicker'
-import { cleanCorruptedUserData, debugLocalStorageData, isValidUserId } from '../../utils/validateUserData'
+import { cleanCorruptedUserData, isValidUserId } from '../../utils/validateUserData'
 
 
 const uploadParams = () => {
@@ -77,39 +76,12 @@ const Profile = () => {
     
     // Só redirecionar se terminou de carregar e não está logado
     if (!isLoading && !isLoggedIn) {
-      console.log('⚠️ Usuário não logado após carregamento, redirecionando...');
       navigate('/');
       return;
     }
     
-    // Debug crítico dos dados do usuário na inicialização
-    debugLocalStorageData();
-    
-    console.log('🚨 DEBUG INICIAL - Profile Component:', {
-      isLoading,
-      isLoggedIn,
-      user: user,
-      userId: user?.id,
-      userIdType: typeof user?.id,
-      userIdValue: JSON.stringify(user?.id),
-      userIdString: String(user?.id),
-      isValidUserId: user?.id ? isValidUserId(user.id) : false,
-      hasUserInStorage: !!localStorage.getItem('userData'),
-      hasTokenInStorage: !!localStorage.getItem('authToken')
-    });
-    
-    // TEMPORARIAMENTE DESATIVADO: Validação de ID que estava causando logout
-    // Vamos debugar primeiro antes de forçar logout
     if (user && user.id && !isValidUserId(user.id)) {
-      console.warn('⚠️ ID do usuário pode estar corrompido, mas NÃO fazendo logout para debug:', {
-        userId: user.id,
-        userIdType: typeof user.id,
-        userIdValue: JSON.stringify(user.id)
-      });
-      // NÃO forçar logout por enquanto:
-      // localStorage.clear();
-      // navigate('/');
-      // window.location.reload();
+      cleanCorruptedUserData();
     }
   }, [isLoading, isLoggedIn, navigate, user])
 
@@ -158,31 +130,11 @@ const Profile = () => {
     try {
       let finalFotoUrl = editedData.foto;
       
-      // Debug crítico para identificar problema de ID
-      console.log('🚨 DEBUG CRÍTICO - handleSave:', {
-        user: user,
-        userId: user?.id,
-        userIdType: typeof user?.id,
-        userIdValue: JSON.stringify(user?.id),
-        userIdString: String(user?.id),
-        isValidId: user?.id && typeof user.id === 'number' && user.id > 0
-      });
-      
       // A foto já foi enviada para Azure no handleAvatarUpload
       // finalFotoUrl já contém a URL da Azure ou dados do usuário
-      console.log('📸 URL da foto para salvar:', finalFotoUrl ? 'Foto disponível' : 'Sem foto');
       
       // Atualizar no backend se tiver ID do usuário válido
       if (user?.id && typeof user.id === 'number' && user.id > 0) {
-        console.log('✅ ID válido, prosseguindo com atualização');
-        // Debug do user object completo
-        console.log('🔍 Debug user object:', {
-          user,
-          userId: user.id,
-          userIdType: typeof user.id,
-          userIdValue: JSON.stringify(user.id)
-        })
-        
         // Preparar payload básico
         const payload: any = {
           nome: editedData.nome,
@@ -206,14 +158,7 @@ const Profile = () => {
         // Calcular IMC automaticamente se peso e altura estiverem disponíveis
         if (payload.peso && payload.altura) {
           payload.imc = Number((payload.peso / (payload.altura * payload.altura)).toFixed(2))
-          console.log(`📊 IMC calculado automaticamente: ${payload.imc} (peso: ${payload.peso}kg, altura: ${payload.altura}m)`)
         }
-        
-        console.log('🚀 Enviando dados para API:', {
-          userId: user.id,
-          userIdType: typeof user.id,
-          payload: { ...payload, senha: '[REDACTED]' }
-        })
         
         await updateUserAPI(user.id, payload)
       }
@@ -231,35 +176,20 @@ const Profile = () => {
         const altura = Number(editedData.altura)
         const imc = peso / (altura * altura)
         updatedUserData.imc = imc.toFixed(2)
-        console.log(`📊 IMC atualizado no contexto: ${updatedUserData.imc}`)
       }
       
-      console.log('📸 Foto atualizada no contexto:', finalFotoUrl ? 'Nova foto definida' : 'Sem alteração de foto')
       updateUser(updatedUserData)
       
       setIsEditing(false)
-      console.log('✅ Perfil atualizado com sucesso!')
     } catch (error) {
-      console.error('❌ Erro ao atualizar perfil:', error)
       alert('Erro ao salvar alterações. Tente novamente.')
     }
   }
 
   const handleWeightHeightSubmit = async (data: { peso: number | null; altura: number | null }) => {
     try {
-      // Debug crítico para identificar problema de ID
-      console.log('🚨 DEBUG CRÍTICO - handleWeightHeightSubmit:', {
-        user: user,
-        userId: user?.id,
-        userIdType: typeof user?.id,
-        userIdValue: JSON.stringify(user?.id),
-        userIdString: String(user?.id),
-        isValidId: user?.id && typeof user.id === 'number' && user.id > 0
-      });
-      
       // Atualizar no backend se tiver ID do usuário válido
       if (user?.id && typeof user.id === 'number' && user.id > 0) {
-        console.log('✅ ID válido no WeightHeight, prosseguindo...');
         const updateData: any = {};
         
         // Adicionar apenas se tiver valores válidos
@@ -1126,8 +1056,6 @@ const Profile = () => {
         isLoading={isUpdatingPost}
       />
       
-      {/* DEBUG TEMPORÁRIO - REMOVER EM PRODUÇÃO */}
-      <DebugUserState />
     </ProfileContainer>
   )
 }

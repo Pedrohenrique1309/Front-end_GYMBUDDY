@@ -1088,56 +1088,139 @@ const Social = () => {
   }, [users])
 
   const loadPosts = async () => {
+    console.log('🚀 ======= INICIANDO CARREGAMENTO DE POSTS =======')
+    console.log('🌐 API Base URL:', API_BASE_URL)
+    console.log('🕐 Timestamp:', new Date().toLocaleTimeString())
+    
     try {
-      console.log('🌐 Carregando posts do feed: /api/v1/gymbuddy/view/feed')
-      const response = await fetch('/api/v1/gymbuddy/view/feed')
+      console.log('🔄 Tentativa 1: Endpoint /api/v1/gymbuddy/publicacao')
+      
+      // Primeiro tenta endpoint das publicações
+      const response = await fetch('/api/v1/gymbuddy/publicacao', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+      
+      console.log('📡 Status da resposta:', response.status)
+      console.log('📡 Headers da resposta:', Object.fromEntries(response.headers.entries()))
       
       if (response.ok) {
         const data = await response.json()
-        console.log('📄 Resposta completa do /view/feed:', data)
+        console.log('📄 Resposta completa do /publicacao:', data)
+        console.log('🔍 Estrutura da resposta:', {
+          isArray: Array.isArray(data),
+          hasPublicacao: !!data?.publicacao,
+          isPublicacaoArray: Array.isArray(data?.publicacao),
+          publicacaoLength: data?.publicacao?.length || 0,
+          dataKeys: Object.keys(data || {}),
+          firstElement: data?.publicacao?.[0] || data?.[0]
+        })
         
-        if (data?.view && Array.isArray(data.view)) {
-          console.log('✅ Posts carregados do feed:', data.view.length, 'posts')
-          console.log('📊 Status:', data.status, 'Itens:', data.itens)
+        // Verifica múltiplas estruturas possíveis
+        let postsArray = null
+        
+        // Estrutura 1: { publicacao: [...] }
+        if (data?.publicacao && Array.isArray(data.publicacao) && data.publicacao.length > 0) {
+          postsArray = data.publicacao
+          console.log('✅ Estrutura encontrada: data.publicacao')
+        }
+        // Estrutura 2: Array direto [...]
+        else if (Array.isArray(data) && data.length > 0) {
+          postsArray = data
+          console.log('✅ Estrutura encontrada: Array direto')
+        }
+        // Estrutura 3: { publicacoes: [...] } (plural)
+        else if (data?.publicacoes && Array.isArray(data.publicacoes) && data.publicacoes.length > 0) {
+          postsArray = data.publicacoes
+          console.log('✅ Estrutura encontrada: data.publicacoes')
+        }
+        // Estrutura 4: { data: [...] }
+        else if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
+          postsArray = data.data
+          console.log('✅ Estrutura encontrada: data.data')
+        }
+        
+        if (postsArray) {
+          console.log('✅ Posts carregados da API:', postsArray.length, 'posts')
           
-          // ✅ Mapear dados do /view/feed (já vem com todos os dados!)
-          const apiPosts = data.view.map((pub: any) => {
+          // Mapear dados das publicações
+          const apiPosts = postsArray.map((pub: any) => {
             // Extrair hashtags da descrição
             const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
-            const uniqueHashtags = [...new Set(hashtagMatches)]
+            const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
             
-            console.log(`📝 Post ${pub.id_publicacao}:`, {
-              usuario: pub.nome_usuario,
+            console.log(`📝 Post ${pub.id}:`, {
+              usuario: pub.usuario?.nickname || pub.usuario?.nome,
               imagem: pub.imagem ? '✅ Tem' : '❌ Sem',
               descricao: pub.descricao,
               hashtags: uniqueHashtags.length
             })
             
             return {
-              id: pub.id_publicacao, // 🔄 Campo correto
+              id: pub.id,
               user: {
-                username: pub.nome_usuario || `@user${pub.id_user}`, // 🔄 Já vem pronto!
-                avatar: pub.foto_perfil || '' // 🔄 Já vem pronto!
+                username: pub.usuario?.nickname || pub.usuario?.nome || `@user${pub.id_user}`,
+                avatar: pub.usuario?.foto || ''
+              },
+              image: pub.imagem || '', 
+              description: pub.descricao || '', 
+              hashtags: uniqueHashtags,
+              likes: pub.curtidas || 0,
+              comments: pub.comentarios || 0,
+              location: pub.localizacao || '',
+              date: pub.data || pub.data_publicacao || ''
+            }
+          })
+          
+          console.log('🔄 Posts mapeados da API:', apiPosts)
+          setPosts(apiPosts)
+          return
+        } else {
+          console.log('❌ Nenhuma estrutura de posts válida encontrada na resposta da API')
+        }
+      }
+      
+      // Se primeiro endpoint falhar, tenta o endpoint view/feed
+      console.log('🔄 Tentando endpoint alternativo: /api/v1/gymbuddy/view/feed')
+      const feedResponse = await fetch('/api/v1/gymbuddy/view/feed')
+      
+      if (feedResponse.ok) {
+        const feedData = await feedResponse.json()
+        console.log('📄 Resposta completa do /view/feed:', feedData)
+        
+        if (feedData?.view && Array.isArray(feedData.view)) {
+          console.log('✅ Posts carregados do feed:', feedData.view.length, 'posts')
+          
+          const apiPosts = feedData.view.map((pub: any) => {
+            const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
+            const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
+            
+            return {
+              id: pub.id_publicacao,
+              user: {
+                username: pub.nome_usuario || `@user${pub.id_user}`,
+                avatar: pub.foto_perfil || ''
               },
               image: pub.imagem || '', 
               description: pub.descricao || '', 
               hashtags: uniqueHashtags,
               likes: pub.curtidas_count || 0,
               comments: pub.comentarios_count || 0,
-              curtido: false, // TODO: verificar se usuário já curtiu
               location: pub.localizacao || '',
               date: pub.data_publicacao || ''
             }
-          });
+          })
           
-          console.log('🔄 Posts mapeados da API:', apiPosts);
-          
+          console.log('🔄 Posts mapeados do feed:', apiPosts)
           setPosts(apiPosts)
           return
         }
       }
       
-      throw new Error('API não retornou dados válidos')
+      throw new Error('Nenhum endpoint retornou dados válidos')
       
     } catch (error) {
       console.error('❌ Erro ao carregar posts da API:', error)
@@ -1583,15 +1666,6 @@ return (
         </SearchBar>
         
         <SectionTitle>Posts recentes</SectionTitle>
-        
-        {/* Debug Info */}
-        {filteredPosts.length === 0 && (
-          <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>
-            <p>📄 Nenhum post encontrado</p>
-            <p>🔍 Posts carregados: {posts.length}</p>
-            <p>🔍 Query de busca: "{searchQuery}"</p>
-          </div>
-        )}
           
           <PostsGrid>
             {filteredPosts.map((post) => (
