@@ -78,64 +78,114 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   left: ${props => props.isOpen ? '590px' : '20px'};
   top: 50%;
   transform: translateY(-50%);
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
+  
+  /* Liquid Glass Base */
   background: linear-gradient(135deg, 
-    #E30613 0%, 
-    #B91C1C 50%,
-    #E30613 100%
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 100%
   );
+  
+  /* Glass Morphism */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
+  
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1001;
+  
+  /* Red Glow Enhancement */
   box-shadow: 
-    0 8px 32px rgba(227, 6, 19, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.2),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    0 8px 32px rgba(227, 6, 19, 0.15),
+    0 4px 16px rgba(227, 6, 19, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   
+  /* Subtle Red Inner Glow */
   &::before {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, 
-      rgba(227, 6, 19, 0.3),
-      rgba(185, 28, 28, 0.3),
-      rgba(227, 6, 19, 0.3)
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: radial-gradient(
+      circle at center,
+      rgba(227, 6, 19, 0.1) 0%,
+      rgba(227, 6, 19, 0.05) 40%,
+      transparent 70%
     );
     border-radius: 50%;
     z-index: -1;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Outer Red Glow Ring */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: conic-gradient(
+      from 0deg,
+      rgba(227, 6, 19, 0.3),
+      rgba(185, 28, 28, 0.2),
+      rgba(227, 6, 19, 0.3)
+    );
+    border-radius: 50%;
+    z-index: -2;
     opacity: 0;
+    filter: blur(2px);
     transition: opacity 0.3s ease;
   }
   
   &:hover {
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.05);
+    
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    
+    border-color: rgba(255, 255, 255, 0.3);
+    
     box-shadow: 
-      0 12px 48px rgba(227, 6, 19, 0.6),
-      inset 0 3px 6px rgba(255, 255, 255, 0.3),
-      inset 0 -3px 6px rgba(0, 0, 0, 0.3);
+      0 12px 48px rgba(227, 6, 19, 0.25),
+      0 6px 24px rgba(227, 6, 19, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
       
     &::before {
       opacity: 1;
     }
+    
+    &::after {
+      opacity: 0.6;
+    }
   }
   
   &:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: translateY(-50%) scale(0.98);
   }
   
   svg {
     font-size: 24px;
-    color: white;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
+    color: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 2px 8px rgba(227, 6, 19, 0.3));
+    transition: all 0.3s ease;
     transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
   }
 `
@@ -1212,21 +1262,6 @@ return (
           <PostsGrid>
             {filteredPosts.map((post) => (
               <PostCard key={post.id}>
-                {/* Debug para cada post */}
-
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '5px', 
-                  left: '5px', 
-                  background: 'rgba(0,0,0,0.7)', 
-                  color: 'white', 
-                  padding: '4px', 
-                  fontSize: '10px',
-                  borderRadius: '4px',
-                  zIndex: 10
-                }}>
-                  ID: {post.id} | User: {post.user.username} | Img: {post.image ? '✅' : '❌'}
-                </div>
                 
                 {post.image && (
                   <PostImage>
