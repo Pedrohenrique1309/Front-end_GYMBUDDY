@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import CreatePostPopup from '../../components/PopUpCriarPost'
 import CommentsModal from '../../components/CommentsModal'
-import { curtidaService, type LikeUser } from '../../services/socialService'
+import { curtidaService, comentarioCountService, type LikeUser } from '../../services/socialService'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei'
 
@@ -1077,6 +1077,13 @@ const Social = () => {
     loadPosts()
   }, [])
 
+  // Carregar estados de curtidas e contadores
+  useEffect(() => {
+    if (user?.id && posts.length > 0) {
+      loadLikesAndCounts()
+    }
+  }, [user, posts])
+
   useEffect(() => {
     filterPosts()
   }, [searchQuery, posts])
@@ -1423,6 +1430,49 @@ const Social = () => {
         }
       ])
     }
+  }
+
+  // Carregar estados de curtidas e contadores
+  const loadLikesAndCounts = async () => {
+    if (!user?.id || posts.length === 0) return
+    
+    const newPostLikes: { [postId: number]: { count: number, liked: boolean } } = {}
+    
+    for (const post of posts) {
+      try {
+        // Verificar se o usuário curtiu o post
+        const liked = await curtidaService.verificarCurtidaPost(Number(user.id), post.id)
+        
+        // Contar total de curtidas
+        const curtidas = await curtidaService.contarCurtidasPost(post.id)
+        
+        // Contar comentários
+        const comentarios = await comentarioCountService.contarComentarios(post.id)
+        
+        newPostLikes[post.id] = {
+          count: curtidas,
+          liked: liked
+        }
+        
+        // Atualizar post com contagem de comentários
+        setPosts(prev => prev.map(p => 
+          p.id === post.id 
+            ? { ...p, likes: curtidas, comments: comentarios }
+            : p
+        ))
+        
+        setFilteredPosts(prev => prev.map(p => 
+          p.id === post.id 
+            ? { ...p, likes: curtidas, comments: comentarios }
+            : p
+        ))
+        
+      } catch (error) {
+        console.error(`Erro ao carregar dados do post ${post.id}:`, error)
+      }
+    }
+    
+    setPostLikes(newPostLikes)
   }
   
 

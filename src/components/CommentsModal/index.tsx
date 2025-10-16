@@ -332,8 +332,10 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     <CommentContent>
                       <CommentHeader>
                         <CommentAuthor>
-                          {/* Tentar user[0] primeiro, depois usuario como fallback */}
-                          {comment.user && Array.isArray(comment.user) && comment.user[0]?.nome 
+                          {/* Se o comentário foi feito pelo usuário logado, usar dados do contexto */}
+                          {user && Number(comment.id_user) === Number(user.id) 
+                            ? user.nome || user.username
+                            : comment.user && Array.isArray(comment.user) && comment.user[0]?.nome 
                             ? comment.user[0].nome
                             : comment.user && Array.isArray(comment.user) && comment.user[0]?.usuario
                             ? comment.user[0].usuario 
