@@ -12,6 +12,14 @@ export interface Comment {
     foto?: string
     username: string
   }
+  // Campo user como array (conforme retorno real do backend)
+  user?: Array<{
+    id: number
+    nome: string
+    foto?: string
+    usuario: string // nickname/username
+    email?: string
+  }>
   curtidas_count?: number
   curtiu?: boolean
 }
@@ -208,6 +216,15 @@ export const comentarioService = {
             console.log(`    ${key}: ${c.publicacao[key]} (tipo: ${typeof c.publicacao[key]})`)
           })
         }
+        
+        // Debug do objeto user
+        console.log('  Objeto user:', c.user)
+        if (c.user && Array.isArray(c.user) && c.user.length > 0) {
+          console.log('  Propriedades do user[0]:')
+          Object.keys(c.user[0]).forEach(key => {
+            console.log(`    ${key}: ${c.user[0][key]} (tipo: ${typeof c.user[0][key]})`)
+          })
+        }
       })
       
       console.log(`
@@ -281,19 +298,87 @@ export const comentarioService = {
     }
   },
 
+  // Editar comentário - Dados baseados no SQL do backend
+  async editarComentario(id: number, novoConteudo: string, originalComment?: Comment, postId?: number): Promise<Comment> {
+    console.log('✏️ Editando comentário:', id, 'Novo conteúdo:', novoConteudo)
+    console.log('🔗 URL PUT:', `${API_BASE_URL}/comentario/${id}`)
+    console.log('📋 Comentário original:', originalComment)
+    console.log('🔍 Debug campos do comentário:')
+    console.log('  - originalComment.id_publicacao:', originalComment?.id_publicacao)
+    console.log('  - postId (fallback):', postId)
+    console.log('  - Todas as chaves:', originalComment ? Object.keys(originalComment) : 'N/A')
+    
+    if (!originalComment) {
+      throw new Error('Comentário original não encontrado para edição')
+    }
+    
+    // Dados exatos que o backend SQL espera:
+    // conteudo, data_comentario, id_publicacao, id_user (+ id no WHERE)
+    const comentarioData = {
+      id: id, // ID para o WHERE
+      conteudo: novoConteudo.trim(),
+      data_comentario: new Date().toISOString().split('T')[0],
+      // FALLBACK: usar postId se id_publicacao não existir no comment
+      id_publicacao: originalComment.id_publicacao || postId,
+      id_user: originalComment.user?.[0]?.id || originalComment.id_user
+    }
+    
+    console.log('📦 Dados para edição:', JSON.stringify(comentarioData, null, 2))
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/comentario/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(comentarioData)
+      })
+      
+      console.log('📊 Status PUT:', response.status)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('💥 Erro ao editar comentário:', errorText)
+        console.error('💥 Response headers:', response.headers)
+        throw new Error(`Erro ao editar comentário: ${response.status} - ${errorText}`)
+      }
+      
+      const result = await response.json()
+      console.log('✅ Comentário editado:', result)
+      
+      return result
+    } catch (error: any) {
+      console.error('💥 Erro na requisição PUT:', error)
+      throw error
+    }
+  },
+
   // Deletar comentário
   async deletarComentario(id: number): Promise<void> {
     console.log('🗑️ Deletando comentário:', id)
+    console.log('🔗 URL DELETE:', `${API_BASE_URL}/comentario/${id}`)
     
-    const response = await fetch(`${API_BASE_URL}/comentario/${id}`, {
-      method: 'DELETE',
-    })
+    try {
+      const response = await fetch(`${API_BASE_URL}/comentario/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      console.log('📊 Status DELETE:', response.status)
 
-    if (!response.ok) {
-      throw new Error(`Erro ao deletar comentário: ${response.status}`)
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('💥 Erro ao deletar comentário:', errorText)
+        throw new Error(`Erro ao deletar comentário: ${response.status} - ${errorText}`)
+      }
+      
+      console.log('✅ Comentário deletado com sucesso')
+    } catch (error: any) {
+      console.error('💥 Erro na requisição DELETE:', error)
+      throw error
     }
-    
-    console.log('✅ Comentário deletado')
   }
 }
 

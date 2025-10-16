@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiSend, FiHeart, FiTrash2, FiUser } from 'react-icons/fi'
+import { FiX, FiSend, FiHeart, FiTrash2, FiUser, FiEdit3, FiCheck } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import { 
@@ -28,6 +28,8 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null)
+  const [editingContent, setEditingContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hoveredLikes, setHoveredLikes] = useState<{ [key: number]: LikeUser[] }>({})
   const [showLikesModal, setShowLikesModal] = useState<{ commentId: number, users: LikeUser[] } | null>(null)
@@ -56,12 +58,35 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
     if (!newComment.trim() || !user?.id || isSubmitting) return
 
     setIsSubmitting(true)
+    
+    // Debug do usuário na criação do comentário
+    console.log('📝 DEBUG - Criando comentário:')
+    console.log('  - user completo:', user)
+    console.log('  - user.id:', user.id, 'tipo:', typeof user.id)
+    console.log('  - user.username:', user.username) 
+    console.log('  - Number(user.id):', Number(user.id))
+    console.log('  - postId:', postId)
+    console.log('  - conteúdo:', newComment.trim())
+    
+    // Usar o ID real do usuário logado
+    const userId = user.id
+    if (!userId || typeof userId !== 'number') {
+      console.error('❌ ID do usuário inválido:', userId)
+      alert('Erro: usuário não está logado corretamente.')
+      return
+    }
+    console.log('  - userId final usado:', userId)
+    
+    const comentarioData = {
+      texto: newComment.trim(),
+      id_user: Number(userId),
+      id_publicacao: postId
+    }
+    
+    console.log('  - Dados enviados:', comentarioData)
+    
     try {
-      await comentarioService.criarComentario({
-        texto: newComment.trim(),
-        id_user: Number(user.id),
-        id_publicacao: postId
-      })
+      await comentarioService.criarComentario(comentarioData)
       
       setNewComment('')
       
@@ -112,10 +137,84 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
     try {
       await comentarioService.deletarComentario(commentId)
       setComments(prev => prev.filter(comment => comment.id !== commentId))
+      console.log('✅ Comentário deletado com sucesso')
     } catch (error) {
       console.error('Erro ao deletar comentário:', error)
       alert('Erro ao deletar comentário.')
     }
+  }
+
+  const handleEditComment = (commentId: number, currentContent: string) => {
+    setEditingCommentId(commentId)
+    setEditingContent(currentContent)
+  }
+
+  const handleSaveEdit = async (commentId: number) => {
+    if (!editingContent.trim()) {
+      alert('O conteúdo não pode estar vazio')
+      return
+    }
+
+    // Encontrar o comentário original para passar dados extras
+    const originalComment = comments.find(c => c.id === commentId)
+    console.log('📝 Comentário original para edição:', originalComment)
+
+    try {
+      await comentarioService.editarComentario(commentId, editingContent, originalComment, postId)
+      
+      // Atualizar o comentário na lista local
+      setComments(prev => prev.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, conteudo: editingContent }
+          : comment
+      ))
+      
+      setEditingCommentId(null)
+      setEditingContent('')
+      console.log('✅ Comentário editado com sucesso')
+    } catch (error) {
+      console.error('Erro ao editar comentário:', error)
+      alert('Erro ao editar comentário.')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null)
+    setEditingContent('')
+  }
+
+  // Verificar se o usuário pode editar/deletar o comentário
+  const canModifyComment = (comment: Comment) => {
+    console.log('🔍 DEBUG canModifyComment:')
+    console.log('  - user logado:', user)
+    console.log('  - user.id:', user?.id, 'tipo:', typeof user?.id)
+    
+    // Obter o ID do usuário do comentário de diferentes formas possíveis
+    let commentUserId = null
+    
+    // Primeiro tentar comment.id_user (campo direto)
+    if (comment.id_user !== undefined) {
+      commentUserId = comment.id_user
+      console.log('  - Usando comment.id_user:', commentUserId)
+    }
+    // Depois tentar comment.user[0].id (array user)
+    else if (comment.user && Array.isArray(comment.user) && comment.user[0]?.id) {
+      commentUserId = comment.user[0].id
+      console.log('  - Usando comment.user[0].id:', commentUserId)
+    }
+    
+    console.log('  - comment.id_user (direto):', comment.id_user, 'tipo:', typeof comment.id_user)
+    console.log('  - comment.user[0]?.id:', comment.user?.[0]?.id, 'tipo:', typeof comment.user?.[0]?.id)
+    console.log('  - commentUserId final:', commentUserId, 'tipo:', typeof commentUserId)
+    console.log('  - user?.id existe:', !!user?.id)
+    console.log('  - Number(user.id):', Number(user?.id))
+    console.log('  - Number(commentUserId):', Number(commentUserId))
+    console.log('  - Comparação:', Number(user?.id) === Number(commentUserId))
+    
+    const canModify = user?.id && commentUserId && Number(user.id) === Number(commentUserId)
+    console.log('  - Resultado final:', canModify)
+    
+    return canModify
   }
 
   const handleShowLikesUsers = async (commentId: number) => {
@@ -207,7 +306,10 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     transition={{ delay: index * 0.1 }}
                   >
                     <CommentAvatar>
-                      {comment.usuario?.foto ? (
+                      {/* Acessar o array user[0] ao invés de usuario direto */}
+                      {comment.user && Array.isArray(comment.user) && comment.user[0]?.foto ? (
+                        <img src={comment.user[0].foto} alt={comment.user[0].nome} />
+                      ) : comment.usuario?.foto ? (
                         <img src={comment.usuario.foto} alt={comment.usuario.nome} />
                       ) : (
                         <DefaultAvatar size={40} />
@@ -217,19 +319,58 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     <CommentContent>
                       <CommentHeader>
                         <CommentAuthor>
-                          {comment.usuario?.nome || `Usuário ${comment.id_user}`}
+                          {/* Tentar user[0] primeiro, depois usuario como fallback */}
+                          {comment.user && Array.isArray(comment.user) && comment.user[0]?.nome 
+                            ? comment.user[0].nome
+                            : comment.user && Array.isArray(comment.user) && comment.user[0]?.usuario
+                            ? comment.user[0].usuario 
+                            : comment.usuario?.nome 
+                            || `Usuário ${comment.id_user}`
+                          }
                         </CommentAuthor>
+                        
                         <CommentDate>
                           {new Date(comment.data_comentario).toLocaleDateString('pt-BR')}
                         </CommentDate>
-                        {user?.id === comment.id_user && (
-                          <DeleteButton onClick={() => handleDeleteComment(comment.id)}>
-                            <FiTrash2 size={14} />
-                          </DeleteButton>
+                        
+                        {/* Botões de Ação - apenas para o próprio usuário */}
+                        {canModifyComment(comment) && (
+                          <ModifyActions>
+                            {editingCommentId === comment.id ? (
+                              <>
+                                <EditButton onClick={() => handleSaveEdit(comment.id)}>
+                                  <FiCheck size={14} />
+                                </EditButton>
+                                <DeleteButton onClick={handleCancelEdit}>
+                                  <FiX size={14} />
+                                </DeleteButton>
+                              </>
+                            ) : (
+                              <>
+                                <EditButton onClick={() => handleEditComment(comment.id, comment.conteudo)}>
+                                  <FiEdit3 size={14} />
+                                </EditButton>
+                                <DeleteButton onClick={() => handleDeleteComment(comment.id)}>
+                                  <FiTrash2 size={14} />
+                                </DeleteButton>
+                              </>
+                            )}
+                          </ModifyActions>
                         )}
                       </CommentHeader>
                       
-                      <CommentText>{comment.conteudo}</CommentText>
+                      {/* Conteúdo do Comentário - modo edição ou texto normal */}
+                      {editingCommentId === comment.id ? (
+                        <EditTextarea
+                          value={editingContent}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditingContent(e.target.value)}
+                          placeholder="Edite seu comentário..."
+                          maxLength={500}
+                          autoFocus
+                        />
+                      ) : (
+                        <CommentText>{comment.conteudo}</CommentText>
+                      )}
                       
                       <CommentActions>
                         <LikeButton
@@ -544,12 +685,58 @@ const DeleteButton = styled.button`
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
-  margin-left: auto;
   transition: all 0.2s ease;
   
   &:hover {
     color: #ff4757;
     background: rgba(255, 71, 87, 0.1);
+  }
+`
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #4A90E2;
+    background: rgba(74, 144, 226, 0.1);
+  }
+`
+
+const ModifyActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+`
+
+const EditTextarea = styled.textarea`
+  width: 100%;
+  min-height: 60px;
+  max-height: 120px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  border-radius: 8px;
+  color: white;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #4A90E2;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
   }
 `
 
