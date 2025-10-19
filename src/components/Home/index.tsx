@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import styled from 'styled-components'
 import { useNavigate } from 'react-router-dom'
@@ -6,15 +6,22 @@ import { BRAND } from '../../config/branding'
 import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward, FiGlobe, FiUserCheck } from 'react-icons/fi'
 import { useScrambleText } from '../../hooks/useScrambleText'
 import { useUser } from '../../contexts/UserContext'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 interface HeroProps {
   onOpenSignup?: () => void
 }
 
-// Componente interno para cada card com scramble text
+// Componente interno para cada card com scramble text e GSAP
 const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { card: any; icon: any; index: number; totalCards: number }) => {
   const [hasStarted, setHasStarted] = useState(false);
   const [triggerRescrample, setTriggerRescramble] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const iconRef = useRef<HTMLDivElement>(null);
+  const statRef = useRef<HTMLDivElement>(null);
   
   // Scramble para estatística
   const statScramble = useScrambleText({
@@ -44,6 +51,100 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
   });
   
   // Re-scramble aleatório após carregamento inicial
+  // GSAP Animations
+  useLayoutEffect(() => {
+    if (!cardRef.current) return;
+    
+    const ctx = gsap.context(() => {
+      // Animação de entrada com GSAP
+      gsap.fromTo(cardRef.current,
+        { 
+          opacity: 0,
+          scale: 0.5,
+          rotation: -45,
+          y: 100,
+          transformOrigin: "center center"
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          rotation: card.rotate || 0,
+          y: 0,
+          duration: 1.2,
+          delay: index * 0.15,
+          ease: "elastic.out(1, 0.5)",
+          onComplete: () => setHasStarted(true)
+        }
+      );
+      
+      // Hover effect com GSAP
+      cardRef.current?.addEventListener('mouseenter', () => {
+        gsap.to(cardRef.current, {
+          scale: 1.15,
+          rotation: 0,
+          duration: 0.4,
+          ease: "power2.out",
+          overwrite: true
+        });
+        
+        if (iconRef.current) {
+          gsap.to(iconRef.current, {
+            rotation: 360,
+            scale: 1.3,
+            duration: 0.6,
+            ease: "back.out(1.7)"
+          });
+        }
+        
+        if (statRef.current) {
+          gsap.to(statRef.current, {
+            scale: 1.1,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        }
+      });
+      
+      cardRef.current?.addEventListener('mouseleave', () => {
+        gsap.to(cardRef.current, {
+          scale: 1,
+          rotation: card.rotate || 0,
+          duration: 0.4,
+          ease: "power2.out",
+          overwrite: true
+        });
+        
+        if (iconRef.current) {
+          gsap.to(iconRef.current, {
+            rotation: 0,
+            scale: 1,
+            duration: 0.6,
+            ease: "back.out(1.7)"
+          });
+        }
+        
+        if (statRef.current) {
+          gsap.to(statRef.current, {
+            scale: 1,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        }
+      });
+      
+      // Floating animation
+      gsap.to(cardRef.current, {
+        y: "-=20",
+        duration: 3 + (index % 3) * 0.5,
+        ease: "power1.inOut",
+        repeat: -1,
+        yoyo: true
+      });
+    }, cardRef);
+    
+    return () => ctx.revert();
+  }, [index, card.rotate]);
+  
   useEffect(() => {
     if (!hasStarted) return;
     
@@ -57,6 +158,17 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
         
         if (shouldRescramble) {
           setTriggerRescramble(prev => prev + 1);
+          
+          // Pulsar o card quando faz rescramble
+          if (cardRef.current) {
+            gsap.to(cardRef.current, {
+              scale: 1.05,
+              duration: 0.2,
+              yoyo: true,
+              repeat: 1,
+              ease: "power2.inOut"
+            });
+          }
         }
         
         scheduleNextRescramble();
@@ -109,79 +221,36 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
 
   return (
     <FloatingCardWrap
+      ref={cardRef}
       className={card.position}
       style={{ 
         ['--rot' as any]: `${card.rotate || 0}deg`, 
         ['--dur' as any]: `${6 + (index % 5) * 0.3}s`,
         zIndex: card.zIndex
       }}
-      initial={{ 
-        opacity: 0, 
-        y: 60,
-        scale: 0.7,
-        rotateX: -20,
-        rotateY: 10
-      }}
-      animate={{ 
-        opacity: 1, 
-        y: 0,
-        scale: 1,
-        rotateX: 0,
-        rotateY: 0
-      }}
-      transition={{
-        duration: 0.8,
-        delay: index * 0.2,
-        ease: [0.34, 1.56, 0.64, 1],
-      }}
-      onAnimationComplete={() => setHasStarted(true)}
-      whileHover={{ 
-        scale: 1.15,
-        rotate: 0,
-        z: 50,
-        transition: { 
-          duration: 0.5,
-          ease: [0.34, 1.56, 0.64, 1],
-        }
-      }}
-      whileTap={{ scale: 0.98 }}
     >
       <FloatingCard>
         <div className="card-header">
-          <motion.div 
+          <div 
+            ref={iconRef}
             className="card-icon"
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.2 + 0.2, duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
           >
             <IconComponent />
-          </motion.div>
-          <motion.span 
-            className="category"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.2 + 0.4, duration: 0.3 }}
-          >
+          </div>
+          <span className="category">
             {displayCategory}
-          </motion.span>
+          </span>
         </div>
         <div className="card-main">
-          <motion.div 
+          <div 
+            ref={statRef}
             className="card-stat"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.2 + 0.3, duration: 0.3 }}
           >
             {displayStat}
-          </motion.div>
-          <motion.h3 
-            className="card-title"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: index * 0.2 + 0.35, duration: 0.3 }}
-          >
+          </div>
+          <h3 className="card-title">
             {displayTitle}
-          </motion.h3>
+          </h3>
         </div>
         <div className="card-footer">
           <div className="card-indicators">
