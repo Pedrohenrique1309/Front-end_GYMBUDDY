@@ -15,7 +15,7 @@ const Overlay = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: var(--overlay-bg);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,7 +30,7 @@ const PopupContainer = styled(motion.div)`
   margin: 0 auto;
   z-index: 10001;
   pointer-events: auto;
-  background: var(--bg-modal);
+  background: #0A0A0A;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.6rem;
   padding: 3rem;
@@ -43,7 +43,7 @@ const BotaoFechar = styled.button`
   right: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--text-primary);
+  color: var(--white);
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -52,7 +52,7 @@ const BotaoFechar = styled.button`
   z-index: 10;
   
   &:hover {
-    background: var(--bg-hover);
+    background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
   }
 `
@@ -70,7 +70,7 @@ const LogoPopUp = styled.div`
   }
   
   h2 {
-    color: var(--text-primary);
+    color: var(--white);
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -85,7 +85,7 @@ const LogoPopUp = styled.div`
 `
 
 const Titulo = styled.h1`
-  color: var(--text-primary);
+  color: var(--white);
   font-size: 2.4rem;
   font-weight: 800;
   text-align: center;
@@ -123,12 +123,12 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
   };
   border-radius: 0.8rem;
   padding: 1.4rem ${props => (props.name === 'password' || props.name === 'confirmPassword') ? '4.5rem' : '1.6rem'} 1.4rem 1.6rem;
-  color: var(--text-primary);
+  color: var(--white);
   font-size: 1.5rem;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: var(--text-tertiary);
+    color: rgba(255, 255, 255, 0.5);
   }
   
   &:focus {
@@ -214,7 +214,7 @@ const VerSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: var(--text-tertiary);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
@@ -226,7 +226,7 @@ const VerSenha = styled.button`
   height: 2.4rem;
   
   &:hover {
-    color: var(--text-primary);
+    color: var(--white);
   }
   
   svg {
@@ -320,7 +320,7 @@ const FerramentaDeSenha = styled(motion.div)`
     }
 
     span {
-      color: var(--text-primary);
+      color: var(--white);
       font-size: 1.4rem;
       font-weight: 700;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -337,14 +337,14 @@ const FerramentaDeSenha = styled(motion.div)`
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 1.3rem;
     font-weight: 500;
     padding: 0.4rem 0;
     transition: all 0.2s ease;
 
     &:hover {
-      color: var(--text-primary);
+      color: rgba(255, 255, 255, 1);
       transform: translateX(2px);
     }
 
@@ -371,7 +371,7 @@ const MensagemDeErro = styled(motion.div)`
 
 const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
-  color: var(--text-inverse);
+  color: var(--white);
   border: none;
   border-radius: 2.5rem;
   padding: 1.4rem 2rem;
@@ -389,7 +389,7 @@ const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
 `
 
 const EnviarParaLogin = styled.p`
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;

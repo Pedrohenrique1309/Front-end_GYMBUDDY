@@ -11,7 +11,7 @@ import { usePublicationActions } from '../../hooks/usePublicationActions'
 const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'
 const AZURE_STORAGE_URL = `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`
 const AZURE_CONTAINER = 'fotos'
-const AZURE_SAS_TOKEN = 'sp=cwl&st=2025-10-16T11:40:47Z&se=2025-10-16T20:55:47Z&sv=2024-11-04&sr=c&sig=4n9LQS%2Ferr4FfSIvE0woIQyCXBUMvNQpyntZT8kjOWY%3D'
+const AZURE_SAS_TOKEN = 'sp=acw&st=2025-10-21T13:37:51Z&se=2025-10-21T21:52:51Z&sv=2024-11-04&sr=c&sig=en49kaCwSJapJKoyRUKX%2FRSlbXX%2F6vUQww2w984%2BRSg%3D'
 
 interface FerramentasPopUpCriarPost {
   isOpen: boolean

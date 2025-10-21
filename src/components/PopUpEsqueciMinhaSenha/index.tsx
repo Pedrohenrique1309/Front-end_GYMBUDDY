@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiX, FiCheck, FiMail, FiArrowLeft, FiKey, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import styled from 'styled-components'
@@ -19,14 +19,17 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
   const [sucesso, setSucesso] = useState<string | null>(null)
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
+  const [digitosCodigo, setDigitosCodigo] = useState(['', '', '', '', '', ''])
   const [novaSenha, setNovaSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [idUsuario, setIdUsuario] = useState<number | null>(null)
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const limparFormulario = () => {
     setEmail('')
     setCodigo('')
+    setDigitosCodigo(['', '', '', '', '', ''])
     setNovaSenha('')
     setConfirmarSenha('')
     setMostrarSenha(false)
@@ -75,6 +78,48 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
     }
   }
 
+  // Função para lidar com mudanças nos dígitos do código
+  const aoMudarDigito = (indice: number, valor: string) => {
+    // Permite apenas números
+    const novoValor = valor.replace(/\D/g, '')
+    
+    if (novoValor.length <= 1) {
+      const novosDigitos = [...digitosCodigo]
+      novosDigitos[indice] = novoValor
+      setDigitosCodigo(novosDigitos)
+      
+      // Atualizar o código completo
+      const codigoCompleto = novosDigitos.join('')
+      setCodigo(codigoCompleto)
+      
+      // Mover para o próximo input se um dígito foi inserido
+      if (novoValor && indice < 5) {
+        inputRefs.current[indice + 1]?.focus()
+      }
+    }
+  }
+  
+  // Função para lidar com teclas especiais
+  const aoTeclarDigito = (indice: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !digitosCodigo[indice] && indice > 0) {
+      // Se backspace e campo vazio, mover para o anterior
+      inputRefs.current[indice - 1]?.focus()
+    } else if (e.key === 'ArrowLeft' && indice > 0) {
+      inputRefs.current[indice - 1]?.focus()
+    } else if (e.key === 'ArrowRight' && indice < 5) {
+      inputRefs.current[indice + 1]?.focus()
+    }
+  }
+  
+  // Efeito para focar no primeiro input quando a etapa muda para código
+  useEffect(() => {
+    if (etapaAtual === 'codigo') {
+      setTimeout(() => {
+        inputRefs.current[0]?.focus()
+      }, 100)
+    }
+  }, [etapaAtual])
+
   const aoValidarCodigo = async (e: React.FormEvent) => {
     e.preventDefault()
     setEstaCarregando(true)
@@ -84,7 +129,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
       const resposta = await buscarUsuarioPorToken(codigo)
       
       if (resposta && resposta.recupercoes_senha && resposta.recupercoes_senha[0]) {
-        const usuario = resposta.recupercoes_senha[0].user?.[0]
+        const usuario = resposta.recupercoes_senha[0].user[0]
         if (usuario && usuario.id) {
           setIdUsuario(usuario.id)
           setSucesso('Código válido!')
@@ -230,17 +275,21 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
               Enviamos um código de 6 dígitos para <strong>{email}</strong>
             </DescricaoEtapa>
 
-            <GrupoCampo>
-              <Campo
-                type="text"
-                placeholder="Código de 6 dígitos"
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                required
-                style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '0.5rem' }}
-              />
-            </GrupoCampo>
+            <ContainerCodigo>
+              {digitosCodigo.map((digito, indice) => (
+                <InputCodigo
+                  key={indice}
+                  ref={(el) => (inputRefs.current[indice] = el)}
+                  type="text"
+                  value={digito}
+                  onChange={(e) => aoMudarDigito(indice, e.target.value)}
+                  onKeyDown={(e) => aoTeclarDigito(indice, e)}
+                  maxLength={1}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                />
+              ))}
+            </ContainerCodigo>
 
             {erro && (
               <MensagemErro
@@ -275,6 +324,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
               onClick={() => {
                 setEtapaAtual('email')
                 setCodigo('')
+                setDigitosCodigo(['', '', '', '', '', ''])
                 setErro(null)
               }}
               style={{ marginTop: '1.5rem', display: 'block', textAlign: 'center' }}
@@ -430,7 +480,7 @@ const FundoEscuro = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: var(--overlay-bg);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   z-index: 10100;
   display: flex;
@@ -446,14 +496,14 @@ const ContainerPopup = styled(motion.div)`
 
 const ConteudoPopup = styled.div`
   position: relative;
-  background: var(--bg-modal);
-  border: 1px solid var(--border-color);
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.6rem;
   padding: 3rem;
   width: 90vw;
   max-width: 42rem;
   margin: 0 auto;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 `
 
 const SecaoLogo = styled.div`
@@ -505,7 +555,7 @@ const TituloEtapa = styled.h1`
 `
 
 const DescricaoEtapa = styled.p`
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 1.4rem;
   text-align: center;
   margin-top: -1rem;
@@ -523,15 +573,15 @@ const GrupoCampo = styled.div`
 const Campo = styled.input`
   width: 100%;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.8rem;
   padding: 1.4rem 1.6rem;
-  color: var(--text-primary);
+  color: var(--white);
   font-size: 1.5rem;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: var(--text-tertiary);
+    color: rgba(255, 255, 255, 0.5);
   }
   
   &:focus {
@@ -564,7 +614,7 @@ const MensagemSucesso = styled(motion.div)`
 
 const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
-  color: var(--text-inverse);
+  color: var(--white);
   border: none;
   border-radius: 2.5rem;
   padding: 1.4rem 2rem;
@@ -595,7 +645,7 @@ const BotaoVoltar = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: var(--bg-hover);
+    background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
   }
 `
@@ -621,13 +671,60 @@ const BotaoMostrarSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: var(--text-tertiary);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
   
   &:hover {
     color: var(--white);
+  }
+`
+
+const ContainerCodigo = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem 0;
+`
+
+const InputCodigo = styled.input`
+  width: 5rem;
+  height: 5rem;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  color: var(--white);
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  transition: all 0.3s ease;
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.2);
+    transform: scale(1.05);
+  }
+  
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  
+  /* Remove spinner de número em alguns browsers */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  /* Firefox */
+  &[type=number] {
+    -moz-appearance: textfield;
   }
 `
 

@@ -122,7 +122,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
     <HeaderContainer $scrolled={scrolled} $isVisible={isVisible}>
       <div className="container">
         <Logo>
-          <LogoImage src={isDarkMode ? BRAND.logoSrc : BRAND.logoSrcLight} alt={BRAND.name} />
+          <LogoImage src={BRAND.logoSrc} alt={BRAND.name} />
         </Logo>
         
         <Nav>
@@ -460,11 +460,11 @@ const HeaderContainer = styled.header<{ $scrolled: boolean; $isVisible: boolean 
   transition: all 0.5s ease;
   background: ${({ $scrolled }) =>
     $scrolled
-      ? 'var(--bg-header)'
-      : 'linear-gradient(180deg, var(--bg-header) 0%, transparent 100%)'};
+      ? 'rgba(10, 10, 10, 0.7)'
+      : 'linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0) 100%)'};
   backdrop-filter: ${({ $scrolled }) => ($scrolled ? 'saturate(120%) blur(6px)' : 'none')};
-  border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid var(--border-light)' : '1px solid transparent')};
-  box-shadow: ${({ $scrolled }) => ($scrolled ? 'var(--shadow-lg)' : 'none')};
+  border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent')};
+  box-shadow: ${({ $scrolled }) => ($scrolled ? '0 4px 20px rgba(0,0,0,0.25)' : 'none')};
   
   opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
   transform: ${({ $isVisible }) => ($isVisible ? 'translateY(0)' : 'translateY(-100%)')};
@@ -484,7 +484,7 @@ const Logo = styled.div`
   gap: 1rem;
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--white);
   margin-left: 0;
   
   .icon {
@@ -526,7 +526,7 @@ const NavLink = styled(Link)`
   position: relative;
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--white);
   transition: all 0.3s ease;
   padding: 1rem 1.5rem;
   letter-spacing: 0.02em;

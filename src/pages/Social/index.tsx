@@ -16,8 +16,8 @@ const API_BASE_URL = '/api/v1/gymbuddy'
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: #1a1a1a;
+  color: white;
   position: relative;
 `
 
@@ -185,7 +185,7 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   
   svg {
     font-size: 24px;
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.9);
     filter: drop-shadow(0 2px 8px rgba(227, 6, 19, 0.3));
     transition: all 0.3s ease;
     transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
@@ -198,7 +198,7 @@ const Header = styled.header`
   left: 50px;
   right: 0;
   height: 70px;
-  background: var(--bg-header);
+  background: rgba(26, 26, 26, 0.95);
   backdrop-filter: blur(10px);
   display: flex;
   justify-content: space-between;
@@ -246,7 +246,7 @@ const SearchBar = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -254,7 +254,7 @@ const SearchBar = styled.div`
   transition: all 0.3s ease;
   
   &:focus-within {
-    background: var(--bg-hover);
+    background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.2);
   }
   
@@ -271,7 +271,7 @@ const SearchBar = styled.div`
     font-size: 1.5rem;
     
     &::placeholder {
-      color: var(--text-tertiary);
+      color: rgba(255, 255, 255, 0.4);
     }
     
     &:focus {
@@ -283,7 +283,7 @@ const SearchBar = styled.div`
 const SectionTitle = styled.h2`
   font-size: 1.8rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: rgba(255, 255, 255, 0.9);
 `
 
 const PostsGrid = styled.div`
@@ -293,11 +293,11 @@ const PostsGrid = styled.div`
 `
 
 const PostCard = styled.div`
-  background: var(--bg-card);
+  background: #2a2a2a;
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   
   &:hover {
     transform: translateY(-5px);
@@ -347,18 +347,18 @@ const UserAvatar = styled.div`
 const Username = styled.span`
   font-size: 1.4rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   transition: color 0.3s ease;
   
   &:hover {
-    color: var(--primary);
+    color: #E53935;
   }
 `
 
 const PostDescription = styled.p`
   font-size: 1.4rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.5;
   margin: 0.8rem 0;
 `
@@ -369,13 +369,13 @@ const PostHashtags = styled.div`
   gap: 0.5rem;
   
   span {
-    color: var(--primary);
+    color: #E53935;
     font-size: 1.2rem;
     cursor: pointer;
     transition: color 0.3s ease;
     
     &:hover {
-      color: var(--primary-dark);
+      color: #FF5722;
     }
   }
 `
@@ -423,7 +423,7 @@ const LikeButton = styled.button<{ $isLiked?: boolean }>`
   
   &:hover:not(:disabled) {
     background: rgba(227, 6, 19, 0.1);
-    color: var(--primary);
+    color: #E30613;
     transform: translateY(-2px);
     
     svg {
@@ -463,7 +463,7 @@ const CommentButton = styled.button`
   
   &:hover {
     background: rgba(74, 144, 226, 0.1);
-    color: var(--primary);
+    color: #4A90E2;
     transform: translateY(-2px);
     
     svg {
@@ -478,7 +478,7 @@ const CommentButton = styled.button`
 `
 
 const LikesCount = styled.span`
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 1.3rem;
   font-weight: 600;
   cursor: pointer;
@@ -488,13 +488,13 @@ const LikesCount = styled.span`
   
   &:hover {
     background: rgba(227, 6, 19, 0.1);
-    color: var(--primary);
+    color: #E30613;
     transform: scale(1.05);
   }
 `
 
 const CommentsCount = styled.span`
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 1.3rem;
   font-weight: 600;
 `
@@ -506,7 +506,7 @@ const LikesModalOverlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--overlay-bg);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(10px);
   z-index: 10000;
   display: flex;
@@ -565,8 +565,8 @@ const LikesModalHeader = styled.div`
     transition: all 0.2s ease;
     
     &:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
       transform: rotate(90deg);
     }
   }
@@ -660,7 +660,7 @@ const FriendsSidebar = styled.div`
 const FriendsSearch = styled.div`
   input {
     width: 100%;
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     padding: 1rem 1.5rem;
@@ -668,13 +668,13 @@ const FriendsSearch = styled.div`
     font-size: 1.4rem;
     
     &::placeholder {
-      color: var(--text-tertiary);
+      color: rgba(255, 255, 255, 0.4);
     }
     
     &:focus {
       outline: none;
       border-color: rgba(255, 255, 255, 0.2);
-      background: var(--bg-hover);
+      background: rgba(255, 255, 255, 0.12);
     }
   }
 `
@@ -702,7 +702,7 @@ const FriendItem = styled.div`
   align-items: flex-start;
   
   &:hover {
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.08);
     transform: translateY(-2px);
   }
 `
@@ -885,7 +885,7 @@ const ChatInput = styled.input`
   
   &:focus {
     border-color: rgba(229, 57, 53, 0.5);
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.08);
   }
 `
 
@@ -946,7 +946,7 @@ const AiMessage = styled.div`
   color: white;
   font-weight: 500;
   padding: 2rem;
-  background: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 `
