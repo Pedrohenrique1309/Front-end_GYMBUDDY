@@ -19,6 +19,21 @@ const PostFeed = ({ posts, setPosts, loadPosts, searchQuery = '' }: PostFeedProp
   const [newPostContent, setNewPostContent] = useState('')
   const [commentInputs, setCommentInputs] = useState<{[key: number]: string}>({})
 
+  // Função auxiliar para verificar se é vídeo baseado na extensão
+  const isVideoUrl = (url: string): boolean => {
+    if (!url) return false
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv', '.wmv', '.m4v', '.3gp']
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext))
+  }
+  
+  // Função para obter o tipo MIME correto do vídeo
+  const getVideoMimeType = (url: string): string => {
+    if (url.includes('.webm')) return 'video/webm'
+    if (url.includes('.mov')) return 'video/quicktime'
+    if (url.includes('.avi')) return 'video/x-msvideo'
+    return 'video/mp4'
+  }
+
   const handleLike = async (postId: number) => {
     try {
       await fetch(`${API_BASE_URL}/curtida`, {
@@ -159,7 +174,37 @@ const PostFeed = ({ posts, setPosts, loadPosts, searchQuery = '' }: PostFeedProp
             </PostHeader>
             
             {post.imagem && (
-              <PostImage src={post.imagem} alt="Post" />
+              isVideoUrl(post.imagem) ? (
+                <PostVideo 
+                  controls 
+                  loop
+                  playsInline
+                  preload="auto"
+                  onError={(e) => {
+                    console.error('Erro ao carregar vídeo:', post.imagem)
+                    // Ocultar vídeo se falhar ao carregar
+                    const videoElement = e.currentTarget as HTMLVideoElement
+                    videoElement.style.display = 'none'
+                  }}
+                  onLoadStart={() => console.log('Carregando vídeo:', post.imagem)}
+                  onCanPlay={() => console.log('Vídeo pronto para reproduzir:', post.imagem)}
+                >
+                  <source src={post.imagem} type={getVideoMimeType(post.imagem)} />
+                  <source src={post.imagem} type="video/mp4" />
+                  Seu navegador não suporta a tag de vídeo.
+                </PostVideo>
+              ) : (
+                <PostImage 
+                  src={post.imagem} 
+                  alt="Post"
+                  onError={(e) => {
+                    console.error('Erro ao carregar imagem:', post.imagem)
+                    // Ocultar imagem se falhar ao carregar
+                    const imgElement = e.currentTarget as HTMLImageElement
+                    imgElement.style.display = 'none'
+                  }}
+                />
+              )
             )}
             
             <PostContent>{post.conteudo}</PostContent>
@@ -358,6 +403,19 @@ const PostImage = styled.img`
   width: 100%;
   height: 20rem;
   object-fit: cover;
+`
+
+const PostVideo = styled.video`
+  width: 100%;
+  max-height: 40rem;
+  min-height: 20rem;
+  object-fit: contain;
+  background: #000;
+  border-radius: 0;
+  
+  &:focus {
+    outline: none;
+  }
 `
 
 const PostContent = styled.p`

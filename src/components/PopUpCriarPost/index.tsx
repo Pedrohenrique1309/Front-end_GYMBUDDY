@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin } from 'react-icons/fi'
+import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin, FiMusic, FiSearch } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import ImageEditor from '../ImageEditor'
@@ -42,21 +42,31 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
   const [conteudo, setConteudo] = useState('')
   const [imagem, setImagem] = useState<string>('')
   const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null)
+  const [tipoArquivo, setTipoArquivo] = useState<'imagem' | 'video' | null>(null)
   const [entradaHashtag, setEntradaHashtag] = useState<string>('')
   const [chipsHashtag, setChipsHashtag] = useState<string[]>([])
   const [localizacao, setLocalizacao] = useState('Academia Iron Gym - São Paulo')
   const [enviando, setEnviando] = useState(false)
   const [progressoUpload, setProgressoUpload] = useState(0)
   const [mostrarEditorImagem, setMostrarEditorImagem] = useState(false)
+  
+  // Estados para música do Deezer
+  const [buscaMusica, setBuscaMusica] = useState('')
+  const [resultadosMusica, setResultadosMusica] = useState<any[]>([])
+  const [musicaSelecionada, setMusicaSelecionada] = useState<any>(null)
+  const [mostrarBuscaMusica, setMostrarBuscaMusica] = useState(false)
+  const [carregandoMusicas, setCarregandoMusicas] = useState(false)
 
   // Função de configuração do upload 
   const getUploadParams = (file: File) => {
+    // Obter extensão do arquivo
+    const fileExtension = file.name.split('.').pop() || 'jpg'
     return {
       file,
       storageAccount: AZURE_STORAGE_ACCOUNT,
       sasToken: AZURE_SAS_TOKEN,
       containerName: AZURE_CONTAINER,
-      fileName: `post_${user?.id}_${new Date().getTime()}.jpg`
+      fileName: `post_${user?.id}_${new Date().getTime()}.${fileExtension}`
     }
   }
 
@@ -65,18 +75,35 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // verificar tamanho do arquivo (máx 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Imagem muito grande! Máximo 5MB permitido.')
+      // Verificar tipo de arquivo
+      const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/jfif']
+      const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm', 'video/x-matroska', 'video/x-flv']
+      
+      const isImage = allowedImageTypes.includes(file.type)
+      const isVideo = allowedVideoTypes.includes(file.type)
+      
+      console.log('📎 Arquivo selecionado:', {
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        isImage,
+        isVideo
+      })
+      
+      if (!isImage && !isVideo) {
+        alert('Tipo de arquivo não suportado! Use JPG, PNG, WebP para imagens ou MP4, MOV, AVI, WebM para vídeos.')
         return
       }
       
-      // Verificar tipo de arquivo
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/jfif']
-      if (!allowedTypes.includes(file.type)) {
-        alert('Tipo de arquivo não suportado! Use JPG, PNG, JFIF ou WebP.')
+      // Verificar tamanho do arquivo (máx 50MB para vídeos, 5MB para imagens)
+      const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024
+      if (file.size > maxSize) {
+        alert(`Arquivo muito grande! Máximo ${isVideo ? '50MB' : '5MB'} permitido.`)
         return
       }
+      
+      // Definir tipo do arquivo
+      setTipoArquivo(isVideo ? 'video' : 'imagem')
       
       // Armazenar arquivo original para upload
       setArquivoSelecionado(file)
@@ -90,24 +117,27 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     }
   }
 
-  // Função para fazer upload da imagem para Azure (usando configurações corretas)
-  const uploadImageToAzure = async (file: File): Promise<string> => {
+  // Função para fazer upload de mídia (imagem ou vídeo) para Azure
+  const uploadMediaToAzure = async (file: File): Promise<string> => {
     const uploadParams = getUploadParams(file)
     const blobUrl = `${AZURE_STORAGE_URL}/${uploadParams.containerName}/${uploadParams.fileName}?${uploadParams.sasToken}`
     
     try {
-      console.log('Enviando imagem para Azure Storage')
+      const mediaType = file.type.startsWith('video/') ? 'vídeo' : 'imagem'
+      console.log(`Enviando ${mediaType} para Azure Storage`)
       console.log('Configurações:', {
         storageAccount: uploadParams.storageAccount,
         container: uploadParams.containerName,
-        fileName: uploadParams.fileName
+        fileName: uploadParams.fileName,
+        fileType: file.type,
+        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`
       })
       
       const response = await fetch(blobUrl, {
         method: 'PUT',
         headers: {
           'x-ms-blob-type': 'BlockBlob',
-          'Content-Type': file.type || 'image/jpeg',
+          'Content-Type': file.type,
         },
         body: file,
       })
@@ -118,9 +148,9 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
         throw new Error(`Erro ao fazer upload: ${response.status} - ${errorText}`)
       }
       
-      // Retornar URL pública da imagem (sem o SAS token)
+      // Retornar URL pública da mídia (sem o SAS token)
       const publicUrl = `${AZURE_STORAGE_URL}/${uploadParams.containerName}/${uploadParams.fileName}`
-      console.log('Imagem enviada para Azure:', publicUrl)
+      console.log(`${mediaType} enviado para Azure:`, publicUrl)
       return publicUrl
       
     } catch (error) {
@@ -156,6 +186,60 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
 
   const removerChipHashtag = (tagParaRemover: string) => {
     setChipsHashtag(prev => prev.filter(tag => tag !== tagParaRemover))
+  }
+
+  // Função para buscar músicas no Deezer
+  const buscarMusicasDeezer = async (query: string) => {
+    setCarregandoMusicas(true)
+    try {
+      let url: string
+      
+      if (!query.trim()) {
+        // Se não há busca, mostrar top charts
+        url = 'https://api.deezer.com/chart'
+        console.log('🎵 Carregando top charts do Deezer...')
+      } else {
+        // Se há busca, usar search
+        url = `https://api.deezer.com/search?q=${encodeURIComponent(query)}`
+        console.log('🎵 Buscando músicas:', query)
+      }
+      
+      const response = await fetch(url)
+      const data = await response.json()
+      
+      // Chart retorna {tracks: {data: [...]}} e search retorna {data: [...]}
+      const musicas = data.tracks?.data || data.data || []
+      console.log('🎵 Músicas encontradas:', musicas.length)
+      setResultadosMusica(musicas)
+    } catch (error) {
+      console.error('Erro ao buscar músicas:', error)
+      setResultadosMusica([])
+    } finally {
+      setCarregandoMusicas(false)
+    }
+  }
+
+  // Carregar músicas quando abrir o modal
+  useEffect(() => {
+    if (!mostrarBuscaMusica) return
+    
+    const timer = setTimeout(() => {
+      buscarMusicasDeezer(buscaMusica)
+    }, 500)
+    
+    return () => clearTimeout(timer)
+  }, [buscaMusica, mostrarBuscaMusica])
+
+  const selecionarMusica = (musica: any) => {
+    setMusicaSelecionada(musica)
+    setMostrarBuscaMusica(false)
+    setBuscaMusica('')
+    setResultadosMusica([])
+    console.log('🎵 Música selecionada:', musica.title, '-', musica.artist.name)
+  }
+
+  const removerMusica = () => {
+    setMusicaSelecionada(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -194,19 +278,20 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       
       let imageUrl: string = ''
       
-      // Se há uma imagem selecionada, fazer upload para o Azure
+      // Se há uma imagem/vídeo selecionado, fazer upload para o Azure
       if (arquivoSelecionado) {
-        console.log('🇺️ Fazendo upload da imagem para Azure...')
+        const mediaType = tipoArquivo === 'video' ? 'vídeo' : 'imagem'
+        console.log(`🇺️ Fazendo upload ${mediaType} para Azure...`)
         setProgressoUpload(50)
         
         try {
-          imageUrl = await uploadImageToAzure(arquivoSelecionado)
+          imageUrl = await uploadMediaToAzure(arquivoSelecionado)
           setProgressoUpload(100)
-          console.log('✅ Imagem enviada para Azure:', imageUrl)
+          console.log(`✅ ${mediaType} enviado para Azure:`, imageUrl)
         } catch (error) {
-          console.error('❌ Erro ao enviar imagem para Azure:', error)
-          // Continuar sem imagem em caso de erro no Azure
-          console.log('⚠️ Continuando sem imagem...')
+          console.error(`❌ Erro ao enviar ${mediaType} para Azure:`, error)
+          // Continuar sem mídia em caso de erro no Azure
+          console.log(`⚠️ Continuando sem ${mediaType}...`)
           imageUrl = ''
         }
       }
@@ -270,6 +355,20 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
         id_user: Number(user?.id || userId) // ID real do usuário logado
       }
       
+      // Adicionar música se selecionada
+      if (musicaSelecionada) {
+        backendPayload.musica = JSON.stringify({
+          id: musicaSelecionada.id,
+          titulo: musicaSelecionada.title,
+          artista: musicaSelecionada.artist.name,
+          album: musicaSelecionada.album.title,
+          capa: musicaSelecionada.album.cover_medium,
+          preview: musicaSelecionada.preview,
+          duracao: musicaSelecionada.duration
+        })
+        console.log('🎵 Música adicionada ao post:', musicaSelecionada.title)
+      }
+      
       console.log('✅ Enviando dados reais do usuário!')
       
       console.log('🎯 Payload detalhado:')
@@ -303,9 +402,14 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       setConteudo('')
       setImagem('')
       setArquivoSelecionado(null)
+      setTipoArquivo(null)
       setEntradaHashtag('')
       setChipsHashtag([])
       setProgressoUpload(0)
+      setMusicaSelecionada(null)
+      setBuscaMusica('')
+      setResultadosMusica([])
+      setMostrarBuscaMusica(false)
       
       // Chamar callback para recarregar posts
       if (onPostCreated) {
@@ -329,9 +433,14 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setConteudo('')
     setImagem('')
     setArquivoSelecionado(null)
+    setTipoArquivo(null)
     setEntradaHashtag('')
     setChipsHashtag([])
     setProgressoUpload(0)
+    setMusicaSelecionada(null)
+    setBuscaMusica('')
+    setResultadosMusica([])
+    setMostrarBuscaMusica(false)
     onClose()
   }
 
@@ -409,30 +518,54 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
 
             {imagem && (
               <ImagePreview>
-                <img src={imagem} alt="Preview do post" />
+                {tipoArquivo === 'video' ? (
+                  <video 
+                    src={imagem} 
+                    controls 
+                    loop
+                    playsInline
+                    preload="auto"
+                    onError={(e) => console.error('Erro ao carregar preview do vídeo:', e)}
+                    onLoadStart={() => console.log('Carregando preview do vídeo')}
+                    onCanPlay={() => console.log('Preview do vídeo pronto')}
+                    style={{ 
+                      width: '100%', 
+                      maxHeight: '30rem', 
+                      minHeight: '20rem',
+                      borderRadius: '1rem', 
+                      background: '#000',
+                      objectFit: 'contain'
+                    }} 
+                  />
+                ) : (
+                  <img src={imagem} alt="Preview do post" />
+                )}
                 {progressoUpload > 0 && progressoUpload < 100 && (
                   <UploadProgress>
                     {progressoUpload}%
                   </UploadProgress>
                 )}
                 <ImageActions>
-                  <EditImageButton
-                    type="button"
-                    onClick={() => setMostrarEditorImagem(true)}
-                    disabled={enviando}
-                    title="Editar imagem"
-                  >
-                    <FiEdit3 />
-                  </EditImageButton>
+                  {tipoArquivo === 'imagem' && (
+                    <EditImageButton
+                      type="button"
+                      onClick={() => setMostrarEditorImagem(true)}
+                      disabled={enviando}
+                      title="Editar imagem"
+                    >
+                      <FiEdit3 />
+                    </EditImageButton>
+                  )}
                   <RemoveImageButton
                     type="button"
                     onClick={() => {
                       setImagem('')
                       setArquivoSelecionado(null)
+                      setTipoArquivo(null)
                       setProgressoUpload(0)
                     }}
                     disabled={enviando}
-                    title="Remover imagem"
+                    title={tipoArquivo === 'video' ? 'Remover vídeo' : 'Remover imagem'}
                   >
                     <FiX />
                   </RemoveImageButton>
@@ -474,11 +607,88 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
               </HashtagInputContainer>
             </HashtagSection>
 
+            {/* Seção de Música */}
+            <MusicSection>
+              {musicaSelecionada ? (
+                <SelectedMusic>
+                  <MusicInfo>
+                    <MusicCover src={musicaSelecionada.album.cover_small} alt={musicaSelecionada.album.title} />
+                    <MusicDetails>
+                      <MusicTitle>{musicaSelecionada.title}</MusicTitle>
+                      <MusicArtist>{musicaSelecionada.artist.name}</MusicArtist>
+                    </MusicDetails>
+                  </MusicInfo>
+                  <RemoveMusicButton
+                    type="button"
+                    onClick={removerMusica}
+                    disabled={enviando}
+                  >
+                    <FiX />
+                  </RemoveMusicButton>
+                </SelectedMusic>
+              ) : (
+                <MusicSearchButton
+                  type="button"
+                  onClick={() => setMostrarBuscaMusica(!mostrarBuscaMusica)}
+                  disabled={enviando}
+                >
+                  <FiMusic />
+                  {mostrarBuscaMusica ? 'Fechar busca' : 'Adicionar música'}
+                </MusicSearchButton>
+              )}
+
+              {/* Modal de busca de música */}
+              {mostrarBuscaMusica && !musicaSelecionada && (
+                <MusicSearchModal>
+                  <MusicSearchInput>
+                    <FiSearch />
+                    <input
+                      type="text"
+                      value={buscaMusica}
+                      onChange={(e) => setBuscaMusica(e.target.value)}
+                      placeholder="Buscar música no Deezer..."
+                      autoFocus
+                    />
+                  </MusicSearchInput>
+
+                  {carregandoMusicas && (
+                    <LoadingMusic>
+                      <Spinner />
+                      Buscando músicas...
+                    </LoadingMusic>
+                  )}
+
+                  {!carregandoMusicas && resultadosMusica.length > 0 && (
+                    <MusicResults>
+                      {resultadosMusica.slice(0, 10).map((musica) => (
+                        <MusicResultItem
+                          key={musica.id}
+                          onClick={() => selecionarMusica(musica)}
+                        >
+                          <img src={musica.album.cover_small} alt={musica.album.title} />
+                          <div>
+                            <strong>{musica.title}</strong>
+                            <span>{musica.artist.name}</span>
+                          </div>
+                        </MusicResultItem>
+                      ))}
+                    </MusicResults>
+                  )}
+
+                  {!carregandoMusicas && resultadosMusica.length === 0 && (
+                    <NoResults>
+                      {buscaMusica.trim() ? 'Nenhuma música encontrada' : 'Não foi possível carregar as músicas'}
+                    </NoResults>
+                  )}
+                </MusicSearchModal>
+              )}
+            </MusicSection>
+
             <ActionButtons>
               <ImageUploadButton type="button" disabled={enviando}>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleImageUpload}
                   style={{ display: 'none' }}
                   id="image-upload"
@@ -486,7 +696,7 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
                 />
                 <label htmlFor="image-upload">
                   <FiImage />
-                  Adicionar foto
+                  Adicionar foto/vídeo
                 </label>
               </ImageUploadButton>
 
@@ -1122,6 +1332,272 @@ const ProgressText = styled.span`
   color: white;
   font-size: 1.4rem;
   font-weight: 600;
+`
+
+// Styled Components para Música do Deezer
+const MusicSection = styled.div`
+  position: relative;
+  margin-bottom: 2rem;
+`
+
+const MusicSearchButton = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.2rem;
+  padding: 1.2rem 2rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  svg {
+    font-size: 1.8rem;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(229, 57, 53, 0.3);
+    color: var(--white);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`
+
+const SelectedMusic = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(229, 57, 53, 0.3);
+  border-radius: 1.2rem;
+  padding: 1.2rem;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(229, 57, 53, 0.5);
+  }
+`
+
+const MusicInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex: 1;
+`
+
+const MusicCover = styled.img`
+  width: 5rem;
+  height: 5rem;
+  border-radius: 0.8rem;
+  object-fit: cover;
+  border: 2px solid rgba(229, 57, 53, 0.3);
+`
+
+const MusicDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+`
+
+const MusicTitle = styled.strong`
+  color: var(--white);
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`
+
+const MusicArtist = styled.span`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`
+
+const RemoveMusicButton = styled.button`
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(229, 57, 53, 0.2);
+  border: 2px solid rgba(229, 57, 53, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  svg {
+    font-size: 1.8rem;
+    color: #E53935;
+  }
+  
+  &:hover {
+    background: rgba(229, 57, 53, 0.4);
+    border-color: rgba(229, 57, 53, 0.5);
+    transform: scale(1.1);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`
+
+const MusicSearchModal = styled.div`
+  position: absolute;
+  top: calc(100% + 1rem);
+  left: 0;
+  right: 0;
+  background: rgba(26, 26, 26, 0.98);
+  backdrop-filter: blur(25px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  max-height: 40rem;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.5),
+    0 5px 15px rgba(229, 57, 53, 0.1);
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #E53935, #FF5722);
+    border-radius: 3px;
+  }
+`
+
+const MusicSearchInput = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+  
+  svg {
+    color: rgba(229, 57, 53, 0.7);
+    font-size: 1.8rem;
+  }
+  
+  input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--white);
+    font-size: 1.4rem;
+    outline: none;
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+  
+  &:focus-within {
+    border-color: rgba(229, 57, 53, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+  }
+`
+
+const LoadingMusic = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.4rem;
+`
+
+const MusicResults = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+`
+
+const MusicResultItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  img {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 0.6rem;
+    object-fit: cover;
+  }
+  
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+    
+    strong {
+      color: var(--white);
+      font-size: 1.4rem;
+      font-weight: 600;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    span {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1.2rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(229, 57, 53, 0.3);
+    transform: translateX(0.5rem);
+  }
+`
+
+const NoResults = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.4rem;
 `
 
 export default PopupCriarPost
