@@ -1072,18 +1072,149 @@ const Social = () => {
   const [postLikes, setPostLikes] = useState<{ [postId: number]: { count: number, liked: boolean } }>({})
   const [hoveredLikes, setHoveredLikes] = useState<{ [postId: number]: LikeUser[] }>({})
   const [showLikesModal, setShowLikesModal] = useState<{ postId: number, users: LikeUser[] } | null>(null)
+  const [likingPosts, setLikingPosts] = useState<{ [postId: number]: boolean }>({})
 
   useEffect(() => {
     loadUsers()
     loadPosts()
   }, [])
 
-  // Carregar estados de curtidas e contadores
+  // Estado para prevenir múltiplas chamadas simultâneas
+  const [isLoadingLikes, setIsLoadingLikes] = useState(false)
+
+  // Função melhorada para carregar curtidas com logs detalhados
+  const loadLikesAndCounts = async () => {
+    if (!user?.id || posts.length === 0) {
+      console.log('⚠️ Não é possível carregar curtidas - usuário ou posts ausentes')
+      return
+    }
+
+    if (isLoadingLikes) {
+      console.log('⚠️ Carregamento de curtidas já em andamento - pulando')
+      return
+    }
+
+    setIsLoadingLikes(true)
+    try {
+      console.log('🔄 Carregando curtidas para', posts.length, 'posts...')
+      
+      const likesPromises = posts.map(async (post) => {
+        try {
+          const [likesCount, userLiked] = await Promise.all([
+            curtidaService.contarCurtidasPost(post.id),
+            curtidaService.verificarCurtidaPost(Number(user.id), post.id)
+          ])
+          
+          console.log(`📊 Post ${post.id}: ${likesCount} curtidas (backend tinha: ${post.likes}), usuário curtiu: ${userLiked}`)
+          
+          return {
+            postId: post.id,
+            count: likesCount,
+            liked: userLiked
+          }
+        } catch (error) {
+          console.error(`💥 Erro ao carregar dados do post ${post.id}:`, error)
+          return {
+            postId: post.id,
+            count: post.likes || 0, // Fallback para valor atual
+            liked: false
+          }
+        }
+      })
+
+      const likesData = await Promise.all(likesPromises)
+      
+      // Atualizar estado das curtidas
+      const likesState: { [postId: number]: { count: number, liked: boolean } } = {}
+      likesData.forEach(({ postId, count, liked }) => {
+        likesState[postId] = { count, liked }
+      })
+      
+      setPostLikes(likesState)
+      
+      // CRUCIAL: Atualizar também os posts com os contadores corretos
+      setPosts(prev => prev.map(post => {
+        const likeData = likesState[post.id]
+        if (likeData) {
+          return { ...post, likes: likeData.count }
+        }
+        return post
+      }))
+      
+      setFilteredPosts(prev => prev.map(post => {
+        const likeData = likesState[post.id]
+        if (likeData) {
+          return { ...post, likes: likeData.count }
+        }
+        return post
+      }))
+      
+      console.log('✅ Curtidas carregadas e posts atualizados:')
+      likesData.forEach(({ postId, count }) => {
+        console.log(`  - Post ${postId}: ${count} curtidas`)
+      })
+      
+    } catch (error) {
+      console.error('💥 Erro geral ao carregar curtidas:', error)
+    } finally {
+      setIsLoadingLikes(false)
+    }
+  }
+
+  // Função para sincronizar contador de curtidas de uma publicação específica
+  const syncPostLikeCount = async (postId: number) => {
+    try {
+      console.log(`🔄 Sincronizando contador de curtidas para post ${postId}...`)
+      
+      // Buscar contagem real de curtidas
+      const realCount = await curtidaService.contarCurtidasPost(postId)
+      console.log(`📊 Contagem real de curtidas para post ${postId}:`, realCount)
+      
+      // Atualizar posts com a contagem correta
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes: realCount }
+          : post
+      ))
+      
+      setFilteredPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes: realCount }
+          : post
+      ))
+      
+      // Atualizar estado de curtidas também
+      if (user?.id) {
+        const userLiked = await curtidaService.verificarCurtidaPost(user.id, postId)
+        setPostLikes(prev => ({
+          ...prev,
+          [postId]: {
+            count: realCount,
+            liked: userLiked
+          }
+        }))
+      }
+      
+      console.log(`✅ Post ${postId} sincronizado - curtidas: ${realCount}`)
+    } catch (error) {
+      console.error('💥 Erro ao sincronizar contador:', error)
+    }
+  }
+
+  // Função para forçar reload das curtidas em caso de inconsistência
+  const forceReloadLikes = async () => {
+    console.log('🔄 Forçando reload das curtidas devido a inconsistência...')
+    if (user?.id && posts.length > 0) {
+      await loadLikesAndCounts()
+    }
+  }
+
+  // Carregar estados de curtidas e contadores - apenas quando posts mudam de tamanho ou usuário muda
   useEffect(() => {
     if (user?.id && posts.length > 0) {
       loadLikesAndCounts()
     }
-  }, [user, posts])
+  }, [user?.id, posts.length]) // Usar apenas user.id e posts.length para evitar loop
 
   useEffect(() => {
     filterPosts()
@@ -1098,7 +1229,13 @@ const Social = () => {
   // Enriquecer posts com dados completos dos usuários
   const enriquecerPostsComUsuarios = async (posts: any[]): Promise<Post[]> => {
     console.log('🔄 Iniciando enriquecimento de posts com dados dos usuários...')
-    console.log('📋 Posts para enriquecer:', posts.map(p => `Post ${p.id}: user ${p.id_user}`))
+    console.log('📋 Posts para enriquecer:', posts.length, 'posts')
+    console.log('📄 Detalhes dos posts:', posts.map(p => ({
+      id: p.id, 
+      id_user: p.id_user, 
+      username_atual: p.user?.username,
+      avatar_atual: p.user?.avatar ? 'tem' : 'não tem'
+    })))
     
     // Primeiro, buscar TODOS os usuários da API de uma vez
     let todosUsuarios: any[] = []
@@ -1108,8 +1245,13 @@ const Social = () => {
       if (usersResponse.ok) {
         const usersData = await usersResponse.json()
         todosUsuarios = usersData.usuarios || usersData || []
-        console.log('✅ Usuários carregados:', todosUsuarios.length)
-        console.log('👥 IDs dos usuários:', todosUsuarios.map(u => `${u.id}: ${u.nome}`))
+        console.log('✅ Usuários carregados da API:', todosUsuarios.length)
+        console.log('👥 Primeiros 5 usuários:', todosUsuarios.slice(0, 5).map(u => ({
+          id: u.id,
+          nome: u.nome,
+          nickname: u.nickname,
+          foto: u.foto ? 'tem foto' : 'sem foto'
+        })))
       }
     } catch (error) {
       console.error('❌ Erro ao buscar lista de usuários:', error)
@@ -1130,10 +1272,26 @@ const Social = () => {
           }
           
           console.log(`🔍 Post ${post.id}: buscando dados do usuário ID ${userId}`)
+          console.log(`📄 Post ${post.id} dados atuais:`, {
+            user_atual: post.user,
+            id_user: post.id_user
+          })
           
           if (!userId) {
-            console.warn(`⚠️ Post ${post.id}: ID do usuário não encontrado`)
-            return post
+            console.warn(`⚠️ Post ${post.id}: ID do usuário não encontrado, mantendo dados originais`)
+            console.warn(`📄 Dados originais do post ${post.id}:`, {
+              id: post.id,
+              user: post.user,
+              id_user_original: post.id_user
+            })
+            // Se não tem ID do usuário, manter os dados originais
+            return {
+              ...post,
+              user: {
+                username: post.user?.username || 'Usuário Anônimo',
+                avatar: post.user?.avatar || ''
+              }
+            }
           }
           
           // Primeiro tentar encontrar na lista de todos os usuários
@@ -1155,26 +1313,36 @@ const Social = () => {
           }
           
           if (userData) {
-            console.log(`📝 Dados do usuário ${userId}:`, {
+            console.log(`📝 Dados do usuário ${userId} encontrados:`, {
               id: userData.id,
               nome: userData.nome,
               nickname: userData.nickname,
               foto: userData.foto ? 'tem foto' : 'sem foto'
             })
             
+            // CORREÇÃO: Garantir que userData.usuario seja considerado também
+            const dadosUsuario = userData.usuario || userData
+            
             // Priorizar nome completo sobre nickname
-            const nomeExibir = userData.nome || userData.nickname || `Usuário ${userId}`
-            const foto = userData.foto || ''
+            const nomeExibir = dadosUsuario.nome || dadosUsuario.nickname || `Usuário ${userId}`
+            const foto = dadosUsuario.foto || ''
             
-            console.log(`✅ Post ${post.id}: nome definido como "${nomeExibir}", foto: ${foto ? 'sim' : 'não'}`)
-            
-            return {
+            const postAtualizado = {
               ...post,
               user: {
                 username: nomeExibir,
                 avatar: foto
               }
             }
+            
+            console.log(`✅ Post ${post.id} atualizado:`, {
+              nome_exibir: nomeExibir,
+              foto: foto ? 'sim' : 'não',
+              username_final: postAtualizado.user.username,
+              avatar_final: postAtualizado.user.avatar ? 'tem' : 'não tem'
+            })
+            
+            return postAtualizado
           }
           
           // Fallback se não encontrar o usuário
@@ -1182,8 +1350,8 @@ const Social = () => {
           return {
             ...post,
             user: {
-              username: `Usuário ${userId}`,
-              avatar: ''
+              username: post.user?.username || `Usuário ${userId}`,
+              avatar: post.user?.avatar || ''
             }
           }
         } catch (error) {
@@ -1252,33 +1420,44 @@ const Social = () => {
         
         if (postsArray) {
           console.log('✅ Posts carregados da API:', postsArray.length, 'posts')
+          console.log('🔍 ESTRUTURA COMPLETA DO PRIMEIRO POST DA API:', JSON.stringify(postsArray[0], null, 2))
+          console.log('📊 Campos disponíveis no primeiro post:', Object.keys(postsArray[0] || {}))
           
           // Mapear dados das publicações
-          const apiPosts = postsArray.map((pub: any) => {
+          const apiPosts = postsArray.map((pub: any, index: number) => {
             // Extrair hashtags da descrição
             const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
             const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
             
-            console.log(`📝 Post ${pub.id}:`, {
-              usuario: pub.usuario?.nickname || pub.usuario?.nome,
+            // Extrair ID do usuário de várias possíveis estruturas
+            // CORREÇÃO: Priorizar id_user do post sobre usuario?.id
+            const userId = pub.id_user || pub.id_usuario || pub.user_id || pub.idUser || pub.userID || pub.usuario?.id
+            
+            console.log(`📝 Post ${index + 1} (ID: ${pub.id}):`, {
+              estrutura_pub: Object.keys(pub),
+              id_user_original: pub.id_user,
+              id_usuario: pub.id_usuario,
+              usuario_objeto: pub.usuario,
+              userId_extraído: userId,
+              usuario_nome: pub.usuario?.nickname || pub.usuario?.nome,
               imagem: pub.imagem ? '✅ Tem' : '❌ Sem',
-              descricao: pub.descricao,
+              descricao: pub.descricao?.substring(0, 50) + '...',
               hashtags: uniqueHashtags.length
             })
             
             return {
               id: pub.id,
-              id_user: pub.id_user, // Preservar ID do usuário para enriquecimento
+              id_user: userId, // ID do usuário extraído de várias possíveis estruturas
               user: {
                 // SEMPRE usar fallback genérico para ser substituído pelo enriquecimento
-                username: `@user${pub.id_user}`,
-                avatar: ''
+                username: pub.usuario?.nome || pub.usuario?.nickname || (userId ? `Usuário ${userId}` : 'Usuário Desconhecido'),
+                avatar: pub.usuario?.foto || ''
               },
               image: pub.imagem || '', 
               description: pub.descricao || '', 
               hashtags: uniqueHashtags,
-              likes: pub.curtidas || 0,
-              comments: pub.comentarios || 0,
+              likes: pub.curtidas_count || pub.curtidas || 0,
+              comments: pub.comentarios_count || pub.comentarios || 0,
               location: pub.localizacao || '',
               date: pub.data || pub.data_publicacao || ''
             }
@@ -1289,8 +1468,19 @@ const Social = () => {
           // Enriquecer posts com dados dos usuários
           console.log('🚀 Iniciando enriquecimento dos posts...')
           const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
-          console.log('✅ Posts enriquecidos:', postsEnriquecidos.map(p => `${p.id}: ${p.user.username}`))
+          console.log('✅ Posts enriquecidos (Resultado Final):', postsEnriquecidos.map(p => ({
+            id: p.id, 
+            username: p.user.username,
+            avatar: p.user.avatar ? 'tem avatar' : 'sem avatar'
+          })))
+          console.log('🎯 Verificação de userundefined:', postsEnriquecidos.filter(p => 
+            !p.user?.username || p.user.username.includes('undefined')
+          ).map(p => `Post ${p.id}: ${p.user?.username || 'UNDEFINED'}`))
           setPosts(postsEnriquecidos)
+          
+          // Forçar carregamento das curtidas após carregar posts
+          console.log('✅ Posts carregados - curtidas serão carregadas via useEffect')
+          
           return
         } else {
           console.log('❌ Nenhuma estrutura de posts válida encontrada na resposta da API')
@@ -1307,23 +1497,38 @@ const Social = () => {
         
         if (feedData?.view && Array.isArray(feedData.view)) {
           console.log('✅ Posts carregados do feed:', feedData.view.length, 'posts')
+          console.log('🔍 ESTRUTURA COMPLETA DO PRIMEIRO POST DO FEED:', JSON.stringify(feedData.view[0], null, 2))
+          console.log('📊 Campos disponíveis no primeiro post do feed:', Object.keys(feedData.view[0] || {}))
           
-          const apiPosts = feedData.view.map((pub: any) => {
+          const apiPosts = feedData.view.map((pub: any, index: number) => {
             const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
             const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
             
+            // Extrair ID do usuário de várias possíveis estruturas
+            // CORREÇÃO: Priorizar id_user do post sobre usuario?.id
+            const userId = pub.id_user || pub.id_usuario || pub.user_id || pub.idUser || pub.userID || pub.usuario?.id
+            
+            console.log(`📝 Post do Feed ${index + 1} (ID: ${pub.id_publicacao}):`, {
+              estrutura_pub: Object.keys(pub),
+              id_user_original: pub.id_user,
+              id_usuario: pub.id_usuario,
+              usuario_objeto: pub.usuario,
+              userId_extraído: userId,
+              usuario_nome: pub.usuario?.nickname || pub.usuario?.nome
+            })
+            
             return {
               id: pub.id_publicacao,
-              id_user: pub.id_user, // Preservar ID do usuário para enriquecimento
+              id_user: userId, // ID do usuário extraído de várias possíveis estruturas
               user: {
                 // SEMPRE usar fallback genérico para ser substituído pelo enriquecimento
-                username: `@user${pub.id_user}`,
-                avatar: ''
+                username: pub.usuario?.nome || pub.usuario?.nickname || (userId ? `Usuário ${userId}` : 'Usuário Desconhecido'),
+                avatar: pub.usuario?.foto || ''
               },
               image: pub.imagem || '', 
               description: pub.descricao || '', 
               hashtags: uniqueHashtags,
-              likes: pub.curtidas_count || 0,
+              likes: 0, // Será atualizado pela função loadLikesAndCounts()
               comments: pub.comentarios_count || 0,
               location: pub.localizacao || '',
               date: pub.data_publicacao || ''
@@ -1334,75 +1539,32 @@ const Social = () => {
           
           // Enriquecer posts com dados dos usuários
           const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
-          console.log('✅ Posts enriquecidos do feed:', postsEnriquecidos.map(p => `${p.id}: ${p.user.username}`))
+          console.log('✅ Posts enriquecidos do feed (Resultado Final):', postsEnriquecidos.map(p => ({
+            id: p.id, 
+            username: p.user.username,
+            avatar: p.user.avatar ? 'tem avatar' : 'sem avatar'
+          })))
+          console.log('🎯 Verificação de userundefined no feed:', postsEnriquecidos.filter(p => 
+            !p.user?.username || p.user.username.includes('undefined')
+          ).map(p => `Post ${p.id}: ${p.user?.username || 'UNDEFINED'}`))
           setPosts(postsEnriquecidos)
+          
+          // Forçar carregamento das curtidas após carregar posts do feed
+          console.log('✅ Posts do feed carregados - curtidas serão carregadas via useEffect')
+          
           return
         }
       }
       
-      throw new Error('Nenhum endpoint retornou dados válidos')
+      console.log('❌ Nenhum endpoint da API retornou publicações válidas.')
+      throw new Error('Nenhum endpoint retornou dados válidos de publicações')
       
     } catch (error) {
       console.error('❌ Erro ao carregar posts da API:', error)
-      console.log('🔄 Usando fallback mock data...')
+      console.log('⚠️ Não foi possível carregar publicações da API. Aguardando dados reais dos usuários.')
       
-      // Mock data para posts com usernames sincronizados
-      setPosts([
-        {
-          id: 1,
-          user: { username: '@joaosilva', avatar: '' },
-          image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500',
-          description: 'Treino de pernas hoje! Foco total na hipertrofia 💪',
-          hashtags: ['#foco', '#treino', '#saude'],
-          likes: 1709,
-          comments: 10
-        },
-        {
-          id: 2,
-          user: { username: 'Tetano Pé', avatar: '' },
-          image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500',
-          description: 'Motivação em alta! Nunca desista dos seus sonhos',
-          hashtags: ['#gym', '#motivation'],
-          likes: 892,
-          comments: 23
-        },
-        {
-          id: 3,
-          user: { username: '@pedrocosta', avatar: '' },
-          image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=500',
-          description: 'Pré-treino carregado! Hora de dar tudo de si',
-          hashtags: ['#workout', '#fitness'],
-          likes: 567,
-          comments: 15
-        },
-        {
-          id: 4,
-          user: { username: '@anajulia', avatar: '' },
-          image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500',
-          description: 'Dicas de treino funcional para todos os níveis',
-          hashtags: ['#training', '#healthy'],
-          likes: 1234,
-          comments: 45
-        },
-        {
-          id: 5,
-          user: { username: '@carlosfit', avatar: '' },
-          image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500',
-          description: 'Progresso é progresso, não importa quão pequeno seja',
-          hashtags: ['#bodybuilding', '#progress'],
-          likes: 445,
-          comments: 8
-        },
-        {
-          id: 6,
-          user: { username: '@luciafernanda', avatar: '' },
-          image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=500',
-          description: 'Alimentação saudável é a base de tudo! 🥗',
-          hashtags: ['#nutricao', '#saude', '#alimentacao'],
-          likes: 678,
-          comments: 34
-        }
-      ])
+      // Não usar dados mock - deixar vazio para mostrar apenas publicações reais
+      setPosts([])
     }
   }
   
@@ -1458,8 +1620,8 @@ const Social = () => {
       
     } catch (error) {
       console.error('❌ Erro ao carregar usuários da API:', error)
-      console.log('🔄 Usando fallback mock data com IDs reais...')
-      // Mock data simulando API real (quando API não funciona)
+      console.log('⚠️ API de usuários indisponível - usando fallback apenas para sidebar')
+      // Fallback apenas para sidebar (não afeta publicações)
       setUsers([
         {
           id: 2,
@@ -1544,49 +1706,6 @@ const Social = () => {
       ])
     }
   }
-
-  // Carregar estados de curtidas e contadores
-  const loadLikesAndCounts = async () => {
-    if (!user?.id || posts.length === 0) return
-    
-    const newPostLikes: { [postId: number]: { count: number, liked: boolean } } = {}
-    
-    for (const post of posts) {
-      try {
-        // Verificar se o usuário curtiu o post
-        const liked = await curtidaService.verificarCurtidaPost(Number(user.id), post.id)
-        
-        // Contar total de curtidas
-        const curtidas = await curtidaService.contarCurtidasPost(post.id)
-        
-        // Contar comentários
-        const comentarios = await comentarioCountService.contarComentarios(post.id)
-        
-        newPostLikes[post.id] = {
-          count: curtidas,
-          liked: liked
-        }
-        
-        // Atualizar post com contagem de comentários
-        setPosts(prev => prev.map(p => 
-          p.id === post.id 
-            ? { ...p, likes: curtidas, comments: comentarios }
-            : p
-        ))
-        
-        setFilteredPosts(prev => prev.map(p => 
-          p.id === post.id 
-            ? { ...p, likes: curtidas, comments: comentarios }
-            : p
-        ))
-        
-      } catch (error) {
-        console.error(`Erro ao carregar dados do post ${post.id}:`, error)
-      }
-    }
-    
-    setPostLikes(newPostLikes)
-  }
   
 
   const handleChatSubmit = () => {
@@ -1652,17 +1771,35 @@ const Social = () => {
       return
     }
 
+    // Prevenir múltiplos cliques
+    if (likingPosts[postId]) {
+      return
+    }
+
+    setLikingPosts(prev => ({ ...prev, [postId]: true }))
+
     try {
       const result = await curtidaService.toggleCurtidaPost({
         id_user: Number(user.id),
         id_publicacao: postId
       })
 
+      // Obter o contador atual para calcular diferença
+      const currentCount = postLikes[postId]?.count || posts.find(p => p.id === postId)?.likes || 0
+      const newCount = result.total
+      
+      console.log(`🔢 ATUALIZAÇÃO CONTADOR - Post ${postId}:`, {
+        antes: currentCount,
+        depois: newCount,
+        curtiu: result.curtiu,
+        mudou: currentCount !== newCount
+      })
+      
       // Atualizar estado local
       setPostLikes(prev => ({
         ...prev,
         [postId]: {
-          count: result.total,
+          count: newCount,
           liked: result.curtiu
         }
       }))
@@ -1670,18 +1807,38 @@ const Social = () => {
       // Atualizar posts com nova contagem
       setPosts(prev => prev.map(post => 
         post.id === postId 
-          ? { ...post, likes: result.total }
+          ? { ...post, likes: newCount }
           : post
       ))
       
       setFilteredPosts(prev => prev.map(post => 
         post.id === postId 
-          ? { ...post, likes: result.total }
+          ? { ...post, likes: newCount }
           : post
       ))
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Erro ao curtir post:', error)
-      alert('Erro ao curtir post. Tente novamente.')
+      
+      // Mostrar mensagem específica baseada no tipo de erro
+      let mensagemErro = 'Erro ao curtir post. Tente novamente.'
+      
+      if (error?.message?.includes('temporário no servidor')) {
+        mensagemErro = 'Problema temporário no servidor. Aguarde alguns segundos e tente novamente.'
+      } else if (error?.message?.includes('Failed to fetch')) {
+        mensagemErro = 'Problema de conexão. Verifique sua internet e tente novamente.'
+      } else if (error?.message?.includes('não foi possível processar')) {
+        mensagemErro = 'Servidor indisponível no momento. Tente novamente em instantes.'
+      } else if (error?.message?.includes('já cadastrado')) {
+        // Este caso já deve ter sido tratado no service, não deveria chegar aqui
+        console.log('⚠️ Erro "já cadastrado" chegou até a interface - verificando sincronização')
+        mensagemErro = 'Sincronizando estado das curtidas... Tente novamente em alguns segundos.'
+      }
+      
+      alert(mensagemErro)
+    } finally {
+      // Sempre limpar o estado de loading
+      setLikingPosts(prev => ({ ...prev, [postId]: false }))
     }
   }
 
@@ -1830,6 +1987,29 @@ return (
         
         <SectionTitle>Posts recentes</SectionTitle>
           
+          {filteredPosts.length === 0 ? (
+            <EmptyState
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <EmptyIcon>📱</EmptyIcon>
+              <EmptyTitle>Nenhuma publicação encontrada</EmptyTitle>
+              <EmptyDescription>
+                {searchQuery.trim() ? 
+                  `Nenhuma publicação encontrada para "${searchQuery}"` :
+                  'Seja o primeiro a compartilhar algo incrível!'
+                }
+              </EmptyDescription>
+              <CreateFirstPostButton
+                onClick={() => setShowCreatePostPopup(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Criar primeiro post
+              </CreateFirstPostButton>
+            </EmptyState>
+          ) : (
           <PostsGrid>
             {filteredPosts.map((post) => (
               <PostCard key={post.id}>
@@ -1872,7 +2052,18 @@ return (
                         console.log('❌ Usuário não encontrado para username:', post.user.username)
                         console.log('📋 Usuários disponíveis:', users.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
                       }
-                    }}>{post.user.username || '@usuário'}</Username>
+                    }}>{(() => {
+                      const username = post.user?.username || '@usuário'
+                      if (!post.user?.username || username === 'undefined' || username.includes('undefined')) {
+                        console.log('⚠️ Post com username problemático:', {
+                          postId: post.id,
+                          username: username,
+                          user_object: post.user,
+                          id_user: post.id_user
+                        })
+                      }
+                      return username
+                    })()}</Username>
                   </PostUser>
                   {post.description && (
                     <PostDescription>{post.description}</PostDescription>
@@ -1890,33 +2081,31 @@ return (
                     <LikeButton 
                       onClick={() => handleLikePost(post.id)}
                       $isLiked={postLikes[post.id]?.liked || false}
-                      disabled={!user}
+                      disabled={!user || likingPosts[post.id]}
+                      title={likingPosts[post.id] ? 'Processando...' : 'Curtir post'}
                     >
                       <FiHeart size={22} />
-                      {(postLikes[post.id]?.count !== undefined ? postLikes[post.id].count : post.likes) > 0 && (
-                        <LikesCount
-                          onMouseEnter={() => handleLikesHover(post.id, true)}
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation()
-                            handleShowLikesUsers(post.id)
-                          }}
-                        >
-                          {postLikes[post.id]?.count !== undefined ? postLikes[post.id].count : post.likes}
-                        </LikesCount>
-                      )}
+                      <LikesCount
+                        onMouseEnter={() => handleLikesHover(post.id, true)}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation()
+                          handleShowLikesUsers(post.id)
+                        }}
+                      >
+                        {postLikes[post.id]?.count !== undefined ? postLikes[post.id].count : (post.likes || 0)}
+                      </LikesCount>
                     </LikeButton>
                     
                     <CommentButton onClick={() => handleOpenComments(post)}>
                       <FiMessageCircle size={22} />
-                      {post.comments > 0 && (
-                        <CommentsCount>{post.comments}</CommentsCount>
-                      )}
+                      <CommentsCount>{post.comments || 0}</CommentsCount>
                     </CommentButton>
                   </PostStats>
                 </PostFooter>
               </PostCard>
             ))}
           </PostsGrid>
+          )}
         </ContentArea>
       
         
@@ -2058,6 +2247,64 @@ return (
 }
 
 // Botão Flutuante de Criar Post
+// Styled components para estado vazio
+const EmptyState = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2rem;
+  padding: 4rem 2rem;
+  margin: 3rem 0;
+  
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+`
+
+const EmptyIcon = styled.div`
+  font-size: 6rem;
+  margin-bottom: 2rem;
+  opacity: 0.6;
+`
+
+const EmptyTitle = styled.h3`
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1rem;
+`
+
+const EmptyDescription = styled.p`
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+  max-width: 40rem;
+  margin-bottom: 3rem;
+`
+
+const CreateFirstPostButton = styled(motion.button)`
+  background: linear-gradient(135deg, #E53935, #FF5722);
+  border: none;
+  border-radius: 1.5rem;
+  padding: 1.5rem 3rem;
+  color: white;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(229, 57, 53, 0.3);
+  
+  &:hover {
+    box-shadow: 0 12px 35px rgba(229, 57, 53, 0.4);
+  }
+`
+
 const CreatePostButton = styled(motion.button)`
   position: fixed;
   bottom: 1.5rem;

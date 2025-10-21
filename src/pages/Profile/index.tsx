@@ -26,7 +26,7 @@ const uploadParams = () => {
   return {
     file,
     storageAccount: 'gymbuddystorage',
-    sasToken: 'sp=cwl&st=2025-10-16T11:40:47Z&se=2025-10-16T20:55:47Z&sv=2024-11-04&sr=c&sig=4n9LQS%2Ferr4FfSIvE0woIQyCXBUMvNQpyntZT8kjOWY%3D',
+    sasToken: 'sp=acw&st=2025-10-21T13:37:51Z&se=2025-10-21T21:52:51Z&sv=2024-11-04&sr=c&sig=en49kaCwSJapJKoyRUKX%2FRSlbXX%2F6vUQww2w984%2BRSg%3D',
     containerName: 'fotos',
   };
 };

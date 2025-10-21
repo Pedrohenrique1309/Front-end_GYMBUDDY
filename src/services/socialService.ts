@@ -119,6 +119,7 @@ export const comentarioService = {
   // Listar comentários de uma publicação
   async listarComentarios(id_publicacao: number): Promise<Comment[]> {
     console.log('📚 Buscando comentários da publicação:', id_publicacao)
+    console.log('🔍 ID da publicação (tipo):', typeof id_publicacao)
     
     // Tentar primeiro endpoint específico para a publicação
     let response
@@ -294,29 +295,58 @@ export const comentarioService = {
       const comentariosEnriquecidos = await Promise.all(
         comentariosFiltrados.map(async (comentario: any) => {
           try {
-            // Se já tem dados do usuário completos, não precisa buscar
+            // Se já tem dados do usuário completos no array user
             if (comentario.user && Array.isArray(comentario.user) && comentario.user[0]?.nome) {
-              return comentario
-            }
-            
-            // Buscar dados do usuário
-            const userResponse = await fetch(`${API_BASE_URL}/usuario/${comentario.id_user}`)
-            if (userResponse.ok) {
-              const userData = await userResponse.json()
+              console.log(`✅ Comentário ${comentario.id} já tem dados do usuário:`, comentario.user[0].nome)
               return {
                 ...comentario,
                 usuario: {
-                  nome: userData.nome || userData.usuario?.nome || `Usuário ${comentario.id_user}`,
-                  foto: userData.foto || userData.usuario?.foto,
-                  username: userData.nickname || userData.usuario?.nickname || `user${comentario.id_user}`
+                  nome: comentario.user[0].nome,
+                  foto: comentario.user[0].foto,
+                  username: comentario.user[0].usuario || comentario.user[0].nickname || `user${comentario.user[0].id}`
                 }
               }
             }
             
-            return comentario
+            // Buscar dados do usuário se não tiver
+            const userId = comentario.id_user || comentario.user_id
+            console.log(`🔍 Buscando dados do usuário ${userId} para comentário ${comentario.id}`)
+            
+            const userResponse = await fetch(`${API_BASE_URL}/usuario/${userId}`)
+            if (userResponse.ok) {
+              const userData = await userResponse.json()
+              const dadosUsuario = userData.usuario || userData
+              
+              return {
+                ...comentario,
+                usuario: {
+                  nome: dadosUsuario.nome || `Usuário ${userId}`,
+                  foto: dadosUsuario.foto || '',
+                  username: dadosUsuario.nickname || dadosUsuario.usuario || `user${userId}`
+                }
+              }
+            }
+            
+            // Fallback se não conseguir buscar dados
+            return {
+              ...comentario,
+              usuario: {
+                nome: `Usuário ${userId}`,
+                foto: '',
+                username: `user${userId}`
+              }
+            }
           } catch (error) {
             console.warn('Erro ao buscar dados do usuário para comentário:', comentario.id, error)
-            return comentario
+            const userId = comentario.id_user || comentario.user_id || 'desconhecido'
+            return {
+              ...comentario,
+              usuario: {
+                nome: `Usuário ${userId}`,
+                foto: '',
+                username: `user${userId}`
+              }
+            }
           }
         })
       )
@@ -431,6 +461,51 @@ export const comentarioService = {
   }
 }
 
+// Função auxiliar para buscar curtida específica do usuário/publicação
+const buscarCurtidaEspecifica = async (id_user: number, id_publicacao: number) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/curtida`, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      const likes = data.curtidas || data.data || data
+      
+      if (Array.isArray(likes)) {
+        // Tentar diferentes estruturas que o backend pode retornar
+        const curtidaEncontrada = likes.find((curtida: any) => {
+          // Estrutura 1: user[] e publicacao[] arrays
+          if (curtida.user && Array.isArray(curtida.user) && curtida.publicacao && Array.isArray(curtida.publicacao)) {
+            const userMatch = Number(curtida.user[0]?.id) === Number(id_user)
+            const pubMatch = Number(curtida.publicacao[0]?.id) === Number(id_publicacao)
+            return userMatch && pubMatch
+          }
+          
+          // Estrutura 2: id_user e id_publicacao diretos
+          if (curtida.id_user !== undefined && curtida.id_publicacao !== undefined) {
+            const userMatch = Number(curtida.id_user) === Number(id_user)
+            const pubMatch = Number(curtida.id_publicacao) === Number(id_publicacao)
+            return userMatch && pubMatch
+          }
+          
+          return false
+        })
+        
+        return curtidaEncontrada || null
+      }
+    }
+  } catch (error) {
+    console.error('Erro na busca:', error)
+  }
+  
+  return null
+}
+
 // Funções de Curtidas em Posts
 export const curtidaService = {
   // Curtir/Descurtir post
@@ -438,20 +513,14 @@ export const curtidaService = {
     id_user: number
     id_publicacao: number
   }): Promise<{ curtiu: boolean, total: number }> {
-    console.log('❤️ Alternando curtida do post:', dados)
+    // Validar dados antes de prosseguir
+    if (!dados.id_user || !dados.id_publicacao) {
+      throw new Error('ID do usuário e da publicação são obrigatórios para curtir')
+    }
     
     try {
-      // Primeiro verificar se já curtiu
-      const checkResponse = await fetch(`${API_BASE_URL}/curtida`)
-      const existingLikes = checkResponse.ok ? await checkResponse.json() : { data: [] }
-      const likes = existingLikes.curtidas || existingLikes.data || existingLikes
-      
-      const existingLike = Array.isArray(likes) 
-        ? likes.find((like: Like) => 
-            like.id_user === dados.id_user && 
-            like.id_publicacao === dados.id_publicacao
-          )
-        : null
+      // Buscar curtida existente
+      const existingLike = await buscarCurtidaEspecifica(dados.id_user, dados.id_publicacao)
 
       if (existingLike) {
         // Já curtiu, então descurtir usando endpoint DELETE
@@ -466,46 +535,177 @@ export const curtidaService = {
           throw new Error(`Erro ao descurtir: ${deleteResponse.status}`)
         }
         
-        // Buscar novo total
+        // Buscar novo total usando a estrutura correta
         const updatedResponse = await fetch(`${API_BASE_URL}/curtida`)
         const updatedData = updatedResponse.ok ? await updatedResponse.json() : { data: [] }
         const updatedLikes = updatedData.curtidas || updatedData.data || updatedData
+        
+        console.log('🔍 DEBUG - Estrutura das curtidas após DELETE:', {
+          total: Array.isArray(updatedLikes) ? updatedLikes.length : 0,
+          amostra: updatedLikes[0]
+        })
+        
         const newTotal = Array.isArray(updatedLikes) 
-          ? updatedLikes.filter((l: Like) => l.id_publicacao === dados.id_publicacao).length
+          ? updatedLikes.filter((l: any) => {
+              // Tentar ambas as estruturas
+              let match = false
+              
+              // Estrutura 1: publicacao[] array
+              if (l.publicacao && Array.isArray(l.publicacao) && l.publicacao.length > 0) {
+                match = Number(l.publicacao[0].id) === Number(dados.id_publicacao)
+              }
+              // Estrutura 2: id_publicacao direto
+              else if (l.id_publicacao !== undefined) {
+                match = Number(l.id_publicacao) === Number(dados.id_publicacao)
+              }
+              
+              return match
+            }).length
           : 0
         
-        console.log('💔 Post descurtido')
+        console.log(`💔 Descurtiu - Total para post ${dados.id_publicacao}: ${newTotal}`)
         return { curtiu: false, total: newTotal }
       } else {
         // Não curtiu ainda, então curtir usando endpoint POST
+        const curtidaData = {
+          id_user: Number(dados.id_user),
+          id_publicacao: Number(dados.id_publicacao),
+          data_curtida: new Date().toISOString().split('T')[0]
+        }
+        
+        console.log('📤 Enviando POST para:', `${API_BASE_URL}/curtida`)
+        console.log('📤 Dados:', curtidaData)
+        
         const postResponse = await fetch(`${API_BASE_URL}/curtida`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
-          body: JSON.stringify({
-            ...dados,
-            data_curtida: new Date().toISOString().split('T')[0]
-          }),
+          body: JSON.stringify(curtidaData)
+        })
+        
+        console.log('📥 Resposta do POST:', {
+          status: postResponse.status,
+          statusText: postResponse.statusText,
+          ok: postResponse.ok,
+          url: postResponse.url
         })
         
         if (!postResponse.ok) {
-          throw new Error(`Erro ao curtir: ${postResponse.status}`)
+          let errorMessage = 'Erro desconhecido'
+          let errorData = null
+          try {
+            errorData = await postResponse.json()
+            errorMessage = errorData.message || errorData.error || `Status ${postResponse.status}`
+            console.log('❌ Erro JSON do servidor:', errorData)
+          } catch {
+            const errorText = await postResponse.text()
+            errorMessage = errorText || `Status ${postResponse.status}`
+            console.log('❌ Erro texto do servidor:', errorText)
+          }
+          
+          // Tratamento específico por tipo de erro
+          if (postResponse.status === 404 && !errorMessage.includes('já cadastrado')) {
+            // Erro 404 sem ser "já cadastrado" = endpoint não encontrado
+            console.error('❌ ERRO 404: Endpoint não encontrado!')
+            console.error('URL tentada:', `${API_BASE_URL}/curtida`)
+            console.error('Verifique se o backend está rodando e o endpoint está correto')
+            throw new Error('Endpoint de curtidas não encontrado (404). Verifique o backend.')
+          } else if (postResponse.status === 500) {
+            throw new Error('Problema temporário no servidor. Tente novamente em alguns segundos.')
+          } else if (postResponse.status === 404 && errorMessage.includes('já cadastrado')) {
+            // Backend diz que já existe - buscar e tentar remover
+            
+            // Tentar encontrar todas as curtidas do usuário neste post
+            const response = await fetch(`${API_BASE_URL}/curtida`)
+            const data = response.ok ? await response.json() : { data: [] }
+            const likes = data.curtidas || data.data || data
+            
+            // Buscar TODAS as curtidas deste usuário neste post (pode haver duplicatas)
+            const userLikes = Array.isArray(likes) ? likes.filter((curtida: any) => {
+              // Verificar ambas estruturas
+              if (curtida.id_user !== undefined && curtida.id_publicacao !== undefined) {
+                return Number(curtida.id_user) === Number(dados.id_user) && 
+                       Number(curtida.id_publicacao) === Number(dados.id_publicacao)
+              }
+              if (curtida.user && Array.isArray(curtida.user) && curtida.publicacao && Array.isArray(curtida.publicacao)) {
+                return Number(curtida.user[0]?.id) === Number(dados.id_user) && 
+                       Number(curtida.publicacao[0]?.id) === Number(dados.id_publicacao)
+              }
+              return false
+            }) : []
+            
+            // Se encontrou curtidas duplicadas, deletar todas
+            if (userLikes.length > 0) {
+              for (const like of userLikes) {
+                try {
+                  await fetch(`${API_BASE_URL}/curtida/${like.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                  })
+                } catch (e) {
+                  // Erro silencioso ao deletar duplicata
+                }
+              }
+            }
+            
+            // Retornar estado não curtido
+            const currentTotal = await curtidaService.contarCurtidasPost(dados.id_publicacao)
+            return { curtiu: false, total: currentTotal }
+          }
+          
+          throw new Error(`Erro ao curtir: ${errorMessage}`)
         }
         
-        // Buscar novo total
+        // Buscar novo total usando a estrutura correta
         const updatedResponse = await fetch(`${API_BASE_URL}/curtida`)
         const updatedData = updatedResponse.ok ? await updatedResponse.json() : { data: [] }
         const updatedLikes = updatedData.curtidas || updatedData.data || updatedData
+        
+        console.log('🔍 DEBUG - Estrutura COMPLETA das curtidas após POST:')
+        console.log('Total de curtidas retornadas:', Array.isArray(updatedLikes) ? updatedLikes.length : 0)
+        console.log('Tipo de dados:', typeof updatedLikes, Array.isArray(updatedLikes) ? 'É Array' : 'NÃO é Array')
+        if (Array.isArray(updatedLikes) && updatedLikes.length > 0) {
+          console.log('Amostra da primeira curtida:', JSON.stringify(updatedLikes[0], null, 2))
+          console.log('Campos disponíveis:', Object.keys(updatedLikes[0]))
+        } else {
+          console.log('Array vazio ou não é array:', updatedLikes)
+        }
+        console.log('Procurando por id_publicacao:', dados.id_publicacao, 'tipo:', typeof dados.id_publicacao)
+        
         const newTotal = Array.isArray(updatedLikes) 
-          ? updatedLikes.filter((l: Like) => l.id_publicacao === dados.id_publicacao).length
+          ? updatedLikes.filter((l: any) => {
+              // Tentar ambas as estruturas
+              let match = false
+              
+              console.log(`   Analisando curtida ID ${l.id}:`, {
+                tem_publicacao_array: !!(l.publicacao && Array.isArray(l.publicacao)),
+                publicacao_id: l.publicacao?.[0]?.id,
+                tem_id_publicacao: l.id_publicacao !== undefined,
+                id_publicacao_valor: l.id_publicacao,
+                procurando: dados.id_publicacao
+              })
+              
+              // Estrutura 1: publicacao[] array
+              if (l.publicacao && Array.isArray(l.publicacao) && l.publicacao.length > 0) {
+                match = Number(l.publicacao[0].id) === Number(dados.id_publicacao)
+                console.log(`     ✓ Estrutura 1 (publicacao[]): ${l.publicacao[0].id} === ${dados.id_publicacao} ? ${match}`)
+              }
+              // Estrutura 2: id_publicacao direto
+              else if (l.id_publicacao !== undefined) {
+                match = Number(l.id_publicacao) === Number(dados.id_publicacao)
+                console.log(`     ✓ Estrutura 2 (id_publicacao): ${l.id_publicacao} === ${dados.id_publicacao} ? ${match}`)
+              }
+              
+              return match
+            }).length
           : 1
         
-        console.log('❤️ Post curtido')
+        console.log(`❤️ Curtiu - Total para post ${dados.id_publicacao}: ${newTotal}`)
         return { curtiu: true, total: newTotal }
       }
-    } catch (error) {
-      console.error('💥 Erro ao alternar curtida:', error)
+    } catch (error: any) {
       throw error
     }
   },
@@ -575,17 +775,8 @@ export const curtidaService = {
   // Verificar se usuário curtiu um post
   async verificarCurtidaPost(id_user: number, id_publicacao: number): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE_URL}/curtida`)
-      if (!response.ok) return false
-      
-      const result = await response.json()
-      const likes = result.curtidas || result.data || result
-      
-      return Array.isArray(likes) 
-        ? likes.some((like: Like) => 
-            like.id_user === id_user && like.id_publicacao === id_publicacao
-          )
-        : false
+      const curtida = await buscarCurtidaEspecifica(id_user, id_publicacao)
+      return curtida !== null
     } catch (error) {
       console.error('Erro ao verificar curtida:', error)
       return false
@@ -602,7 +793,18 @@ export const curtidaService = {
       const likes = result.curtidas || result.data || result
       
       return Array.isArray(likes) 
-        ? likes.filter((like: Like) => like.id_publicacao === id_publicacao).length
+        ? likes.filter((curtida: any) => {
+            // Tentar ambas as estruturas
+            // Estrutura 1: publicacao[] array
+            if (curtida.publicacao && Array.isArray(curtida.publicacao) && curtida.publicacao.length > 0) {
+              return Number(curtida.publicacao[0].id) === Number(id_publicacao)
+            }
+            // Estrutura 2: id_publicacao direto
+            if (curtida.id_publicacao !== undefined) {
+              return Number(curtida.id_publicacao) === Number(id_publicacao)
+            }
+            return false
+          }).length
         : 0
     } catch (error) {
       console.error('Erro ao contar curtidas:', error)
