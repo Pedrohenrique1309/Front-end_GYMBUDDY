@@ -84,7 +84,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
       const resposta = await buscarUsuarioPorToken(codigo)
       
       if (resposta && resposta.recupercoes_senha && resposta.recupercoes_senha[0]) {
-        const usuario = resposta.recupercoes_senha[0].user[0]
+        const usuario = resposta.recupercoes_senha[0].user?.[0]
         if (usuario && usuario.id) {
           setIdUsuario(usuario.id)
           setSucesso('Código válido!')
@@ -430,7 +430,7 @@ const FundoEscuro = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   z-index: 10100;
   display: flex;
@@ -446,14 +446,14 @@ const ContainerPopup = styled(motion.div)`
 
 const ConteudoPopup = styled.div`
   position: relative;
-  background: #0A0A0A;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-modal);
+  border: 1px solid var(--border-color);
   border-radius: 1.6rem;
   padding: 3rem;
   width: 90vw;
   max-width: 42rem;
   margin: 0 auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-xl);
 `
 
 const SecaoLogo = styled.div`
@@ -505,7 +505,7 @@ const TituloEtapa = styled.h1`
 `
 
 const DescricaoEtapa = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   font-size: 1.4rem;
   text-align: center;
   margin-top: -1rem;
@@ -523,15 +523,15 @@ const GrupoCampo = styled.div`
 const Campo = styled.input`
   width: 100%;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-color);
   border-radius: 0.8rem;
   padding: 1.4rem 1.6rem;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1.5rem;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-tertiary);
   }
   
   &:focus {
@@ -564,7 +564,7 @@ const MensagemSucesso = styled(motion.div)`
 
 const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
-  color: var(--white);
+  color: var(--text-inverse);
   border: none;
   border-radius: 2.5rem;
   padding: 1.4rem 2rem;
@@ -595,7 +595,7 @@ const BotaoVoltar = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-hover);
     transform: scale(1.1);
   }
 `
@@ -621,7 +621,7 @@ const BotaoMostrarSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-tertiary);
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;

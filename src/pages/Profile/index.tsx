@@ -1120,7 +1120,7 @@ const Profile = () => {
 
 const ProfileContainer = styled(motion.div)`
   min-height: 100vh;
-  background: #0A0A0A;
+  background: var(--bg-primary);
   padding-top: 10rem;
   padding-bottom: 4rem;
   position: relative;

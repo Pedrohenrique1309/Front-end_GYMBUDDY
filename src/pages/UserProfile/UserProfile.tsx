@@ -364,7 +364,7 @@ const UserProfile = () => {
 // Styled Components
 const Container = styled(motion.div)`
   min-height: 100vh;
-  background: #0A0A0A;
+  background: var(--bg-primary);
   position: relative;
   overflow-x: hidden;
 `

@@ -390,12 +390,23 @@ const HeroSection = styled.section`
   overflow: hidden;
   
   /* Modern mesh gradient background */
-  background: 
-    radial-gradient(at 0% 0%, rgba(227, 6, 19, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(20, 20, 25, 1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(227, 6, 19, 0.12) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(15, 15, 20, 1) 0px, transparent 50%),
-    linear-gradient(180deg, #080808 0%, #0D0D0D 50%, #121212 100%);
+  [data-theme="dark"] & {
+    background: 
+      radial-gradient(at 0% 0%, rgba(227, 6, 19, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(20, 20, 25, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(227, 6, 19, 0.12) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(15, 15, 20, 1) 0px, transparent 50%),
+      linear-gradient(180deg, #080808 0%, #0D0D0D 50%, #121212 100%);
+  }
+  
+  [data-theme="light"] & {
+    background: 
+      radial-gradient(at 0% 0%, rgba(227, 6, 19, 0.08) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(248, 249, 250, 1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(227, 6, 19, 0.06) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(240, 242, 245, 1) 0px, transparent 50%),
+      linear-gradient(180deg, #FFFFFF 0%, #F8F9FA 50%, #F0F2F5 100%);
+  }
   
   /* Camada de grid sutil para efeito tech */
   &::before {
@@ -477,7 +488,7 @@ const TextArea = styled(motion.div)`
     letter-spacing: -0.02em;
     text-transform: uppercase;
     margin-bottom: 3.2rem;
-    color: var(--white);
+    color: var(--text-primary);
 
     .highlight {
       color: var(--primary);
@@ -509,7 +520,7 @@ const TextArea = styled(motion.div)`
     align-items: center;
     justify-content: center;
     background: var(--primary);
-    color: var(--white);
+    color: var(--text-inverse);
     font-size: 1.8rem;
     font-weight: 700;
     height: 5.6rem;
@@ -608,7 +619,7 @@ const FloatingCardWrap = styled(motion.div)`
   min-height: 20rem;
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--text-primary);
   text-align: left;
   pointer-events: auto;
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -772,7 +783,7 @@ const FloatingCard = styled(motion.div)`
   .card-stat {
     font-size: 3.8rem;
     font-weight: 900;
-    color: var(--white);
+    color: var(--text-primary);
     line-height: 0.9;
     text-shadow: 0 2px 8px rgba(0,0,0,0.3);
     margin-bottom: 0.8rem;
@@ -786,7 +797,7 @@ const FloatingCard = styled(motion.div)`
   .card-title {
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--white);
+    color: var(--text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.3;
     text-shadow: 0 1px 4px rgba(0,0,0,0.3);
@@ -850,7 +861,7 @@ const FixedCTA = styled(motion.button)`
   z-index: 1500;
   --arrow-size: 18px;
   background: var(--primary);
-  color: var(--white);
+  color: var(--text-inverse);
   font-weight: 800;
   font-size: 1.6rem;
   border: none;
@@ -958,7 +969,7 @@ const NetworkCTA = styled(motion.button)`
     rgba(227, 6, 19, 1) 50%,
     rgba(180, 5, 15, 1) 100%
   );
-  color: var(--white);
+  color: var(--text-inverse);
   border: none;
   border-radius: 20px;
   padding: 16px 24px;

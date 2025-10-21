@@ -207,7 +207,7 @@ const FundoEscuro = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   z-index: 10000;
   display: flex;
@@ -222,11 +222,11 @@ const ContainerPopup = styled(motion.div)`
   margin: 0 auto;
   z-index: 10001;
   pointer-events: auto;
-  background: #0A0A0A;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-modal);
+  border: 1px solid var(--border-color);
   border-radius: 1.6rem;
   padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-xl);
 `
 
 const BotaoFechar = styled.button`
@@ -235,7 +235,7 @@ const BotaoFechar = styled.button`
   right: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -243,7 +243,7 @@ const BotaoFechar = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-hover);
     transform: scale(1.1);
   }
 `
@@ -261,7 +261,7 @@ const SecaoLogo = styled.div`
   }
   
   h2 {
-    color: var(--white);
+    color: var(--text-primary);
     font-size: 1.8rem;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -276,7 +276,7 @@ const SecaoLogo = styled.div`
 `
 
 const Titulo = styled.h1`
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 2.4rem;
   font-weight: 800;
   text-align: center;
@@ -296,21 +296,21 @@ const GrupoCampo = styled.div`
 
 const Campo = styled.input`
   width: 100%;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: 0.8rem;
   padding: 1.4rem 1.6rem;
-  color: var(--white);
+  color: var(--text-primary);
   font-size: 1.5rem;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-tertiary);
   }
   
   &:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: var(--border-focus);
     box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
   }
 `
@@ -322,13 +322,13 @@ const BotaoMostrarSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-tertiary);
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
   
   &:hover {
-    color: var(--white);
+    color: var(--text-primary);
   }
 `
 
@@ -358,7 +358,7 @@ const MensagemErro = styled(motion.div)`
 
 const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
   background: ${props => props.disabled ? 'rgba(227, 6, 19, 0.5)' : 'var(--primary)'};
-  color: var(--white);
+  color: var(--text-inverse);
   border: none;
   border-radius: 2.5rem;
   padding: 1.4rem 2rem;
@@ -376,7 +376,7 @@ const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
 `
 
 const TextoCadastro = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;
