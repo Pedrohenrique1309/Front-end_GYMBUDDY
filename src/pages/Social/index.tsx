@@ -285,7 +285,7 @@ const Header = styled.header`
   justify-content: space-between;
   align-items: center;
   padding: 0 3rem;
-  z-index: 99;
+  z-index: 1;
 `
 
 const Logo = styled.div`
