@@ -29,15 +29,28 @@ const ChatSidebar = styled(motion.div)<{ isOpen?: boolean }>`
   top: 0;
   bottom: 0;
   width: 600px;
+  
+  /* Glassmorphism Effect */
   background: linear-gradient(135deg, 
-    rgba(26, 26, 26, 0.98) 0%,
-    rgba(18, 18, 18, 0.98) 50%,
-    rgba(22, 22, 22, 0.98) 100%
+    rgba(26, 26, 26, 0.15) 0%,
+    rgba(18, 18, 18, 0.25) 30%,
+    rgba(22, 22, 22, 0.20) 70%,
+    rgba(26, 26, 26, 0.15) 100%
   );
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(229, 57, 53, 0.2);
-  box-shadow: ${props => props.isOpen ? '8px 0 32px rgba(0, 0, 0, 0.4)' : 'none'};
-  z-index: 1000;
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  
+  /* Glass Border */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 2px solid rgba(229, 57, 53, 0.3);
+  
+  /* Enhanced Shadow */
+  box-shadow: ${props => props.isOpen ? 
+    `20px 0 60px rgba(0, 0, 0, 0.3),
+     8px 0 32px rgba(229, 57, 53, 0.1),
+     inset 0 0 60px rgba(255, 255, 255, 0.05)` : 'none'};
+  
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -78,7 +91,7 @@ const ChatSidebar = styled(motion.div)<{ isOpen?: boolean }>`
 
 const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   position: fixed;
-  left: ${props => props.isOpen ? '590px' : '20px'};
+  left: 20px;
   top: 50%;
   transform: translateY(-50%);
   width: 64px;
@@ -102,7 +115,7 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 1001;
+  z-index: 10000;
   
   /* Red Glow Enhancement */
   box-shadow: 
@@ -190,6 +203,73 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
     filter: drop-shadow(0 2px 8px rgba(227, 6, 19, 0.3));
     transition: all 0.3s ease;
     transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
+  }
+`
+
+const ChatCloseButton = styled(motion.div)<{ isOpen?: boolean }>`
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64px;
+  height: 64px;
+  
+  /* Liquid Glass Base */
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  
+  /* Glass Morphism */
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10001;
+  
+  /* Red Glow Enhancement */
+  box-shadow: 
+    0 8px 32px rgba(227, 6, 19, 0.15),
+    0 4px 16px rgba(227, 6, 19, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  &:hover {
+    transform: translateY(-50%) scale(1.05);
+    
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    
+    border-color: rgba(255, 255, 255, 0.3);
+    
+    box-shadow: 
+      0 12px 48px rgba(227, 6, 19, 0.25),
+      0 6px 24px rgba(227, 6, 19, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(-50%) scale(0.98);
+  }
+  
+  svg {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 2px 8px rgba(227, 6, 19, 0.3));
+    transition: all 0.3s ease;
   }
 `
 
@@ -1956,27 +2036,43 @@ return (
       </ChatContent>
     </ChatSidebar>
     
-    {/* Botão de Toggle do Chat */}
+    {/* Botão de Abrir o Chat (esquerda) */}
     <ChatToggleButton
       isOpen={showAiChat}
       onClick={toggleAiChat}
       initial={false}
-      animate={{
-        x: showAiChat ? 570 : 20,
-        scale: showAiChat ? 0.9 : 1
+      animate={{ 
+        opacity: showAiChat ? 0 : 1,
+        scale: showAiChat ? 0.8 : 1
       }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
-      whileHover={{ scale: showAiChat ? 1.0 : 1.1 }}
+      whileHover={{ scale: showAiChat ? 0.8 : 1.1 }}
       whileTap={{ scale: 0.95 }}
+      style={{ pointerEvents: showAiChat ? 'none' : 'auto' }}
     >
       <FiChevronRight />
     </ChatToggleButton>
     
+    {/* Botão de Fechar o Chat (direita) */}
+    <ChatCloseButton
+      isOpen={showAiChat}
+      onClick={toggleAiChat}
+      initial={false}
+      animate={{ 
+        opacity: showAiChat ? 1 : 0,
+        scale: showAiChat ? 1 : 0.8,
+        x: showAiChat ? 0 : -50
+      }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      style={{ pointerEvents: showAiChat ? 'auto' : 'none' }}
+    >
+      <FiChevronRight style={{ transform: 'rotate(180deg)' }} />
+    </ChatCloseButton>
+    
     {/* Cabeçalho */}
     <Header>
-      <Logo>
-        <img src="/gymbuddy-logo.png" alt="GYM BUDDY" />
-      </Logo>
     </Header>
     
     {/* Conteúdo Principal */}
