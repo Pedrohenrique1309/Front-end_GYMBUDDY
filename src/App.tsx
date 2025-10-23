@@ -181,11 +181,11 @@ function App() {
 }
 
 const AppContent = () => {
-  const { isHeaderVisible } = useHeader()
+  const { isHeaderVisible, isAiChatOpen } = useHeader()
   
   return (
     <>
-      <Header isVisible={isHeaderVisible} />
+      <Header isVisible={isHeaderVisible && !isAiChatOpen} />
       <DevGridOverlay />
       <AnimatedRoutes />
     </>

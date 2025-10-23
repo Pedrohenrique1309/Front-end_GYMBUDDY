@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus, FiX } from 'react-icons/fi'
 import { useUser } from '../../contexts/UserContext'
+import { useHeader } from '../../contexts/HeaderContext'
 import { useNavigate } from 'react-router-dom'
 import DefaultAvatar from '../../assets/avatarpadrao'
 import CreatePostPopup from '../../components/PopUpCriarPost'
@@ -273,7 +274,7 @@ const ChatCloseButton = styled(motion.div)<{ isOpen?: boolean }>`
   }
 `
 
-const Header = styled.header`
+const Header = styled(motion.header)<{ $visible?: boolean }>`
   position: fixed;
   top: 0;
   left: 50px;
@@ -286,6 +287,12 @@ const Header = styled.header`
   align-items: center;
   padding: 0 3rem;
   z-index: 1;
+  
+  /* Transição suave de visibilidade */
+  opacity: ${props => props.$visible ? 1 : 0};
+  transform: translateY(${props => props.$visible ? '0' : '-100%'});
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: ${props => props.$visible ? 'auto' : 'none'};
 `
 
 const Logo = styled.div`
@@ -1134,6 +1141,7 @@ interface Post {
 // Component
 const Social = () => {
   const { user } = useUser()
+  const { setAiChatOpen } = useHeader()
   const navigate = useNavigate()
   const [users, setUsers] = useState<User[]>([])
   const [randomUsers, setRandomUsers] = useState<User[]>([])
@@ -1159,6 +1167,11 @@ const Social = () => {
     loadUsers()
     loadPosts()
   }, [])
+
+  // Sincronizar estado do chat IA com contexto global do header
+  useEffect(() => {
+    setAiChatOpen(showAiChat)
+  }, [showAiChat, setAiChatOpen])
 
   // Estado para prevenir múltiplas chamadas simultâneas
   const [isLoadingLikes, setIsLoadingLikes] = useState(false)
@@ -2072,7 +2085,7 @@ return (
     </ChatCloseButton>
     
     {/* Cabeçalho */}
-    <Header>
+    <Header $visible={!showAiChat}>
     </Header>
     
     {/* Conteúdo Principal */}
