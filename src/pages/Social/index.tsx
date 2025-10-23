@@ -1915,7 +1915,7 @@ return (
           
           <HalterModel 
             position={[0, 0, 0]} 
-            scale={0.8} 
+            scale={3.0} 
             autoRotate={true}
           />
           
