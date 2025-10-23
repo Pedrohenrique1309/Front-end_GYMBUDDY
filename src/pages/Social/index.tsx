@@ -1895,11 +1895,6 @@ return (
       }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
     >
-      <ChatHeader>
-        <ChatTitle>GymBuddy AI</ChatTitle>
-        <ChatSubtitle>Seu assistente pessoal de treino</ChatSubtitle>
-      </ChatHeader>
-      
       <Chat3DContainer>
         <Canvas 
           camera={{ position: [0, 0, 4], fov: 45 }}
