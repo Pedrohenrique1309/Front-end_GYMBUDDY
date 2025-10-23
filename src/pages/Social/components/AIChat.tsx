@@ -2,6 +2,9 @@ import { useState } from 'react'
 import styled from 'styled-components'
 import { FiX, FiSend, FiSmile, FiPaperclip } from 'react-icons/fi'
 import { AiOutlineRobot } from 'react-icons/ai'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Environment } from '@react-three/drei'
+import HalterModel from '../../../components/HalterModel/HalterModelWithErrorHandling'
 
 const AIChat = () => {
   const [showChat, setShowChat] = useState(true)
@@ -54,11 +57,40 @@ const AIChat = () => {
       
       <Messages>
         <WelcomeMessage>
-          <h4>Em seu último treino você progrediu com carga em 2 exercícios.</h4>
-          <div className="tags">
-            <span>Hipertrofia</span>
-            <span>Dieta</span>
-            <span>Cardio</span>
+          <div className="message-content">
+            <h4>Em seu último treino você progrediu com carga em 2 exercícios.</h4>
+            <div className="tags">
+              <span>Hipertrofia</span>
+              <span>Dieta</span>
+              <span>Cardio</span>
+            </div>
+          </div>
+          <div className="model-container">
+            <Canvas 
+              camera={{ position: [0, 0, 4], fov: 45 }}
+              dpr={[1, 2]}
+              performance={{ min: 0.5 }}
+              onCreated={(state) => {
+                console.log('Canvas criado:', state)
+              }}
+            >
+              <ambientLight intensity={0.4} />
+              <directionalLight position={[10, 10, 5]} intensity={1} />
+              <pointLight position={[-10, -10, -5]} intensity={0.5} />
+              <HalterModel 
+                position={[0, 0, 0]} 
+                scale={0.8} 
+                autoRotate={true}
+              />
+              <OrbitControls 
+                enableZoom={false}
+                enablePan={false}
+                maxPolarAngle={Math.PI / 2}
+                minPolarAngle={Math.PI / 2}
+                makeDefault
+              />
+              <Environment preset="sunset" />
+            </Canvas>
           </div>
         </WelcomeMessage>
         
@@ -207,32 +239,67 @@ const WelcomeMessage = styled.div`
   background: rgba(255, 255, 255, 0.05);
   border-radius: 1rem;
   padding: 1.5rem;
+  display: flex;
+  gap: 2rem;
+  align-items: center;
   
-  h4 {
-    font-size: 1.4rem;
-    margin-bottom: 1rem;
-    line-height: 1.6;
+  .message-content {
+    flex: 1;
+    
+    h4 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    
+    .tags {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      
+      span {
+        background: rgba(227, 6, 19, 0.2);
+        border: 1px solid rgba(227, 6, 19, 0.3);
+        border-radius: 2rem;
+        padding: 0.5rem 1.5rem;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background: rgba(227, 6, 19, 0.3);
+          border-color: var(--primary);
+          transform: translateY(-2px);
+        }
+      }
+    }
   }
   
-  .tags {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+  .model-container {
+    width: 200px;
+    height: 150px;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(227, 6, 19, 0.1) 0%, rgba(227, 6, 19, 0.05) 100%);
+    border: 1px solid rgba(227, 6, 19, 0.2);
+    backdrop-filter: blur(10px);
     
-    span {
-      background: rgba(227, 6, 19, 0.2);
-      border: 1px solid rgba(227, 6, 19, 0.3);
-      border-radius: 2rem;
-      padding: 0.5rem 1.5rem;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      
-      &:hover {
-        background: rgba(227, 6, 19, 0.3);
-        border-color: var(--primary);
-        transform: translateY(-2px);
-      }
+    &:hover {
+      border-color: rgba(227, 6, 19, 0.4);
+      box-shadow: 0 0 20px rgba(227, 6, 19, 0.2);
+    }
+    
+    canvas {
+      border-radius: 1rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    
+    .model-container {
+      width: 100%;
+      height: 120px;
     }
   }
 `

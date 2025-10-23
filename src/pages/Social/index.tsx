@@ -9,7 +9,8 @@ import CreatePostPopup from '../../components/PopUpCriarPost'
 import CommentsModal from '../../components/CommentsModal'
 import { curtidaService, comentarioCountService, type LikeUser } from '../../services/socialService'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Sphere, MeshDistortMaterial } from '@react-three/drei'
+import { OrbitControls, Sphere, MeshDistortMaterial, Environment } from '@react-three/drei'
+import HalterModel from '../../components/HalterModel/HalterModelWithErrorHandling'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
@@ -1900,20 +1901,35 @@ return (
       </ChatHeader>
       
       <Chat3DContainer>
-        <Canvas camera={{ position: [0, 0, 4] }}>
-          <ambientLight intensity={0.5} />
+        <Canvas 
+          camera={{ position: [0, 0, 4], fov: 45 }}
+          dpr={[1, 2]}
+          performance={{ min: 0.5 }}
+          onCreated={(state) => {
+            console.log('Canvas criado na página Social:', state)
+          }}
+        >
+          <ambientLight intensity={0.4} />
           <directionalLight position={[10, 10, 5]} intensity={1} />
-          <Sphere args={[1, 100, 200]} scale={1.5}>
-            <MeshDistortMaterial
-              color="#E53935"
-              attach="material"
-              distort={0.5}
-              speed={2}
-              roughness={0.2}
-              metalness={0.8}
-            />
-          </Sphere>
-          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1} />
+          <pointLight position={[-10, -10, -5]} intensity={0.5} />
+          
+          <HalterModel 
+            position={[0, 0, 0]} 
+            scale={0.8} 
+            autoRotate={true}
+          />
+          
+          <OrbitControls 
+            enableZoom={false} 
+            enablePan={false}
+            autoRotate 
+            autoRotateSpeed={0.5}
+            maxPolarAngle={Math.PI / 2}
+            minPolarAngle={Math.PI / 2}
+            makeDefault
+          />
+          
+          <Environment preset="sunset" />
         </Canvas>
       </Chat3DContainer>
       
