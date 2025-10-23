@@ -9,6 +9,7 @@ import DefaultAvatar from '../../assets/avatarpadrao'
 import CreatePostPopup from '../../components/PopUpCriarPost'
 import CommentsModal from '../../components/CommentsModal'
 import { curtidaService, comentarioCountService, type LikeUser } from '../../services/socialService'
+import agentService from '../../services/agentService'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Sphere, MeshDistortMaterial, Environment } from '@react-three/drei'
 import HalterModel from '../../components/HalterModel/HalterModelWithErrorHandling'
@@ -948,6 +949,40 @@ const MessageBubble = styled.div<{ isUser?: boolean }>`
     ? '0 4px 20px rgba(229, 57, 53, 0.3)'
     : '0 4px 20px rgba(0, 0, 0, 0.2)'
   };
+
+  /* Indicador de digitação animado */
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(229, 57, 53, 0.6);
+      animation: typing 1.4s infinite ease-in-out;
+      
+      &:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      
+      &:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+    }
+  }
+  
+  @keyframes typing {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 `
 
 const ChatInputContainer = styled.div`
@@ -1151,8 +1186,9 @@ const Social = () => {
   const [showAiChat, setShowAiChat] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
   const [chatMessages, setChatMessages] = useState<{id: number, text: string, isUser: boolean}[]>([
-    { id: 1, text: 'Olá! Sou seu assistente pessoal do GymBuddy. Como posso ajudar com seus treinos hoje?', isUser: false },
+    { id: 1, text: 'Olá! Sou seu assistente pessoal do GymBuddy. Como posso ajudar com seus treinos hoje? 💪', isUser: false },
   ])
+  const [isChatLoading, setIsChatLoading] = useState(false)
   const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
   
   // Estados para comentários e curtidas
@@ -1802,27 +1838,57 @@ const Social = () => {
   }
   
 
-  const handleChatSubmit = () => {
-    if (!chatMessage.trim()) return
+  const handleChatSubmit = async () => {
+    if (!chatMessage.trim() || isChatLoading) return
 
+    const userMessage = chatMessage.trim()
+    
+    // Adicionar mensagem do usuário
     const newMessage = {
       id: chatMessages.length + 1,
-      text: chatMessage,
+      text: userMessage,
       isUser: true
     }
 
     setChatMessages(prev => [...prev, newMessage])
     setChatMessage('')
+    setIsChatLoading(true)
 
-    // Simular resposta da IA após um delay
-    setTimeout(() => {
+    try {
+      // Obter resposta do AgentPyLing
+      const response = await agentService.sendMessage(userMessage)
+      
+      // Adicionar resposta da IA
       const aiResponse = {
         id: chatMessages.length + 2,
-        text: 'Entendi! Vou ajudar você com isso. Que tipo de exercício você gostaria de focar hoje?',
+        text: response.response,
         isUser: false
       }
+      
       setChatMessages(prev => [...prev, aiResponse])
-    }, 1000)
+      
+      // Log de métricas se disponível
+      if (response.metadata) {
+        console.log('🤖 AgentPyLing Response:', {
+          model: response.metadata.model,
+          tokens: response.metadata.tokens,
+          time: response.metadata.processing_time,
+          confidence: response.confidence
+        })
+      }
+    } catch (error) {
+      console.error('❌ Erro no chat:', error)
+      
+      // Mensagem de erro amigável
+      const errorResponse = {
+        id: chatMessages.length + 2,
+        text: '😅 Ops! Tive um problema técnico. Pode repetir sua pergunta?',
+        isUser: false
+      }
+      setChatMessages(prev => [...prev, errorResponse])
+    } finally {
+      setIsChatLoading(false)
+    }
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -2028,20 +2094,39 @@ return (
               {message.text}
             </MessageBubble>
           ))}
+          {isChatLoading && (
+            <MessageBubble isUser={false}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+                A IA está pensando...
+              </span>
+            </MessageBubble>
+          )}
         </ChatMessages>
         
         <ChatInputContainer>
           <ChatInput
             type="text"
-            placeholder="Digite sua pergunta..."
+            placeholder={isChatLoading ? "Aguarde a resposta..." : "Digite sua pergunta..."}
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+            onKeyPress={(e) => e.key === 'Enter' && !isChatLoading && handleChatSubmit()}
+            disabled={isChatLoading}
+            style={{ opacity: isChatLoading ? 0.6 : 1 }}
           />
           <ChatSendButton 
             onClick={handleChatSubmit}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: isChatLoading ? 1 : 1.05 }}
+            whileTap={{ scale: isChatLoading ? 1 : 0.95 }}
+            style={{ 
+              opacity: isChatLoading ? 0.5 : 1,
+              cursor: isChatLoading ? 'not-allowed' : 'pointer'
+            }}
+            disabled={isChatLoading}
           >
             <FiSend />
           </ChatSendButton>
