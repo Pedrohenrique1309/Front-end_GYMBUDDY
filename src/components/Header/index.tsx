@@ -494,18 +494,18 @@ const Logo = styled.div`
 `
 
 const LogoImage = styled.img`
-  height: 8rem;
+  height: 11rem;
   width: auto;
   object-fit: contain;
   transition: transform 0.3s ease;
-  margin-top: 0;
+  margin-top: 1.3rem;
   
   &:hover {
     transform: scale(1.05);
   }
   
   @media (max-width: 768px) {
-    height: 6rem;
+    height: 9rem;
   }
 `
 
