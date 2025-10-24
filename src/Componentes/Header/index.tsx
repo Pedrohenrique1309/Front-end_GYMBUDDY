@@ -8,8 +8,8 @@ import { BRAND } from '../../Config/branding'
 import PopupLogin from '../LoginPopup'
 import SignupPopup from '../CadastroPopUp'
 import PopupEsqueciSenha from '../PopUpEsqueciMinhaSenha'
-import { useUser } from '../../contexts/UserContext'
-import { usePopup } from '../../contexts/PopupContext'
+import { useUser } from '../../Contexts/UserContext'
+import { usePopup } from '../../Contexts/PopupContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 
 interface HeaderProps {

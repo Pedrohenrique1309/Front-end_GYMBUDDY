@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
 import { FiArrowLeft, FiMapPin, FiCalendar, FiActivity, FiUser } from 'react-icons/fi'
-import { useUser } from '../../contexts/UserContext'
+import { useUser } from '../../Contexts/UserContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 
 const API_BASE_URL = '/api/v1/gymbuddy'

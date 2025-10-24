@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import DefaultAvatar from '../../../Recursos/avatarpadrao'
-import { useUser } from '../../../contexts/UserContext'
+import { useUser } from '../../../Contexts/UserContext'
 
 const ProfileSidebar = () => {
   const { user } = useUser()

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiX, FiSend, FiHeart, FiTrash2, FiUser, FiEdit3, FiCheck } from 'react-icons/fi'
-import { useUser } from '../../contexts/UserContext'
+import { useUser } from '../../Contexts/UserContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 import { 
   comentarioService, 

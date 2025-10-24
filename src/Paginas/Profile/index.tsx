@@ -7,13 +7,13 @@ import {
   FiActivity, FiAtSign, FiFileText, FiTrendingUp,
   FiChevronDown, FiChevronUp, FiGrid, FiHeart, FiMessageCircle
 } from 'react-icons/fi'
-import { useUser } from '../../contexts/UserContext'
+import { useUser } from '../../Contexts/UserContext'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmDeletePopup } from '../../Componentes/ConfirmDeletePopup'
 import { EditPostPopup } from '../../Componentes/EditPostPopup'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 import WeightHeightPopup from '../../Componentes/WeightHeightPopup'
-import { useUserActions } from '../../hooks/useUserActions'
+import { useUserActions } from '../../Hooks/useUserActions'
 import { uploadImageToAzure } from './uploadImageToAzure'
 import LiquidDatePicker from '../../Componentes/LiquidDatePicker'
 import { cleanCorruptedUserData, isValidUserId } from '../../Utils/validateUserData'

@@ -4,7 +4,7 @@ import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi'
 import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { signupUser, SignupResponse, checkEmailExists, checkUsernameExists } from '../../Config/api'
-import { useUser } from '../../contexts/UserContext'
+import { useUser } from '../../Contexts/UserContext'
 
 // componentes estilizados
 const Overlay = styled(motion.div)`

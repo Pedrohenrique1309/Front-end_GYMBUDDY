@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin, FiMusic, FiSearch } from 'react-icons/fi'
-import { useUser } from '../../contexts/UserContext'
+import { useUser } from '../../Contexts/UserContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 import ImageEditor from '../ImageEditor'
-import { usePublicationActions } from '../../hooks/usePublicationActions'
+import { usePublicationActions } from '../../Hooks/usePublicationActions'
 
 // Configuração do Azure Storage 
 const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'

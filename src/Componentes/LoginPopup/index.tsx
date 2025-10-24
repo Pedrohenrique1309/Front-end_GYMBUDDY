@@ -4,8 +4,8 @@ import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
 import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { loginUser, LoginResponse } from '../../Config/api'
-import { useUser } from '../../contexts/UserContext'
-import { usePopup } from '../../contexts/PopupContext'
+import { useUser } from '../../Contexts/UserContext'
+import { usePopup } from '../../Contexts/PopupContext'
 
 interface PropsPopupLogin {
   estaAberto: boolean

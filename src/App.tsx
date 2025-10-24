@@ -11,9 +11,9 @@ import UserProfile from './Paginas/UserProfile'
 import Network from './Paginas/Network'
 import Social from './Paginas/Social'
 import ResetarSenha from './Paginas/ResetarSenha'
-import { UserProvider } from './contexts/UserContext'
-import { HeaderProvider, useHeader } from './contexts/HeaderContext'
-import { PopupProvider } from './contexts/PopupContext'
+import { UserProvider } from './Contexts/UserContext'
+import { HeaderProvider, useHeader } from './Contexts/HeaderContext'
+import { PopupProvider } from './Contexts/PopupContext'
 
 const pageVariants = {
   initial: {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import styled from 'styled-components'
 import { FiHeart, FiMessageCircle, FiShare2, FiMoreVertical, FiImage, FiSearch } from 'react-icons/fi'
-import { useUser } from '../../../contexts/UserContext'
+import { useUser } from '../../../Contexts/UserContext'
 import DefaultAvatar from '../../../Recursos/avatarpadrao'
 import { Post } from '../index'
 

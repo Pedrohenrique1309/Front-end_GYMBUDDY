@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUser } from '../../contexts/UserContext';
+import { useUser } from '../../Contexts/UserContext';
 import styled from 'styled-components';
 
 const DebugContainer = styled.div`

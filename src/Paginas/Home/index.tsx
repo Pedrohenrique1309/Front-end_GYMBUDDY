@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import Hero from '../../Componentes/Home'
 import SignupPopup from '../../Componentes/CadastroPopUp'
 import LoginPopup from '../../Componentes/LoginPopup'
-import { usePopup } from '../../contexts/PopupContext'
+import { usePopup } from '../../Contexts/PopupContext'
 
 const Home = () => {
   const { 
