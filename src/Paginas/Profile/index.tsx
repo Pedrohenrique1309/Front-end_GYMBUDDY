@@ -16,7 +16,7 @@ import WeightHeightPopup from '../../Componentes/IMCPopUp'
 import { useUserActions } from '../../Hooks/useUserActions'
 import { uploadImageToAzure } from './uploadImageToAzure'
 import LiquidDatePicker from '../../Componentes/LiquidDatePicker'
-import { cleanCorruptedUserData, isValidUserId } from '../../Utils/validateUserData'
+import { cleanCorruptedUserData, isValidUserId } from '../../Utils/validarDadosUser'
 
 
 const uploadParams = () => {
