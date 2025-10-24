@@ -6,7 +6,7 @@ import {
   listarPublicacoes,
   buscarPublicacao,
   excluirPublicacao
-} from '../services/publicationService'
+} from '../Services/publicationService'
 
 export const usePublicationActions = () => {
   const [loading, setLoading] = useState(false);

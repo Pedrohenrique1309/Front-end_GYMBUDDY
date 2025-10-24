@@ -8,7 +8,7 @@ import {
   buscarUsuario,
   atualizarUsuario,
   excluirUsuario
-} from '../services/userService'
+} from '../Services/userService'
 
 export const useUserActions = () => {
   const [loading, setLoading] = useState(false);

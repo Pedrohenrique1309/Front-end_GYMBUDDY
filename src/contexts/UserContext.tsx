@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { UserData, getUserFromStorage, getTokenFromStorage, clearAuthData } from '../config/api'
+import { UserData, getUserFromStorage, getTokenFromStorage, clearAuthData } from '../Config/api'
 
 interface UserContextType {
   user: UserData | null
