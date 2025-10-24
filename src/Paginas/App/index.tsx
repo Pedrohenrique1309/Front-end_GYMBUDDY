@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import styled from 'styled-components'
 import { FaGooglePlay, FaApple } from 'react-icons/fa'
-import SocialNetworkButton from '../../Componentes/SocialNetworkButton'
+import SocialNetworkButton from '../../Componentes/BotaoRedeGymBuddy'
 
 const App = () => {
   return (

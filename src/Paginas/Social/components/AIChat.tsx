@@ -4,7 +4,7 @@ import { FiX, FiSend, FiSmile, FiPaperclip } from 'react-icons/fi'
 import { AiOutlineRobot } from 'react-icons/ai'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
-import HalterModel from '../../../Componentes/HalterModel/HalterModelWithErrorHandling'
+import HalterModel from '../../../Componentes/HalterModelo3D/HalterModelWithErrorHandling'
 
 const AIChat = () => {
   const [showChat, setShowChat] = useState(true)
