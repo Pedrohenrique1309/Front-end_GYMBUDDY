@@ -4,8 +4,8 @@
  */
 
 // Configuração da API 
-const AGENT_API_URL = process.env.VITE_AGENT_API_URL || 'http://localhost:8000'
-const API_KEY = process.env.VITE_AGENT_API_KEY || ''
+const AGENT_API_URL = import.meta.env.VITE_AGENT_API_URL || 'http://localhost:8000'
+const API_KEY = import.meta.env.VITE_AGENT_API_KEY || ''
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
