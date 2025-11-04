@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus, FiX } from 'react-icons/fi'
@@ -14,6 +14,12 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Sphere, MeshDistortMaterial, Environment } from '@react-three/drei'
 import HalterModel from '../../Componentes/HalterModelo3D/HalterModelWithErrorHandling'
 import { gymbuddyIA } from '../../Services/gymbuddyIA'
+import gsap from 'gsap'
+import { ScrollTrigger, ScrollToPlugin } from 'gsap/all'
+import ShinyText from '../../Components/ShinyText/ShinyText'
+
+// Registrar plugins GSAP
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
@@ -973,12 +979,26 @@ const Chat3DPlaceholder = styled.div`
   z-index: 1;
 `
 
+const ShinyTextContainer = styled.div`
+  padding: 1.5rem 2rem 1rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  
+  .chat-shiny-text {
+    font-size: 1.8rem;
+    font-weight: 600;
+    filter: drop-shadow(0 3px 12px rgba(255, 255, 255, 0.2));
+  }
+`
+
 const ChatContent = styled.div`
   flex: 1;
-  padding: 2rem;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  height: 0; /* Força o container a usar o flex corretamente */
+  min-height: 0; /* Permite que o flex shrink funcione */
 `
 
 const ChatMessages = styled.div`
@@ -986,13 +1006,60 @@ const ChatMessages = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2rem 2rem 1rem 2rem;
+  margin-bottom: 0;
+  
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-button {
+    display: none;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+    margin: 0.5rem 0;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #E30613, #B91C1C);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 2px 8px rgba(227, 6, 19, 0.3),
+      0 0 15px rgba(227, 6, 19, 0.4),
+      0 0 25px rgba(227, 6, 19, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #DC2626, #991B1B);
+    box-shadow: 
+      0 4px 12px rgba(227, 6, 19, 0.4),
+      0 0 20px rgba(227, 6, 19, 0.6),
+      0 0 35px rgba(227, 6, 19, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: scaleY(1.1);
+  }
+  
+  &::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, #B91C1C, #7F1D1D);
+  }
+  
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #E30613 transparent;
 `
 
 const MessageBubble = styled.div<{ isUser?: boolean }>`
   max-width: 85%;
   padding: 1.5rem 2rem;
-  margin-bottom: 1rem;
   border-radius: 24px;
   font-size: 1.1rem;
   font-weight: 500;
@@ -1103,8 +1170,28 @@ const MessageBubble = styled.div<{ isUser?: boolean }>`
 const ChatInputContainer = styled.div`
   display: flex;
   gap: 1rem;
-  padding: 2rem;
+  padding: 1.5rem 2rem 2rem 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0; /* Previne que o input seja comprimido */
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 2rem;
+    right: 2rem;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%,
+      rgba(229, 57, 53, 0.3) 50%,
+      transparent 100%
+    );
+  }
 `
 
 const ChatInput = styled.input`
@@ -1312,6 +1399,19 @@ const Social = () => {
   const [isChatLoading, setIsChatLoading] = useState(false)
   const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
   
+  // Estado para o texto dinâmico do ShinyText
+  const [shinyTextMessage, setShinyTextMessage] = useState('Como será seu treino hoje?')
+  const shinyTextOptions = [
+    'Como será seu treino hoje?',
+    'Como posso te ajudar hoje?',
+    'Mantendo-se firme?'
+  ]
+  
+  // Refs para animações GSAP
+  const chatMessagesRef = useRef<HTMLDivElement>(null)
+  const messageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  
   // Estados para comentários e curtidas
   const [showCommentsModal, setShowCommentsModal] = useState(false)
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null)
@@ -1476,6 +1576,165 @@ const Social = () => {
       generateRandomUsers()
     }
   }, [users])
+
+  // GSAP Animations for Chat Messages
+  useEffect(() => {
+    if (!showAiChat || chatMessages.length === 0) return
+
+    // Animar entrada da última mensagem
+    const lastMessageId = chatMessages[chatMessages.length - 1].id
+    const lastMessageElement = messageRefs.current[lastMessageId]
+    
+    if (lastMessageElement) {
+      // Animação de entrada
+      gsap.fromTo(lastMessageElement, 
+        { 
+          opacity: 0, 
+          y: 30,
+          scale: 0.9,
+          filter: 'blur(5px)'
+        },
+        { 
+          opacity: 1, 
+          y: 0,
+          scale: 1,
+          filter: 'blur(0px)',
+          duration: 0.6,
+          ease: 'power3.out'
+        }
+      )
+      
+      // Pulso suave após entrada
+      gsap.to(lastMessageElement, {
+        scale: 1.02,
+        duration: 0.3,
+        delay: 0.6,
+        yoyo: true,
+        repeat: 1,
+        ease: 'power2.inOut'
+      })
+    }
+
+    // Smooth scroll para a última mensagem
+    if (chatMessagesRef.current) {
+      gsap.to(chatMessagesRef.current, {
+        scrollTo: { y: 'max', autoKill: true },
+        duration: 0.8,
+        ease: 'power2.inOut',
+        delay: 0.2
+      })
+    }
+  }, [chatMessages, showAiChat])
+
+  // Animação do container do chat quando abre/fecha
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      if (showAiChat) {
+        // Selecionar texto aleatório quando o chat abre
+        const randomIndex = Math.floor(Math.random() * shinyTextOptions.length)
+        setShinyTextMessage(shinyTextOptions[randomIndex])
+        
+        // Animação de abertura
+        gsap.fromTo(chatContainerRef.current,
+          { 
+            x: -600,
+            opacity: 0
+          },
+          { 
+            x: 0,
+            opacity: 1,
+            duration: 0.5,
+            ease: 'power3.out'
+          }
+        )
+        
+        // Parallax suave nas mensagens existentes
+        const messages = Object.values(messageRefs.current).filter(el => el !== null)
+        messages.forEach((msg, index) => {
+          gsap.fromTo(msg,
+            { 
+              x: -50 * (1 - index * 0.1),
+              opacity: 0
+            },
+            { 
+              x: 0,
+              opacity: 1,
+              duration: 0.4,
+              delay: index * 0.05,
+              ease: 'power2.out'
+            }
+          )
+        })
+      }
+    }
+  }, [showAiChat])
+
+  // Efeito de hover nas mensagens
+  useEffect(() => {
+    const messages = Object.values(messageRefs.current).filter(el => el !== null)
+    
+    messages.forEach(msg => {
+      if (!msg) return
+      
+      // Mouse enter
+      msg.addEventListener('mouseenter', () => {
+        gsap.to(msg, {
+          scale: 1.02,
+          duration: 0.2,
+          ease: 'power2.out'
+        })
+      })
+      
+      // Mouse leave
+      msg.addEventListener('mouseleave', () => {
+        gsap.to(msg, {
+          scale: 1,
+          duration: 0.2,
+          ease: 'power2.out'
+        })
+      })
+    })
+    
+    // Cleanup
+    return () => {
+      messages.forEach(msg => {
+        if (!msg) return
+        msg.removeEventListener('mouseenter', () => {})
+        msg.removeEventListener('mouseleave', () => {})
+      })
+    }
+  }, [chatMessages])
+
+  // Animação especial para o indicador de typing
+  useEffect(() => {
+    if (isChatLoading && chatMessagesRef.current) {
+      const typingIndicator = chatMessagesRef.current.querySelector('.typing-indicator')
+      if (typingIndicator) {
+        gsap.fromTo(typingIndicator,
+          { opacity: 0, scale: 0.8 },
+          { 
+            opacity: 1, 
+            scale: 1,
+            duration: 0.3,
+            ease: 'back.out(1.7)'
+          }
+        )
+        
+        // Animação das bolinhas
+        const dots = typingIndicator.querySelectorAll('span')
+        dots.forEach((dot, index) => {
+          gsap.to(dot, {
+            y: -5,
+            duration: 0.4,
+            delay: index * 0.1,
+            repeat: -1,
+            yoyo: true,
+            ease: 'power2.inOut'
+          })
+        })
+      }
+    }
+  }, [isChatLoading])
 
   // Enriquecer posts com dados completos dos usuários
   const enriquecerPostsComUsuarios = async (posts: any[]): Promise<Post[]> => {
@@ -2157,6 +2416,7 @@ return (
     </AnimatePresence>
     
     <ChatSidebar
+      ref={chatContainerRef}
       isOpen={showAiChat}
       initial={false}
       animate={{
@@ -2198,10 +2458,23 @@ return (
         </Canvas>
       </Chat3DContainer>
       
+      <ShinyTextContainer>
+        <ShinyText 
+          text={shinyTextMessage}
+          disabled={false}
+          speed={3}
+          className="chat-shiny-text"
+        />
+      </ShinyTextContainer>
+      
       <ChatContent>
-        <ChatMessages>
+        <ChatMessages ref={chatMessagesRef}>
           {chatMessages.map((message) => (
-            <MessageBubble key={message.id} isUser={message.isUser}>
+            <MessageBubble 
+              key={message.id} 
+              isUser={message.isUser}
+              ref={(el) => { messageRefs.current[message.id] = el }}
+            >
               {message.isUser ? message.text : renderMarkdown(message.text)}
             </MessageBubble>
           ))}
