@@ -17,6 +17,65 @@ import { gymbuddyIA } from '../../Services/gymbuddyIA'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
+// Função para renderizar markdown básico
+const renderMarkdown = (text: string) => {
+  // Primeiro, escapar caracteres HTML perigosos (exceto os que vamos usar)
+  let html = text
+  
+  // Converter quebras de linha duplas em parágrafos
+  html = html.replace(/\n\n/g, '</p><p>')
+  html = `<p>${html}</p>`
+  
+  // Converter quebras de linha simples em <br/>
+  html = html.replace(/\n/g, '<br/>')
+  
+  // Negrito (**texto**)
+  html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong style="color: #FF5722; font-weight: 600;">$1</strong>')
+  
+  // Itálico (*texto*) - mas apenas se não fizer parte de **
+  html = html.replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em style="color: #FF8A65;">$1</em>')
+  
+  // Títulos com emojis incluídos
+  html = html.replace(/^### (.+)$/gm, '<h3 style="font-size: 1.3rem; font-weight: 600; margin: 1.5rem 0 0.8rem 0; color: #FF5722; border-left: 3px solid #FF5722; padding-left: 0.8rem;">$1</h3>')
+  html = html.replace(/^## (.+)$/gm, '<h2 style="font-size: 1.5rem; font-weight: 600; margin: 1.8rem 0 1rem 0; color: #E53935; border-left: 4px solid #E53935; padding-left: 1rem;">$1</h2>')
+  html = html.replace(/^# (.+)$/gm, '<h1 style="font-size: 1.7rem; font-weight: 700; margin: 2rem 0 1.2rem 0; color: #E53935; text-shadow: 0 2px 4px rgba(229, 57, 53, 0.3);">$1</h1>')
+  
+  // Listas com bullets personalizados
+  html = html.replace(/^• (.+)$/gm, '<li style="margin: 0.4rem 0; padding-left: 0.5rem; color: rgba(255, 255, 255, 0.9);">$1</li>')
+  html = html.replace(/^- (.+)$/gm, '<li style="margin: 0.4rem 0; padding-left: 0.5rem; color: rgba(255, 255, 255, 0.9);">$1</li>')
+  
+  // Números com formatação especial (ex: 1.90 m, 80.5 kg)
+  html = html.replace(/(\d+[.,]\d+)\s*(kg|g|m|cm|kcal|cal)/gi, '<span style="color: #FF5722; font-weight: 600; background: rgba(255, 87, 34, 0.1); padding: 0.1rem 0.3rem; border-radius: 3px;">$1 $2</span>')
+  
+  // Código inline
+  html = html.replace(/`([^`]+?)`/g, '<code style="background: rgba(255, 255, 255, 0.15); color: #FFB74D; padding: 0.3rem 0.5rem; border-radius: 5px; font-family: \'Fira Code\', monospace; font-size: 0.95em;">$1</code>')
+  
+  // Destacar valores importantes (TMB, IMC, etc.)
+  html = html.replace(/(TMB|IMC|BF|Peso|Altura):\s*([^\s<]+)/gi, '<strong style="color: #FFF;">$1:</strong> <span style="color: #FF5722; font-weight: 600;">$2</span>')
+  
+  // Envolver listas consecutivas em <ul>
+  html = html.replace(/(<li[^>]*>.*?<\/li>\s*)+/gs, '<ul style="margin: 0.8rem 0; padding-left: 2rem; list-style: none;">$&</ul>')
+  
+  // Adicionar bullets customizados às listas
+  html = html.replace(/<ul[^>]*>/g, '<ul style="margin: 0.8rem 0; padding-left: 2rem; list-style: none;">')
+  html = html.replace(/<li/g, '<li style="position: relative;" data-bullet="💪"')
+  
+  // CSS para bullets customizados
+  const styledHtml = `
+    <style>
+      li[data-bullet]:before {
+        content: attr(data-bullet);
+        position: absolute;
+        left: -1.5rem;
+        color: #FF5722;
+      }
+    </style>
+    ${html}
+  `
+  
+  return <div dangerouslySetInnerHTML={{ __html: styledHtml }} />
+}
+
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
@@ -931,26 +990,81 @@ const ChatMessages = styled.div`
 `
 
 const MessageBubble = styled.div<{ isUser?: boolean }>`
-  max-width: 80%;
-  padding: 1rem 1.5rem;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  max-width: 85%;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1rem;
+  border-radius: 24px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.6;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.01em;
   align-self: ${props => props.isUser ? 'flex-end' : 'flex-start'};
   background: ${props => props.isUser 
     ? 'linear-gradient(135deg, #E53935 0%, #FF5722 100%)'
-    : 'rgba(255, 255, 255, 0.05)'
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)'
   };
   color: white;
   border: ${props => props.isUser 
     ? 'none' 
-    : '1px solid rgba(255, 255, 255, 0.1)'
+    : '1px solid rgba(255, 255, 255, 0.12)'
   };
   box-shadow: ${props => props.isUser 
-    ? '0 4px 20px rgba(229, 57, 53, 0.3)'
-    : '0 4px 20px rgba(0, 0, 0, 0.2)'
+    ? '0 8px 32px rgba(229, 57, 53, 0.25), 0 2px 8px rgba(229, 57, 53, 0.15)'
+    : '0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(255, 255, 255, 0.05)'
   };
-
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: ${props => props.isUser 
+      ? '0 12px 40px rgba(229, 57, 53, 0.3), 0 4px 12px rgba(229, 57, 53, 0.2)'
+      : '0 12px 40px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(255, 255, 255, 0.08)'
+    };
+  }
+  
+  /* Melhor formatação de texto */
+  p {
+    margin: 0.5rem 0;
+    &:first-child { margin-top: 0; }
+    &:last-child { margin-bottom: 0; }
+  }
+  
+  /* Estilo para conteúdo markdown */
+  h1, h2, h3 {
+    margin: 1rem 0 0.5rem 0;
+    line-height: 1.3;
+  }
+  
+  strong {
+    font-weight: 600;
+  }
+  
+  em {
+    font-style: italic;
+  }
+  
+  ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  li {
+    margin: 0.3rem 0;
+    line-height: 1.5;
+  }
+  
+  code {
+    font-size: 0.9em;
+  }
+  
+  /* Destaque para emojis */
+  span:has-text('💪'), span:has-text('🎯'), span:has-text('🏋️'), span:has-text('🥗') {
+    font-size: 1.2em;
+    margin: 0 0.2rem;
+  }
+  
   /* Indicador de digitação animado */
   .typing-indicator {
     display: flex;
@@ -995,21 +1109,27 @@ const ChatInputContainer = styled.div`
 
 const ChatInput = styled.input`
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 25px;
-  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  padding: 1.2rem 2rem;
   color: white;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 500;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   outline: none;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
   }
   
   &:focus {
-    border-color: rgba(229, 57, 53, 0.5);
-    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(229, 57, 53, 0.6);
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 20px rgba(229, 57, 53, 0.15);
   }
 `
 
@@ -1856,14 +1976,7 @@ const Social = () => {
 
     // Integração com IA real
     try {
-      console.log('🔍 [Chat Sidebar] Dados do usuário logado:', user)
-      console.log('🔍 [Chat Sidebar] user?.id original:', user?.id)
-      console.log('🔍 [Chat Sidebar] typeof user?.id:', typeof user?.id)
-      console.log('🔍 [Chat Sidebar] user?.nome:', user?.nome)
-      console.log('🔍 [Chat Sidebar] user?.email:', user?.email)
-      
       const userIdFinal = String(user?.id || 'user')
-      console.log('🔍 [Chat Sidebar] Enviando user_id:', userIdFinal)
       const resposta = await gymbuddyIA.enviarMensagem(userIdFinal, userMessage)
       
       const aiResponse = {
@@ -2089,7 +2202,7 @@ return (
         <ChatMessages>
           {chatMessages.map((message) => (
             <MessageBubble key={message.id} isUser={message.isUser}>
-              {message.text}
+              {message.isUser ? message.text : renderMarkdown(message.text)}
             </MessageBubble>
           ))}
           {isChatLoading && (

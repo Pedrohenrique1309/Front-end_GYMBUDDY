@@ -66,13 +66,6 @@ class GymBuddyIA {
     sugestoes?: string[]
   }> {
     try {
-      console.log('🤖 [GymBuddy IA] Enviando mensagem:', { userId, message: message.substring(0, 50) + '...' })
-      console.log('🔍 [GymBuddy IA] VERIFICANDO USER_ID:', { 
-        userId, 
-        tipo: typeof userId, 
-        valido: !isNaN(Number(userId)),
-        convertido: Number(userId)
-      })
       
       const chatData: ChatRequest = {
         user_id: userId,
@@ -82,9 +75,7 @@ class GymBuddyIA {
         }
       }
 
-      console.log('📤 [GymBuddy IA] Dados enviados:', chatData)
       const response = await api.post<ChatResponse>('/v1/gymbuddy/ia/chat', chatData)
-      console.log('📥 [GymBuddy IA] Resposta recebida:', response.data)
       
       if (response.data.status_code === 200 && response.data.data) {
         // Adicionar ao histórico da conversa
