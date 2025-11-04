@@ -9,10 +9,11 @@ import DefaultAvatar from '../../Recursos/avatarpadrao'
 import CreatePostPopup from '../../Componentes/PopUpCriarPost'
 import CommentsModal from '../../Componentes/ModalComentarios'
 import { curtidaService, comentarioCountService, type LikeUser } from '../../Services/socialService'
-import agentService from '../../Services/agentService'
+// import agentService from '../../Services/agentService' // Substituído por gymbuddyIA
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Sphere, MeshDistortMaterial, Environment } from '@react-three/drei'
 import HalterModel from '../../Componentes/HalterModelo3D/HalterModelWithErrorHandling'
+import { gymbuddyIA } from '../../Services/gymbuddyIA'
 
 const API_BASE_URL = '/api/v1/gymbuddy'
 
@@ -1849,56 +1850,53 @@ const Social = () => {
       text: userMessage,
       isUser: true
     }
-
     setChatMessages(prev => [...prev, newMessage])
     setChatMessage('')
     setIsChatLoading(true)
 
+    // Integração com IA real
     try {
-      // Obter resposta do AgentPyLing
-      const response = await agentService.sendMessage(userMessage)
+      console.log('🔍 [Chat Sidebar] Dados do usuário logado:', user)
+      console.log('🔍 [Chat Sidebar] user?.id original:', user?.id)
+      console.log('🔍 [Chat Sidebar] typeof user?.id:', typeof user?.id)
+      console.log('🔍 [Chat Sidebar] user?.nome:', user?.nome)
+      console.log('🔍 [Chat Sidebar] user?.email:', user?.email)
       
-      // Adicionar resposta da IA
+      const userIdFinal = String(user?.id || 'user')
+      console.log('🔍 [Chat Sidebar] Enviando user_id:', userIdFinal)
+      const resposta = await gymbuddyIA.enviarMensagem(userIdFinal, userMessage)
+      
       const aiResponse = {
         id: chatMessages.length + 2,
-        text: response.response,
+        text: resposta.mensagem,
         isUser: false
       }
       
       setChatMessages(prev => [...prev, aiResponse])
-      
-      // Log de métricas se disponível
-      if (response.metadata) {
-        console.log('🤖 AgentPyLing Response:', {
-          model: response.metadata.model,
-          tokens: response.metadata.tokens,
-          time: response.metadata.processing_time,
-          confidence: response.confidence
-        })
-      }
+      setIsChatLoading(false)
     } catch (error) {
-      console.error('❌ Erro no chat:', error)
+      console.error('Erro no chat da sidebar:', error)
       
-      // Mensagem de erro amigável
-      const errorResponse = {
+      // Fallback em caso de erro
+      const aiResponse = {
         id: chatMessages.length + 2,
-        text: '😅 Ops! Tive um problema técnico. Pode repetir sua pergunta?',
+        text: 'Desculpe, tive um problema técnico. Minha IA está sendo atualizada! Tente novamente em alguns instantes. 🤖⚙️',
         isUser: false
       }
-      setChatMessages(prev => [...prev, errorResponse])
-    } finally {
+      
+      setChatMessages(prev => [...prev, aiResponse])
       setIsChatLoading(false)
     }
+  }
+
+  const toggleAiChat = () => {
+    setShowAiChat(!showAiChat)
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       setShowAiChat(false)
     }
-  }
-
-  const toggleAiChat = () => {
-    setShowAiChat(!showAiChat)
   }
 
   const handleCreatePost = () => {

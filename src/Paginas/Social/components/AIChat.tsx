@@ -1,35 +1,136 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { FiX, FiSend, FiSmile, FiPaperclip } from 'react-icons/fi'
+import { FiX, FiSend, FiSmile, FiPaperclip, FiLoader } from 'react-icons/fi'
 import { AiOutlineRobot } from 'react-icons/ai'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
 import HalterModel from '../../../Componentes/HalterModelo3D/HalterModelWithErrorHandling'
+import { useUser } from '../../../Contexts/UserContext'
+import { gymbuddyIA } from '../../../Services/gymbuddyIA'
+// Removido react-markdown para evitar dependência
+
+interface Mensagem {
+  id: string
+  type: 'user' | 'ai'
+  content: string
+  time: Date
+  sugestoes?: string[]
+}
+
+// Fun\u00e7\u00e3o simples para renderizar markdown b\u00e1sico
+const renderMarkdown = (text: string) => {
+  // Converter quebras de linha em <br/>
+  let html = text.replace(/\n/g, '<br/>')
+  
+  // Negrito
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  
+  // It\u00e1lico
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+  
+  // T\u00edtulos
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>')
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>')
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>')
+  
+  // Listas
+  html = html.replace(/^\u2022 (.+)$/gm, '<li>$1</li>')
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>')
+  
+  // C\u00f3digo inline
+  html = html.replace(/`(.+?)`/g, '<code>$1</code>')
+  
+  return <div dangerouslySetInnerHTML={{ __html: html }} />
+}
+
 
 const AIChat = () => {
   const [showChat, setShowChat] = useState(true)
-  const [messages, setMessages] = useState<any[]>([])
+  const [messages, setMessages] = useState<Mensagem[]>([])
   const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [sugestoesRapidas, setSugestoesRapidas] = useState<string[]>([])
+  const { user } = useUser()
 
-  const handleSendMessage = () => {
-    if (!input.trim()) return
+  // Carregar dados do usuário e verificar status da IA
+  useEffect(() => {
+    const inicializarChat = async () => {
+      if (user?.nome) {
+        // Verificar se a IA está disponível
+        const iaDisponivel = await gymbuddyIA.verificarStatus()
+        
+        const boasVindas: Mensagem = {
+          id: 'welcome',
+          type: 'ai',
+          content: `Olá ${user.nome}! 👋\n\nSou seu Personal Trainer virtual do GymBuddy, alimentado por IA avançada (GPT-OSS-120B)! 🤖💪\n\n${iaDisponivel ? 
+            'Estou 100% operacional e pronto para te ajudar com orientações personalizadas sobre treino, nutrição e muito mais!' : 
+            'Estou com alguns problemas técnicos no momento, mas ainda posso te ajudar com o básico!'}
+\nSobre o que gostaria de conversar hoje?`,
+          time: new Date(),
+          sugestoes: [
+            'Monte um treino personalizado',
+            'Analise meu perfil fitness',
+            'Crie um plano nutricional',
+            'Dicas para meu objetivo'
+          ]
+        }
+        setMessages([boasVindas])
+        setSugestoesRapidas(boasVindas.sugestoes || [])
+      }
+    }
     
-    setMessages(prev => [...prev, {
+    inicializarChat()
+  }, [user])
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return
+    
+    const userMessage: Mensagem = {
+      id: `msg_${Date.now()}`,
       type: 'user',
       content: input,
       time: new Date()
-    }])
+    }
     
-    // Simular resposta da IA
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        type: 'ai',
-        content: 'Ótima pergunta! Vou te ajudar com seu treino...',
-        time: new Date()
-      }])
-    }, 1000)
-    
+    setMessages(prev => [...prev, userMessage])
     setInput('')
+    setIsLoading(true)
+    setSugestoesRapidas([])
+    
+    try {
+      // Enviar mensagem para IA do backend
+      const resposta = await gymbuddyIA.enviarMensagem(String(user?.id || 'user'), input)
+      
+      const aiMessage: Mensagem = {
+        id: `msg_${Date.now() + 1}`,
+        type: 'ai',
+        content: resposta.mensagem,
+        time: new Date(),
+        sugestoes: resposta.sugestoes
+      }
+      
+      setMessages(prev => [...prev, aiMessage])
+      setSugestoesRapidas(resposta.sugestoes || [])
+      
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error)
+      
+      const errorMessage: Mensagem = {
+        id: `msg_${Date.now() + 1}`,
+        type: 'ai',
+        content: 'Desculpe, tive um problema técnico. Minha IA está sendo atualizada! Tente novamente em alguns instantes. 🤖⚙️',
+        time: new Date(),
+        sugestoes: ['Tentar novamente', 'Verificar status da IA']
+      }
+      setMessages(prev => [...prev, errorMessage])
+      setSugestoesRapidas(errorMessage.sugestoes || [])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  const handleSugestao = (sugestao: string) => {
+    setInput(sugestao)
   }
 
   if (!showChat) {
@@ -58,11 +159,13 @@ const AIChat = () => {
       <Messages>
         <WelcomeMessage>
           <div className="message-content">
-            <h4>Em seu último treino você progrediu com carga em 2 exercícios.</h4>
+            <h4>GymBuddy AI - Personal Trainer Inteligente</h4>
+            <p>Powered by GPT-OSS-120B • IA avançada para fitness personalizado:</p>
             <div className="tags">
-              <span>Hipertrofia</span>
-              <span>Dieta</span>
-              <span>Cardio</span>
+              <span onClick={() => handleSugestao('Crie um treino personalizado para mim')}>Treino Personalizado</span>
+              <span onClick={() => handleSugestao('Analise meu perfil e objetivos')}>Análise Completa</span>
+              <span onClick={() => handleSugestao('Monte um plano nutricional')}>Plano Nutricional</span>
+              <span onClick={() => handleSugestao('Otimize meus resultados')}>Otimização IA</span>
             </div>
           </div>
           <div className="model-container">
@@ -94,18 +197,60 @@ const AIChat = () => {
           </div>
         </WelcomeMessage>
         
-        {messages.map((msg, index) => (
-          <Message key={index} className={msg.type}>
-            <div className="content">{msg.content}</div>
+        {messages.map((msg) => (
+          <Message key={msg.id} className={msg.type}>
+            <div className="content">
+              {msg.type === 'ai' ? (
+                renderMarkdown(msg.content)
+              ) : (
+                msg.content
+              )}
+            </div>
             <div className="time">
               {new Date(msg.time).toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit'
               })}
             </div>
+            {msg.sugestoes && msg.sugestoes.length > 0 && (
+              <div className="sugestoes">
+                {msg.sugestoes.map((sugestao, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => handleSugestao(sugestao)}
+                    className="sugestao-btn"
+                  >
+                    {sugestao}
+                  </button>
+                ))}
+              </div>
+            )}
           </Message>
         ))}
+        
+        {isLoading && (
+          <Message className="ai">
+            <div className="content loading">
+              <FiLoader className="spin" />
+              <span>Coach GymBuddy está pensando...</span>
+            </div>
+          </Message>
+        )}
       </Messages>
+      
+      {sugestoesRapidas.length > 0 && (
+        <SugestoesRapidas>
+          {sugestoesRapidas.map((sugestao, idx) => (
+            <button 
+              key={idx} 
+              onClick={() => handleSugestao(sugestao)}
+              className="sugestao-rapida"
+            >
+              {sugestao}
+            </button>
+          ))}
+        </SugestoesRapidas>
+      )}
       
       <InputArea>
         <button className="attach">
@@ -113,16 +258,21 @@ const AIChat = () => {
         </button>
         <input 
           type="text"
-          placeholder="Me ajude no meu treino?"
+          placeholder="Pergunte sobre treino, dieta, suplementos..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+          onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSendMessage()}
+          disabled={isLoading}
         />
         <button className="emoji">
           <FiSmile />
         </button>
-        <button className="send" onClick={handleSendMessage}>
-          <FiSend />
+        <button 
+          className="send" 
+          onClick={handleSendMessage}
+          disabled={isLoading}
+        >
+          {isLoading ? <FiLoader className="spin" /> : <FiSend />}
         </button>
       </InputArea>
     </Container>
@@ -322,6 +472,50 @@ const Message = styled.div`
     
     .content {
       background: rgba(255, 255, 255, 0.1);
+      
+      /* Estilos para Markdown */
+      h1, h2, h3, h4, h5, h6 {
+        margin: 1rem 0 0.5rem 0;
+        font-weight: 600;
+      }
+      
+      p {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+      }
+      
+      ul, ol {
+        margin: 0.5rem 0;
+        padding-left: 2rem;
+      }
+      
+      li {
+        margin: 0.3rem 0;
+      }
+      
+      strong {
+        color: var(--primary);
+        font-weight: 600;
+      }
+      
+      code {
+        background: rgba(227, 6, 19, 0.1);
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.3rem;
+        font-family: monospace;
+      }
+    }
+    
+    &.loading {
+      .content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+      }
     }
   }
   
@@ -336,6 +530,61 @@ const Message = styled.div`
     font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.4);
     padding: 0 0.5rem;
+  }
+  
+  .sugestoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    max-width: 80%;
+    
+    .sugestao-btn {
+      background: rgba(227, 6, 19, 0.1);
+      border: 1px solid rgba(227, 6, 19, 0.3);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: rgba(227, 6, 19, 0.2);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+      }
+    }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`
+
+const SugestoesRapidas = styled.div`
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  
+  .sugestao-rapida {
+    background: rgba(227, 6, 19, 0.1);
+    border: 1px solid rgba(227, 6, 19, 0.3);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 2rem;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: rgba(227, 6, 19, 0.2);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(227, 6, 19, 0.3);
+    }
   }
 `
 
