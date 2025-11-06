@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import styled from 'styled-components'
 import { FaGooglePlay, FaApple } from 'react-icons/fa'
-import SocialNetworkButton from '../../Componentes/BotaoRedeGymBuddy'
 
 const App = () => {
   return (
@@ -61,8 +60,6 @@ const App = () => {
           </DownloadButtons>
         </motion.div>
       </ContentWrapper>
-      
-      <SocialNetworkButton />
     </AppContainer>
   )
 }

@@ -197,14 +197,14 @@ const UserProfile = () => {
       
         
         // Busca usuário no mock data
-        console.log('🔄 Buscando usuário no mock data para ID:', id)
-        console.log('📋 IDs disponíveis no mock:', mockUsers.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
+        console.log(' Buscando usuário no mock data para ID:', id)
+        console.log(' IDs disponíveis no mock:', mockUsers.map(u => `${u.id}: ${u.nome} (${u.nickname})`))
         
         const mockUser = mockUsers.find(u => u.id === id)
         
         if (mockUser) {
-          console.log('✅ Usuário encontrado no mock:', mockUser)
-          console.log('📝 Dados completos:', {
+          console.log(' Usuário encontrado no mock:', mockUser)
+          console.log(' Dados completos:', {
             id: mockUser.id,
             nome: mockUser.nome,
             nickname: mockUser.nickname,
@@ -213,8 +213,8 @@ const UserProfile = () => {
           setProfileUser(mockUser)
           setLoading(false) // Importante: parar o loading aqui também
         } else {
-          console.log('❌ Usuário não encontrado para ID:', id)
-          console.log('💡 Sugestão: Verifique se o ID está sendo passado corretamente na navegação')
+          console.log(' Usuário não encontrado para ID:', id)
+          console.log(' Sugestão: Verifique se o ID está sendo passado corretamente na navegação')
           setError(`Usuário com ID ${id} não encontrado`)
         }
       }

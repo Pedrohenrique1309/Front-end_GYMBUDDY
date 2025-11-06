@@ -10,6 +10,7 @@ import Profile from './Paginas/Profile'
 import UserProfile from './Paginas/UserProfile'
 import Network from './Paginas/Network'
 import Social from './Paginas/Social'
+import Treinos from './Paginas/Treinos'
 import ResetarSenha from './Paginas/ResetarSenha'
 import { UserProvider } from './Contexts/UserContext'
 import { HeaderProvider, useHeader } from './Contexts/HeaderContext'
@@ -130,6 +131,20 @@ const AnimatedRoutes = () => {
               transition={pageTransition}
             >
               <UserProfile />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/treinos" 
+          element={
+            <motion.div
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <Treinos />
             </motion.div>
           } 
         />

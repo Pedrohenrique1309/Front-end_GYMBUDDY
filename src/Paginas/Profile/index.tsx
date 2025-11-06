@@ -94,7 +94,7 @@ const Profile = () => {
 //delay
         setTimeout(() => {
           setShowWeightHeightPopup(true)
-        }, 1000);
+        }, 1000)
       }
     }
   }, [isLoggedIn, user])
@@ -114,8 +114,6 @@ const Profile = () => {
         foto: user.foto || ''
       }
       
-      // Sincronizado editedData com dados do usuário
-      
       setEditedData(newEditedData);
     }
   }, [user]);
@@ -131,41 +129,39 @@ const Profile = () => {
       // A foto já foi enviada para Azure no handleAvatarUpload
       // finalFotoUrl já contém a URL da Azure ou dados do usuário
       
-      // Atualizar no backend se tiver ID do usuário válido
+      // Atualizar no backend se tiver ID do usuário valido
       if (user?.id && typeof user.id === 'number' && user.id > 0) {
-        // Preparar payload básico
+        
         const payload: any = {
           nome: editedData.nome,
           email: editedData.email,
           nickname: editedData.nickname,
-          senha: user.senha || 'Senha123@', // Backend requer senha para validação
+          senha: user.senha || 'Senha123@', 
           descricao: editedData.descricao || '',
           localizacao: editedData.localizacao || '',
           data_nascimento: editedData.data_nascimento || '1990-01-01',
           foto: finalFotoUrl || ''
         }
         
-        // Adicionar campos numéricos apenas se tiverem valores válidos
+
         if (editedData.peso && editedData.peso !== '' && editedData.peso !== '--') {
           payload.peso = Number(editedData.peso)
         }
         if (editedData.altura && editedData.altura !== '' && editedData.altura !== '--') {
           payload.altura = Number(editedData.altura)
         }
-        
-        // Calcular IMC automaticamente se peso e altura estiverem disponíveis
+
         if (payload.peso && payload.altura) {
           payload.imc = Number((payload.peso / (payload.altura * payload.altura)).toFixed(2))
         }
         
         await updateUserAPI(user.id, payload)
       }
-      
-      // Atualizar contexto local com IMC calculado e foto
+
       const updatedUserData = {
         ...user,
         ...editedData,
-        foto: finalFotoUrl // Garantir que a foto seja atualizada no contexto
+        foto: finalFotoUrl 
       }
       
       // Calcular e adicionar IMC se peso e altura estiverem disponíveis
