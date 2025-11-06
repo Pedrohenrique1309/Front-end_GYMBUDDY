@@ -50,14 +50,9 @@ const Treinos: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBodyPart, setSelectedBodyPart] = useState('');
-  const [selectedEquipment, setSelectedEquipment] = useState('');
   const [loadingExercises, setLoadingExercises] = useState(false);
   const [selectedExerciseForWorkout, setSelectedExerciseForWorkout] = useState<ExerciseInWorkout | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-
-  const bodyParts = ['costas', 'cardio', 'peito', 'antebraços', 'panturrilha', 'pescoço', 'ombros', 'bíceps/tríceps', 'pernas', 'abdômen'];
-  const equipmentOptions = ['barra', 'halteres', 'cabo', 'peso corporal', 'kettlebell', 'máquina', 'elástico'];
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -100,22 +95,23 @@ const Treinos: React.FC = () => {
     let filtered = [...exercises];
 
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(ex =>
-        ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.target.toLowerCase().includes(searchTerm.toLowerCase())
+        // Busca no nome do exercício
+        ex.name.toLowerCase().includes(searchLower) ||
+        // Busca no target/músculo alvo
+        ex.target.toLowerCase().includes(searchLower) ||
+        // Busca na parte do corpo
+        ex.bodyPart.toLowerCase().includes(searchLower) ||
+        // Busca no equipamento
+        ex.equipment.toLowerCase().includes(searchLower) ||
+        // Busca nos grupos musculares
+        ex.muscles.some(muscle => muscle.toLowerCase().includes(searchLower))
       );
     }
 
-    if (selectedBodyPart) {
-      filtered = filtered.filter(ex => ex.bodyPart === selectedBodyPart);
-    }
-
-    if (selectedEquipment) {
-      filtered = filtered.filter(ex => ex.equipment === selectedEquipment);
-    }
-
     setFilteredExercises(filtered);
-  }, [searchTerm, selectedBodyPart, selectedEquipment, exercises]);
+  }, [searchTerm, exercises]);
 
   const handleAddExerciseToWorkout = (exercise: Exercise) => {
     const newExercise: ExerciseInWorkout = {
@@ -234,7 +230,9 @@ const Treinos: React.FC = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   isSelected={selectedExerciseForWorkout?.id === exerciseItem.id}
-                  onClick={() => setSelectedExerciseForWorkout(exerciseItem)}
+                  onClick={() => setSelectedExerciseForWorkout(
+                    selectedExerciseForWorkout?.id === exerciseItem.id ? null : exerciseItem
+                  )}
                 >
                   <ExerciseCardHeader>
                     <ExerciseGif src={exerciseItem.exercise.gifUrl} alt={exerciseItem.exercise.name} />
@@ -253,13 +251,20 @@ const Treinos: React.FC = () => {
                     </RemoveButton>
                   </ExerciseCardHeader>
 
-                  {selectedExerciseForWorkout?.id === exerciseItem.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
+                  <AnimatePresence>
+                    {selectedExerciseForWorkout?.id === exerciseItem.id && (
+                      <motion.div
+                        key={`details-${exerciseItem.id}`}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ 
+                          duration: 0.4, 
+                          ease: [0.4, 0, 0.2, 1],
+                          height: { duration: 0.4 },
+                          opacity: { duration: 0.3 }
+                        }}
+                      >
                       <ExerciseDetails>
                         <InputGroup>
                           <InputLabel>Observações</InputLabel>
@@ -340,17 +345,24 @@ const Treinos: React.FC = () => {
                           <span>Adicionar Série</span>
                         </AddSetButton>
                       </ExerciseDetails>
-                    </motion.div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </ExerciseCard>
               ))}
             </AnimatePresence>
           </ExercisesList>
 
-          <SaveButton onClick={handleSaveWorkout} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <FiSave />
-            <span>Salvar Treino</span>
-          </SaveButton>
+          <SaveButtonContainer>
+            <SaveButton 
+              onClick={handleSaveWorkout} 
+              whileHover={{ scale: 1.02 }} 
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            >
+              <span>Salvar Treino</span>
+            </SaveButton>
+          </SaveButtonContainer>
 
           <InputGroup>
             <InputLabel>Notas do Treino</InputLabel>
@@ -369,27 +381,11 @@ const Treinos: React.FC = () => {
             <LibraryTitle>Biblioteca de Exercícios</LibraryTitle>
           </LibraryHeader>
 
-          <FiltersSection>
-            <FilterDropdown>
-              <select value={selectedEquipment} onChange={(e) => setSelectedEquipment(e.target.value)}>
-                {equipmentOptions.map(eq => <option key={eq} value={eq}>{eq}</option>)}
-              </select>
-              <FiChevronDown />
-            </FilterDropdown>
-
-            <FilterDropdown>
-              <select value={selectedBodyPart} onChange={(e) => setSelectedBodyPart(e.target.value)}>
-                {bodyParts.map(bp => <option key={bp} value={bp}>{bp}</option>)}
-              </select>
-              <FiChevronDown />
-            </FilterDropdown>
-          </FiltersSection>
-
           <SearchBox>
             <FiSearch />
             <input
               type="text"
-              placeholder="Buscar exercícios..."
+              placeholder="Buscar exercícios ou grupos musculares..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -587,43 +583,132 @@ const HeaderTitle = styled.h1`
 const SaveButton = styled(motion.button)`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #E30613, #B91C1C);
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 2rem 1rem;
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(227, 6, 19, 0.15) 0%,
+    rgba(185, 28, 28, 0.12) 50%,
+    rgba(227, 6, 19, 0.08) 100%
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(227, 6, 19, 0.3);
+  border-radius: 10px;
   color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(227, 6, 19, 0.3);
-  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 16px 0 rgba(227, 6, 19, 0.25),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Red gradient overlay for hover */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.2) 0%,
+      rgba(185, 28, 28, 0.15) 50%,
+      rgba(227, 6, 19, 0.1) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Subtle shine effect */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transition: left 0.6s ease;
+  }
+
+  svg {
+    font-size: 0.9rem;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  }
+
+  span {
+    font-weight: 500;
+    letter-spacing: 0.25px;
+  }
 
   &:hover {
-    box-shadow: 0 12px 32px rgba(227, 6, 19, 0.4);
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.25) 0%,
+      rgba(185, 28, 28, 0.2) 50%,
+      rgba(227, 6, 19, 0.15) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.5);
+    color: white;
+    box-shadow: 
+      0 8px 24px 0 rgba(227, 6, 19, 0.4),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+
+    &::before {
+      opacity: 1;
+    }
+
+    &::after {
+      left: 100%;
+    }
   }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 
+      0 2px 8px 0 rgba(227, 6, 19, 0.3),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+`;
+
+const SaveButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
 `;
 
 const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.5rem;
 `;
 
 const InputLabel = styled.label`
   color: rgba(255, 255, 255, 0.8);
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 600;
 `;
 
 const StyledInput = styled.input`
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: 1.5rem 2rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  border-radius: 16px;
   color: white;
-  font-size: 1rem;
+  font-size: 1.5rem;
   transition: all 0.3s ease;
 
   &:focus {
@@ -1001,50 +1086,6 @@ const Tab = styled.button<{ active: boolean }>`
   &:hover {
     background: ${props => props.active ? 'linear-gradient(135deg, #E30613, #B91C1C)' : 'rgba(255, 255, 255, 0.05)'};
     color: white;
-  }
-`;
-
-const FiltersSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-`;
-
-const FilterDropdown = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  select {
-    width: 100%;
-    padding: 0.75rem 1.25rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    color: white;
-    font-size: 0.95rem;
-    cursor: pointer;
-    appearance: none;
-    transition: all 0.3s ease;
-
-    &:focus {
-      outline: none;
-      border-color: rgba(227, 6, 19, 0.5);
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    option {
-      background: #1a1a1a;
-      color: white;
-    }
-  }
-
-  svg {
-    position: absolute;
-    right: 1rem;
-    color: rgba(255, 255, 255, 0.6);
-    pointer-events: none;
   }
 `;
 
