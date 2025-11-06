@@ -56,8 +56,8 @@ const Treinos: React.FC = () => {
   const [selectedExerciseForWorkout, setSelectedExerciseForWorkout] = useState<ExerciseInWorkout | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  const bodyParts = ['back', 'cardio', 'chest', 'lower arms', 'lower legs', 'neck', 'shoulders', 'upper arms', 'upper legs', 'waist'];
-  const equipmentOptions = ['barbell', 'dumbbell', 'cable', 'body weight', 'kettlebell', 'machine', 'resistance band'];
+  const bodyParts = ['costas', 'cardio', 'peito', 'antebraços', 'panturrilha', 'pescoço', 'ombros', 'bíceps/tríceps', 'pernas', 'abdômen'];
+  const equipmentOptions = ['barra', 'halteres', 'cabo', 'peso corporal', 'kettlebell', 'máquina', 'elástico'];
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -70,21 +70,21 @@ const Treinos: React.FC = () => {
     const fetchExercises = async () => {
       setLoadingExercises(true);
       const mockExercises: Exercise[] = [
-        { id: '1', name: 'Bench Press (Barbell)', bodyPart: 'chest', equipment: 'barbell', gifUrl: 'https://v2.exercisedb.io/image/lEVlWOUhFXBwKb', target: 'pectorals', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior'] },
-        { id: '2', name: 'Bench Press (Dumbbell)', bodyPart: 'chest', equipment: 'dumbbell', gifUrl: 'https://v2.exercisedb.io/image/7pKN4ktbR6SMvN', target: 'pectorals', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior', 'Core'] },
-        { id: '3', name: 'Bent Over Row (Barbell)', bodyPart: 'back', equipment: 'barbell', gifUrl: 'https://v2.exercisedb.io/image/nE8c2B0bZN4oJ5', target: 'upper back', muscles: ['Grande Dorsal', 'Trapézio', 'Romboides', 'Bíceps'] },
-        { id: '4', name: 'Bicep Curl (Dumbbell)', bodyPart: 'upper arms', equipment: 'dumbbell', gifUrl: 'https://v2.exercisedb.io/image/1TZs38TwMmC3Yr', target: 'biceps', muscles: ['Bíceps Braquial', 'Braquial', 'Braquiorradial'] },
-        { id: '5', name: 'Cable Fly Crossovers', bodyPart: 'chest', equipment: 'cable', gifUrl: 'https://v2.exercisedb.io/image/H8P2aqkuRsFSH5', target: 'pectorals', muscles: ['Peitoral Maior', 'Deltoide Anterior'] },
-        { id: '6', name: 'Deadlift (Barbell)', bodyPart: 'back', equipment: 'barbell', gifUrl: 'https://v2.exercisedb.io/image/hM3zPYvtBPnOVl', target: 'spine', muscles: ['Eretores da Espinha', 'Glúteos', 'Isquiotibiais', 'Grande Dorsal', 'Trapézio'] },
-        { id: '7', name: 'Face Pull', bodyPart: 'shoulders', equipment: 'cable', gifUrl: 'https://v2.exercisedb.io/image/XpJqV2nJaD8xDe', target: 'delts', muscles: ['Deltoide Posterior', 'Trapézio Médio', 'Romboides'] },
-        { id: '8', name: 'Hammer Curl (Dumbbell)', bodyPart: 'upper arms', equipment: 'dumbbell', gifUrl: 'https://v2.exercisedb.io/image/yO0vUMWYrfBaNO', target: 'biceps', muscles: ['Braquiorradial', 'Bíceps Braquial', 'Braquial'] },
-        { id: '9', name: 'Incline Bench Press (Barbell)', bodyPart: 'chest', equipment: 'barbell', gifUrl: 'https://v2.exercisedb.io/image/oqR7GnH3SbBvuz', target: 'pectorals', muscles: ['Peitoral Superior', 'Deltoide Anterior', 'Tríceps'] },
-        { id: '10', name: 'Leg Extension (Machine)', bodyPart: 'upper legs', equipment: 'machine', gifUrl: 'https://v2.exercisedb.io/image/KPwXm05u1Wskl6', target: 'quads', muscles: ['Quadríceps', 'Reto Femoral', 'Vasto Lateral', 'Vasto Medial'] },
-        { id: '11', name: 'Leg Press (Machine)', bodyPart: 'upper legs', equipment: 'machine', gifUrl: 'https://v2.exercisedb.io/image/vvgThKSl5T1Jfn', target: 'glutes', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Panturrilha'] },
-        { id: '12', name: 'Lateral Raise (Dumbbell)', bodyPart: 'shoulders', equipment: 'dumbbell', gifUrl: 'https://v2.exercisedb.io/image/1hHK1jW3xtQF0y', target: 'delts', muscles: ['Deltoide Lateral', 'Trapézio Superior'] },
-        { id: '13', name: 'Squat (Barbell)', bodyPart: 'upper legs', equipment: 'barbell', gifUrl: 'https://v2.exercisedb.io/image/f1pU7B1pVLbdcO', target: 'glutes', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Core', 'Eretores'] },
-        { id: '14', name: 'Pull Up', bodyPart: 'back', equipment: 'body weight', gifUrl: 'https://v2.exercisedb.io/image/OLvQpghP8fB4Nn', target: 'lats', muscles: ['Grande Dorsal', 'Bíceps', 'Trapézio', 'Romboides', 'Core'] },
-        { id: '15', name: 'Shoulder Press (Dumbbell)', bodyPart: 'shoulders', equipment: 'dumbbell', gifUrl: 'https://v2.exercisedb.io/image/xDrDhXkxR0twxl', target: 'delts', muscles: ['Deltoide Anterior', 'Deltoide Lateral', 'Tríceps', 'Trapézio'] },
+        { id: '1', name: 'Supino Reto (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/lEVlWOUhFXBwKb', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior'] },
+        { id: '2', name: 'Supino Reto (Halteres)', bodyPart: 'peito', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/7pKN4ktbR6SMvN', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior', 'Core'] },
+        { id: '3', name: 'Remada Curvada (Barra)', bodyPart: 'costas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/nE8c2B0bZN4oJ5', target: 'costas superior', muscles: ['Grande Dorsal', 'Trapézio', 'Romboides', 'Bíceps'] },
+        { id: '4', name: 'Rosca Direta (Halteres)', bodyPart: 'bíceps/tríceps', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/1TZs38TwMmC3Yr', target: 'bíceps', muscles: ['Bíceps Braquial', 'Braquial', 'Braquiorradial'] },
+        { id: '5', name: 'Crucifixo no Cross (Cabo)', bodyPart: 'peito', equipment: 'cabo', gifUrl: 'https://v2.exercisedb.io/image/H8P2aqkuRsFSH5', target: 'peitorais', muscles: ['Peitoral Maior', 'Deltoide Anterior'] },
+        { id: '6', name: 'Levantamento Terra (Barra)', bodyPart: 'costas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/hM3zPYvtBPnOVl', target: 'lombar', muscles: ['Eretores da Espinha', 'Glúteos', 'Isquiotibiais', 'Grande Dorsal', 'Trapézio'] },
+        { id: '7', name: 'Puxada Facial (Cabo)', bodyPart: 'ombros', equipment: 'cabo', gifUrl: 'https://v2.exercisedb.io/image/XpJqV2nJaD8xDe', target: 'deltoides', muscles: ['Deltoide Posterior', 'Trapézio Médio', 'Romboides'] },
+        { id: '8', name: 'Rosca Martelo (Halteres)', bodyPart: 'bíceps/tríceps', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/yO0vUMWYrfBaNO', target: 'bíceps', muscles: ['Braquiorradial', 'Bíceps Braquial', 'Braquial'] },
+        { id: '9', name: 'Supino Inclinado (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/oqR7GnH3SbBvuz', target: 'peitorais', muscles: ['Peitoral Superior', 'Deltoide Anterior', 'Tríceps'] },
+        { id: '10', name: 'Cadeira Extensora (Máquina)', bodyPart: 'pernas', equipment: 'máquina', gifUrl: 'https://v2.exercisedb.io/image/KPwXm05u1Wskl6', target: 'quadríceps', muscles: ['Quadríceps', 'Reto Femoral', 'Vasto Lateral', 'Vasto Medial'] },
+        { id: '11', name: 'Leg Press (Máquina)', bodyPart: 'pernas', equipment: 'máquina', gifUrl: 'https://v2.exercisedb.io/image/vvgThKSl5T1Jfn', target: 'glúteos', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Panturrilha'] },
+        { id: '12', name: 'Elevação Lateral (Halteres)', bodyPart: 'ombros', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/1hHK1jW3xtQF0y', target: 'deltoides', muscles: ['Deltoide Lateral', 'Trapézio Superior'] },
+        { id: '13', name: 'Agachamento Livre (Barra)', bodyPart: 'pernas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/f1pU7B1pVLbdcO', target: 'glúteos', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Core', 'Eretores'] },
+        { id: '14', name: 'Barra Fixa', bodyPart: 'costas', equipment: 'peso corporal', gifUrl: 'https://v2.exercisedb.io/image/OLvQpghP8fB4Nn', target: 'dorsais', muscles: ['Grande Dorsal', 'Bíceps', 'Trapézio', 'Romboides', 'Core'] },
+        { id: '15', name: 'Desenvolvimento com Halteres', bodyPart: 'ombros', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/xDrDhXkxR0twxl', target: 'deltoides', muscles: ['Deltoide Anterior', 'Deltoide Lateral', 'Tríceps', 'Trapézio'] },
       ];
       setExercises(mockExercises);
       setFilteredExercises(mockExercises);
@@ -366,11 +366,7 @@ const Treinos: React.FC = () => {
         {/* Coluna Direita - Biblioteca de Exercícios */}
         <RightColumn>
           <LibraryHeader>
-            <LibraryTitle>Biblioteca</LibraryTitle>
-            <TabsContainer>
-              <Tab active={true}>Exercícios</Tab>
-              <Tab active={false}>Personalizados</Tab>
-            </TabsContainer>
+            <LibraryTitle>Biblioteca de Exercícios</LibraryTitle>
           </LibraryHeader>
 
           <FiltersSection>
@@ -616,7 +612,7 @@ const InputGroup = styled.div`
 
 const InputLabel = styled.label`
   color: rgba(255, 255, 255, 0.8);
-  font-size: 0.95rem;
+  font-size: 1.5rem;
   font-weight: 600;
 `;
 
@@ -643,12 +639,12 @@ const StyledInput = styled.input`
 
 const StyledTextArea = styled.textarea`
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: 1.4rem 1.5rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: white;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-family: inherit;
   resize: vertical;
   transition: all 0.3s ease;
@@ -692,9 +688,9 @@ const ExerciseCardHeader = styled.div`
 `;
 
 const ExerciseGif = styled.img`
-  width: 140px;
-  height: 140px;
-  border-radius: 14px;
+  width: 240px;
+  height: 240px;
+  border-radius: 16px;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.05);
 `;
@@ -707,7 +703,7 @@ const ExerciseInfo = styled.div`
 `;
 
 const ExerciseName = styled.h3`
-  font-size: 1.5rem;
+  font-size: 3rem;
   font-weight: 600;
   color: white;
   margin: 0;
@@ -801,8 +797,8 @@ const RestTimeInput = styled.div`
     background: transparent;
     border: none;
     color: white;
-    font-size: 1rem;
-    width: 80px;
+    font-size: 1.6rem;
+    width: 120px;
 
     &:focus {
       outline: none;
@@ -811,7 +807,7 @@ const RestTimeInput = styled.div`
 
   span {
     color: rgba(255, 255, 255, 0.6);
-    font-size: 0.9rem;
+    font-size: 1.4rem;
   }
 `;
 
@@ -827,7 +823,7 @@ const SetsTable = styled.table`
         padding: 1rem;
         text-align: left;
         color: rgba(255, 255, 255, 0.6);
-        font-size: 0.9rem;
+        font-size: 1.4rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -846,12 +842,12 @@ const SetsTable = styled.table`
       td {
         padding: 1rem;
         color: white;
-        font-size: 1.05rem;
+        font-size: 1.6rem;
 
         &:first-child {
           color: rgba(255, 255, 255, 0.6);
           font-weight: 600;
-          font-size: 1.1rem;
+          font-size: 1.7rem;
         }
       }
     }
@@ -860,13 +856,13 @@ const SetsTable = styled.table`
 
 const SetInput = styled.input`
   width: 100%;
-  max-width: 120px;
-  padding: 0.75rem 1rem;
+  max-width: 160px;
+  padding: 1rem 1.4rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: white;
-  font-size: 1.1rem;
+  font-size: 1.7rem;
   font-weight: 500;
   text-align: center;
   transition: all 0.3s ease;
@@ -901,20 +897,73 @@ const AddSetButton = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: rgba(227, 6, 19, 0.1);
-  border: 1px dashed rgba(227, 6, 19, 0.3);
-  border-radius: 10px;
-  color: #E30613;
-  font-size: 0.95rem;
-  font-weight: 600;
+  gap: 0.75rem;
+  padding: 1.2rem 2rem;
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05)
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Efeito de reflexo/highlight */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.15),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  svg {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  }
 
   &:hover {
-    background: rgba(227, 6, 19, 0.15);
-    border-color: rgba(227, 6, 19, 0.5);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0.08)
+    );
+    border-color: rgba(255, 255, 255, 0.25);
+    color: white;
+    box-shadow: 
+      0 12px 40px 0 rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 
+      0 4px 16px 0 rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
   }
 `;
 
