@@ -18,7 +18,7 @@ import { uploadImageToAzure } from './uploadImageToAzure'
 import LiquidDatePicker from '../../Componentes/LiquidDatePicker'
 import { cleanCorruptedUserData, isValidUserId } from '../../Utils/validarDadosUser'
 
-
+//azure
 const uploadParams = () => {
   const fileInput = document.getElementById('avatar-upload') as HTMLInputElement;
   const file = fileInput?.files?.[0];
@@ -53,31 +53,31 @@ const Profile = () => {
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
 
-  // Estado para os posts do usuário
+
   const [userPosts, setUserPosts] = useState<any[]>([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
 
-  // Estados para popup de confirmação de exclusão
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [postToDelete, setPostToDelete] = useState<number | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   
-  // Estados para popup de edição
+
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [postToEdit, setPostToEdit] = useState<any>(null);
   const [isUpdatingPost, setIsUpdatingPost] = useState(false);
 
   useEffect(() => {
-    // Não redirecionar se ainda está carregando
+
     if (isLoading) {
-      console.log('🔄 UserContext ainda carregando...');
+      console.log('UserContext ainda carregando...');
       return;
     }
     
-    // Só redirecionar se terminou de carregar e não está logado
+
     if (!isLoading && !isLoggedIn) {
-      navigate('/');
-      return;
+      navigate('/')
+      return
     }
     
     if (user && user.id && !isValidUserId(user.id)) {
@@ -85,17 +85,15 @@ const Profile = () => {
     }
   }, [isLoading, isLoggedIn, navigate, user])
 
-  // Verificar primeira visita e mostrar popup de peso/altura
   useEffect(() => {
     if (isLoggedIn && user) {
-      const hasVisitedProfile = localStorage.getItem(`profile_visited_${user.id || user.email}`);
-      const hasMissingData = !user.peso || !user.altura;
-      
-      // Mostrar popup apenas se for primeira visita E não tiver os dados
+      const hasVisitedProfile = localStorage.getItem(`profile_visited_${user.id || user.email}`)
+      const hasMissingData = !user.peso || !user.altura
+
       if (!hasVisitedProfile && hasMissingData) {
-        // Pequeno delay para melhor UX
+//delay
         setTimeout(() => {
-          setShowWeightHeightPopup(true);
+          setShowWeightHeightPopup(true)
         }, 1000);
       }
     }

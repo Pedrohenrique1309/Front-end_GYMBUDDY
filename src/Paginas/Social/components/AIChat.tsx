@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
+import { motion, AnimatePresence } from 'framer-motion'
+import gsap from 'gsap'
 import { FiX, FiSend, FiSmile, FiPaperclip, FiLoader } from 'react-icons/fi'
 import { AiOutlineRobot } from 'react-icons/ai'
 import { Canvas } from '@react-three/fiber'
@@ -51,6 +53,56 @@ const AIChat = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [sugestoesRapidas, setSugestoesRapidas] = useState<string[]>([])
   const { user } = useUser()
+  
+  // Refs para animações GSAP
+  const containerRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLDivElement>(null)
+
+  // Animação de entrada com GSAP
+  useEffect(() => {
+    if (containerRef.current && headerRef.current && messagesRef.current && inputRef.current) {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+      
+      // Animar container principal
+      gsap.set(containerRef.current, { 
+        opacity: 0, 
+        scale: 0.9, 
+        y: 30
+      })
+      
+      tl.to(containerRef.current, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'power4.out'
+      })
+      
+      // Animar elementos internos em sequência
+      .from(headerRef.current, {
+        opacity: 0,
+        y: -20,
+        duration: 0.4,
+        ease: 'back.out(1.4)'
+      }, '-=0.3')
+      
+      .from(messagesRef.current, {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        ease: 'power3.out'
+      }, '-=0.2')
+      
+      .from(inputRef.current, {
+        opacity: 0,
+        y: 20,
+        duration: 0.4,
+        ease: 'power3.out'
+      }, '-=0.3')
+    }
+  }, [])
 
   // Carregar dados do usuário e verificar status da IA
   useEffect(() => {
@@ -142,8 +194,8 @@ const AIChat = () => {
   }
 
   return (
-    <Container>
-      <Header>
+    <Container ref={containerRef}>
+      <Header ref={headerRef}>
         <Title>
           <AiOutlineRobot />
           <div>
@@ -156,7 +208,7 @@ const AIChat = () => {
         </CloseButton>
       </Header>
       
-      <Messages>
+      <Messages ref={messagesRef}>
         <WelcomeMessage>
           <div className="message-content">
             <h4>GymBuddy AI - Personal Trainer Inteligente</h4>
@@ -197,8 +249,20 @@ const AIChat = () => {
           </div>
         </WelcomeMessage>
         
-        {messages.map((msg) => (
-          <Message key={msg.id} className={msg.type}>
+        {messages.map((msg, index) => (
+          <Message 
+            key={msg.id} 
+            className={msg.type}
+            as={motion.div}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ 
+              duration: 0.4, 
+              delay: index * 0.05,
+              ease: [0.25, 0.46, 0.45, 0.94]
+            }}
+          >
             <div className="content">
               {msg.type === 'ai' ? (
                 renderMarkdown(msg.content)
@@ -229,7 +293,13 @@ const AIChat = () => {
         ))}
         
         {isLoading && (
-          <Message className="ai">
+          <Message 
+            className="ai"
+            as={motion.div}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <div className="content loading">
               <FiLoader className="spin" />
               <span>Coach GymBuddy está pensando...</span>
@@ -238,8 +308,15 @@ const AIChat = () => {
         )}
       </Messages>
       
-      {sugestoesRapidas.length > 0 && (
-        <SugestoesRapidas>
+      <AnimatePresence mode="wait">
+        {sugestoesRapidas.length > 0 && (
+        <SugestoesRapidas
+          as={motion.div}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+        >
           {sugestoesRapidas.map((sugestao, idx) => (
             <button 
               key={idx} 
@@ -250,9 +327,10 @@ const AIChat = () => {
             </button>
           ))}
         </SugestoesRapidas>
-      )}
+        )}
+      </AnimatePresence>
       
-      <InputArea>
+      <InputArea ref={inputRef}>
         <button className="attach">
           <FiPaperclip />
         </button>

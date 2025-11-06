@@ -33,10 +33,10 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (userId) {
-      console.log('🔍 Carregando perfil para userId:', userId)
+      console.log('Carregando perfil para userId:', userId)
       loadUserProfile(parseInt(userId))
     } else {
-      console.log('❌ Nenhum userId fornecido')
+      console.log(' Nenhum userId fornecido')
       setError('ID do usuário não fornecido')
       setLoading(false)
     }
@@ -44,9 +44,9 @@ const UserProfile = () => {
 
   const loadUserProfile = async (id: number) => {
     console.log('════════════════════════════════')
-    console.log('🔍 Iniciando carregamento do perfil')
-    console.log('📌 ID solicitado:', id)
-    console.log('📌 Tipo do ID:', typeof id)
+    console.log('Iniciando carregamento do perfil')
+    console.log('ID solicitado:', id)
+    console.log(' Tipo do ID:', typeof id)
     console.log('════════════════════════════════')
     
     try {
@@ -57,14 +57,14 @@ const UserProfile = () => {
       let apiWorked = false
       
       try {
-        console.log('🌐 Tentando API específica:', `${API_BASE_URL}/usuario/${id}`)
+        console.log('Tentando API específica:', `${API_BASE_URL}/usuario/${id}`)
         const response = await fetch(`${API_BASE_URL}/usuario/${id}`)
         
         if (response.ok) {
           const data = await response.json()
           
           if (data?.usuario) {
-            console.log('✅ Usuário carregado da API específica:', data.usuario)
+            console.log('Usuário carregado da API específica:', data.usuario)
             setProfileUser({
               id: data.usuario.id,
               nome: data.usuario.nome,
@@ -85,14 +85,14 @@ const UserProfile = () => {
         
         if (!apiWorked) {
           // Se não funcionou, tenta lista geral
-          console.log('🌐 Tentando API lista geral:', `${API_BASE_URL}/usuario`)
+          console.log('Tentando API lista geral:', `${API_BASE_URL}/usuario`)
           const usersResponse = await fetch(`${API_BASE_URL}/usuario`)
           if (usersResponse.ok) {
             const usersData = await usersResponse.json()
             if (usersData?.usuarios) {
               const foundUser = usersData.usuarios.find((u: any) => u.id === id)
               if (foundUser) {
-                console.log('✅ Usuário encontrado na lista geral:', foundUser)
+                console.log('Usuário encontrado na lista geral:', foundUser)
                 setProfileUser({
                   id: foundUser.id,
                   nome: foundUser.nome,
@@ -114,14 +114,14 @@ const UserProfile = () => {
         }
         
       } catch (apiError) {
-        console.log('⚠️ Erro na API:', apiError)
+        console.log('Erro na API:', apiError)
       }
       
       // Se API não funcionou, usa mock data
       if (!apiWorked) {
-        console.log('🔄 API não funcionou, usando mock data para ID:', id)
+        console.log('API não funcionou, usando mock data para ID:', id)
         
-        // Mock data como fallback (IDs reais simulando API)
+        // mock
         const mockUsers: UserProfileData[] = [
           {
             id: 2,

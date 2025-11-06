@@ -4,6 +4,7 @@ import SignupPopup from '../../Componentes/CadastroPopUp'
 import LoginPopup from '../../Componentes/LoginPopup'
 import { usePopup } from '../../Contexts/PopupContext'
 
+//funcoes da home
 const Home = () => {
   const { 
     showLoginPopup, 
