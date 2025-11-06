@@ -1393,7 +1393,7 @@ const Social = () => {
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [showAiChat, setShowAiChat] = useState(false)
   const [chatMessage, setChatMessage] = useState('')
-  const [chatMessages, setChatMessages] = useState<{id: number, text: string, isUser: boolean}[]>([
+  const [chatMessages, setChatMessages] = useState<{id: number, text: string, isUser: boolean, isTyping?: boolean}[]>([
     { id: 1, text: 'Olá! Sou seu assistente pessoal do GymBuddy. Como posso ajudar com seus treinos hoje? 💪', isUser: false },
   ])
   const [isChatLoading, setIsChatLoading] = useState(false)
@@ -2130,6 +2130,61 @@ const Social = () => {
   }
   
 
+  // ✨ Função de efeito de digitação usando GSAP (versão otimizada)
+  const typewriterEffect = (fullText: string, messageId: number) => {
+    // Adiciona mensagem com texto completo MAS OCULTO (opacity 0 no conteúdo)
+    const message = {
+      id: messageId,
+      text: fullText,
+      isUser: false,
+      isTyping: true // Flag para indicar que está sendo digitado
+    }
+    setChatMessages(prev => [...prev, message])
+    setIsChatLoading(false)
+
+    // Aguardar o próximo frame para garantir que o elemento foi renderizado
+    setTimeout(() => {
+      // Encontrar o elemento da mensagem no DOM usando o messageRef
+      const messageElement = messageRefs.current[messageId]
+      
+      if (messageElement) {
+        // Criar um elemento temporário para exibir o texto sendo digitado
+        const textContainer = messageElement.querySelector('[data-message-content]')
+        
+        if (textContainer) {
+          // Limpar conteúdo e preparar para animação
+          textContainer.textContent = ''
+          
+          // Objeto para controlar o progresso
+          const progress = { value: 0 }
+          
+          // Animar o progresso de 0 a 1
+          gsap.to(progress, {
+            value: 1,
+            duration: fullText.length * 0.02, // 0.02s por caractere
+            ease: 'none',
+            onUpdate: () => {
+              const charsToShow = Math.floor(progress.value * fullText.length)
+              textContainer.textContent = fullText.substring(0, charsToShow)
+            },
+            onComplete: () => {
+              // Garantir texto completo e remover flag de typing
+              textContainer.textContent = fullText
+              setChatMessages(prev => 
+                prev.map(msg => 
+                  msg.id === messageId 
+                    ? { ...msg, isTyping: false }
+                    : msg
+                )
+              )
+              console.log('✅ Efeito de digitação completo')
+            }
+          })
+        }
+      }
+    }, 50) // Pequeno delay para garantir renderização
+  }
+
   const handleChatSubmit = async () => {
     if (!chatMessage.trim() || isChatLoading) return
 
@@ -2150,26 +2205,19 @@ const Social = () => {
       const userIdFinal = String(user?.id || 'user')
       const resposta = await gymbuddyIA.enviarMensagem(userIdFinal, userMessage)
       
-      const aiResponse = {
-        id: chatMessages.length + 2,
-        text: resposta.mensagem,
-        isUser: false
-      }
+      const messageId = chatMessages.length + 2
       
-      setChatMessages(prev => [...prev, aiResponse])
-      setIsChatLoading(false)
+      // 🎬 Usar efeito de digitação em vez de adicionar texto completo
+      typewriterEffect(resposta.mensagem, messageId)
+      
     } catch (error) {
       console.error('Erro no chat da sidebar:', error)
       
-      // Fallback em caso de erro
-      const aiResponse = {
-        id: chatMessages.length + 2,
-        text: 'Desculpe, tive um problema técnico. Minha IA está sendo atualizada! Tente novamente em alguns instantes. 🤖⚙️',
-        isUser: false
-      }
+      const messageId = chatMessages.length + 2
+      const errorText = 'Desculpe, tive um problema técnico. Minha IA está sendo atualizada! Tente novamente em alguns instantes. 🤖⚙️'
       
-      setChatMessages(prev => [...prev, aiResponse])
-      setIsChatLoading(false)
+      // 🎬 Usar efeito de digitação também para mensagens de erro
+      typewriterEffect(errorText, messageId)
     }
   }
 
@@ -2387,7 +2435,14 @@ return (
               isUser={message.isUser}
               ref={(el) => { messageRefs.current[message.id] = el }}
             >
-              {message.isUser ? message.text : renderMarkdown(message.text)}
+              {message.isUser ? (
+                message.text
+              ) : (
+                // Para mensagens da IA, usar div com data-attribute para animação
+                <div data-message-content style={{ whiteSpace: 'pre-wrap' }}>
+                  {message.isTyping ? '' : renderMarkdown(message.text)}
+                </div>
+              )}
             </MessageBubble>
           ))}
           {isChatLoading && (

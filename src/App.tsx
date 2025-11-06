@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Header from './Componentes/Header'
-import DevGridOverlay from './Componentes/DevGridOverlay'
+// import DevGridOverlay from './Componentes/DevGridOverlay' // DESABILITADO - Remover grade vermelha
 import Home from './Paginas/Home'
 import AboutUs from './Componentes/SobreNos/GSAPVersion'
 import Resources from './Componentes/Recursos/GSAPVersion'
@@ -186,7 +186,7 @@ const AppContent = () => {
   return (
     <>
       <Header isVisible={isHeaderVisible && !isAiChatOpen} />
-      <DevGridOverlay />
+      {/* <DevGridOverlay /> */} {/* DESABILITADO - Remover grade vermelha */}
       <AnimatedRoutes />
     </>
   )
