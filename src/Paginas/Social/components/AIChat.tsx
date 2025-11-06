@@ -463,7 +463,7 @@ const Message = styled.div`
     align-items: flex-end;
     
     .content {
-      background: var(--primary);
+      background: linear-gradient(135deg, #E30613, #B91C1C);
     }
   }
   
@@ -631,14 +631,14 @@ const InputArea = styled.div`
     }
     
     &.send {
-      background: var(--primary);
+      background: linear-gradient(135deg, #E30613, #B91C1C);
       color: white;
       border-radius: 50%;
       width: 3.5rem;
       height: 3.5rem;
       
       &:hover {
-        background: var(--primary-dark);
+        background: linear-gradient(135deg, #B91C1C, #E30613);
         transform: scale(1.1);
       }
     }

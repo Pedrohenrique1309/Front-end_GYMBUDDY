@@ -1068,7 +1068,7 @@ const MessageBubble = styled.div<{ isUser?: boolean }>`
   letter-spacing: 0.01em;
   align-self: ${props => props.isUser ? 'flex-end' : 'flex-start'};
   background: ${props => props.isUser 
-    ? 'linear-gradient(135deg, #E53935 0%, #FF5722 100%)'
+    ? 'linear-gradient(135deg, #E30613, #B91C1C)'
     : 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%)'
   };
   color: white;
@@ -1077,7 +1077,7 @@ const MessageBubble = styled.div<{ isUser?: boolean }>`
     : '1px solid rgba(255, 255, 255, 0.12)'
   };
   box-shadow: ${props => props.isUser 
-    ? '0 8px 32px rgba(229, 57, 53, 0.25), 0 2px 8px rgba(229, 57, 53, 0.15)'
+    ? '0 8px 32px rgba(227, 6, 19, 0.25), 0 2px 8px rgba(227, 6, 19, 0.15)'
     : '0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(255, 255, 255, 0.05)'
   };
   backdrop-filter: blur(10px);
@@ -1086,7 +1086,7 @@ const MessageBubble = styled.div<{ isUser?: boolean }>`
   &:hover {
     transform: translateY(-1px);
     box-shadow: ${props => props.isUser 
-      ? '0 12px 40px rgba(229, 57, 53, 0.3), 0 4px 12px rgba(229, 57, 53, 0.2)'
+      ? '0 12px 40px rgba(227, 6, 19, 0.3), 0 4px 12px rgba(227, 6, 19, 0.2)'
       : '0 12px 40px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(255, 255, 255, 0.08)'
     };
   }
@@ -1221,7 +1221,7 @@ const ChatInput = styled.input`
 `
 
 const ChatSendButton = styled(motion.button)`
-  background: linear-gradient(135deg, #E53935 0%, #FF5722 100%);
+  background: linear-gradient(135deg, #E30613, #B91C1C);
   border: none;
   border-radius: 50%;
   width: 50px;
@@ -1231,12 +1231,12 @@ const ChatSendButton = styled(motion.button)`
   justify-content: center;
   cursor: pointer;
   color: white;
-  box-shadow: 0 4px 20px rgba(229, 57, 53, 0.4);
+  box-shadow: 0 4px 20px rgba(227, 6, 19, 0.4);
   transition: all 0.3s ease;
   
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(229, 57, 53, 0.6);
+    box-shadow: 0 6px 30px rgba(227, 6, 19, 0.6);
   }
   
   svg {
@@ -2461,7 +2461,7 @@ return (
       <ShinyTextContainer>
         <ShinyText 
           text={shinyTextMessage}
-          disabled={false}
+          disabled={true}
           speed={3}
           className="chat-shiny-text"
         />
