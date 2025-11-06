@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { UserData, getUserFromStorage, getTokenFromStorage, clearAuthData } from '../Config/api'
 
 interface UserContextType {
@@ -20,8 +19,6 @@ interface UserProviderProps {
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const navigate = useNavigate()
-  const location = useLocation()
 
   // se o usuario tiver logado recupera do localstorage
   useEffect(() => {
@@ -112,7 +109,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const logout = () => {
     console.log('🚀 UserContext.logout() chamado:', {
       previousUser: user,
-      currentRoute: location.pathname,
       timestamp: new Date().toISOString(),
       stack: new Error().stack?.split('\n').slice(1, 5) // Stack trace para debug
     })
@@ -121,17 +117,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     clearAuthData()
     
     console.log('❌ Usuário deslogado e dados limpos')
-    
-    // Redirecionar para home apenas se estiver em páginas protegidas
-    const protectedRoutes = ['/profile', '/social']
-    const currentPath = location.pathname
-    
-    if (protectedRoutes.includes(currentPath)) {
-      console.log(`🔄 Redirecionando de ${currentPath} para home após logout`)
-      navigate('/')
-    } else {
-      console.log(`📍 Usuário permanece em ${currentPath} após logout`)
-    }
     
     // Verificar se foi realmente limpo
     setTimeout(() => {

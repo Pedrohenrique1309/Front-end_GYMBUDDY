@@ -1878,127 +1878,9 @@ const Social = () => {
     console.log('🕐 Timestamp:', new Date().toLocaleTimeString())
     
     try {
-      console.log('🔄 Tentativa 1: Endpoint /api/v1/gymbuddy/publicacao')
+      // ✅ PRIORIDADE 1: Tentar endpoint /view/feed (já tem nome_usuario e foto_perfil)
+      console.log('🔄 Tentativa 1: Endpoint /api/v1/gymbuddy/view/feed (com dados completos do usuário)')
       
-      // Primeiro tenta endpoint das publicações
-      const response = await fetch('/api/v1/gymbuddy/publicacao', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      })
-      
-      console.log('📡 Status da resposta:', response.status)
-      console.log('📡 Headers da resposta:', Object.fromEntries(response.headers.entries()))
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('📄 Resposta completa do /publicacao:', data)
-        console.log('🔍 Estrutura da resposta:', {
-          isArray: Array.isArray(data),
-          hasPublicacao: !!data?.publicacao,
-          isPublicacaoArray: Array.isArray(data?.publicacao),
-          publicacaoLength: data?.publicacao?.length || 0,
-          dataKeys: Object.keys(data || {}),
-          firstElement: data?.publicacao?.[0] || data?.[0]
-        })
-        
-        // Verifica múltiplas estruturas possíveis
-        let postsArray = null
-        
-        // Estrutura 1: { publicacao: [...] }
-        if (data?.publicacao && Array.isArray(data.publicacao) && data.publicacao.length > 0) {
-          postsArray = data.publicacao
-          console.log('✅ Estrutura encontrada: data.publicacao')
-        }
-        // Estrutura 2: Array direto [...]
-        else if (Array.isArray(data) && data.length > 0) {
-          postsArray = data
-          console.log('✅ Estrutura encontrada: Array direto')
-        }
-        // Estrutura 3: { publicacoes: [...] } (plural)
-        else if (data?.publicacoes && Array.isArray(data.publicacoes) && data.publicacoes.length > 0) {
-          postsArray = data.publicacoes
-          console.log('✅ Estrutura encontrada: data.publicacoes')
-        }
-        // Estrutura 4: { data: [...] }
-        else if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
-          postsArray = data.data
-          console.log('✅ Estrutura encontrada: data.data')
-        }
-        
-        if (postsArray) {
-          console.log('✅ Posts carregados da API:', postsArray.length, 'posts')
-          console.log('🔍 ESTRUTURA COMPLETA DO PRIMEIRO POST DA API:', JSON.stringify(postsArray[0], null, 2))
-          console.log('📊 Campos disponíveis no primeiro post:', Object.keys(postsArray[0] || {}))
-          
-          // Mapear dados das publicações
-          const apiPosts = postsArray.map((pub: any, index: number) => {
-            // Extrair hashtags da descrição
-            const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
-            const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
-            
-            // Extrair ID do usuário de várias possíveis estruturas
-            // CORREÇÃO: Priorizar id_user do post sobre usuario?.id
-            const userId = pub.id_user || pub.id_usuario || pub.user_id || pub.idUser || pub.userID || pub.usuario?.id
-            
-            console.log(`📝 Post ${index + 1} (ID: ${pub.id}):`, {
-              estrutura_pub: Object.keys(pub),
-              id_user_original: pub.id_user,
-              id_usuario: pub.id_usuario,
-              usuario_objeto: pub.usuario,
-              userId_extraído: userId,
-              usuario_nome: pub.usuario?.nickname || pub.usuario?.nome,
-              imagem: pub.imagem ? '✅ Tem' : '❌ Sem',
-              descricao: pub.descricao?.substring(0, 50) + '...',
-              hashtags: uniqueHashtags.length
-            })
-            
-            return {
-              id: pub.id,
-              id_user: userId, // ID do usuário extraído de várias possíveis estruturas
-              user: {
-                // SEMPRE usar fallback genérico para ser substituído pelo enriquecimento
-                username: pub.usuario?.nome || pub.usuario?.nickname || (userId ? `Usuário ${userId}` : 'Usuário Desconhecido'),
-                avatar: pub.usuario?.foto || ''
-              },
-              image: pub.imagem || '', 
-              description: pub.descricao || '', 
-              hashtags: uniqueHashtags,
-              likes: pub.curtidas_count || pub.curtidas || 0,
-              comments: pub.comentarios_count || pub.comentarios || 0,
-              location: pub.localizacao || '',
-              date: pub.data || pub.data_publicacao || ''
-            }
-          })
-          
-          console.log('🔄 Posts mapeados da API:', apiPosts)
-          
-          // Enriquecer posts com dados dos usuários
-          console.log('🚀 Iniciando enriquecimento dos posts...')
-          const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
-          console.log('✅ Posts enriquecidos (Resultado Final):', postsEnriquecidos.map(p => ({
-            id: p.id, 
-            username: p.user.username,
-            avatar: p.user.avatar ? 'tem avatar' : 'sem avatar'
-          })))
-          console.log('🎯 Verificação de userundefined:', postsEnriquecidos.filter(p => 
-            !p.user?.username || p.user.username.includes('undefined')
-          ).map(p => `Post ${p.id}: ${p.user?.username || 'UNDEFINED'}`))
-          setPosts(postsEnriquecidos)
-          
-          // Forçar carregamento das curtidas após carregar posts
-          console.log('✅ Posts carregados - curtidas serão carregadas via useEffect')
-          
-          return
-        } else {
-          console.log('❌ Nenhuma estrutura de posts válida encontrada na resposta da API')
-        }
-      }
-      
-      // Se primeiro endpoint falhar, tenta o endpoint view/feed
-      console.log('🔄 Tentando endpoint alternativo: /api/v1/gymbuddy/view/feed')
       const feedResponse = await fetch('/api/v1/gymbuddy/view/feed')
       
       if (feedResponse.ok) {
@@ -2014,26 +1896,26 @@ const Social = () => {
             const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
             const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
             
-            // Extrair ID do usuário de várias possíveis estruturas
-            // CORREÇÃO: Priorizar id_user do post sobre usuario?.id
-            const userId = pub.id_user || pub.id_usuario || pub.user_id || pub.idUser || pub.userID || pub.usuario?.id
+            // ✅ O endpoint /view/feed já retorna nome_usuario e foto_perfil diretamente
+            const userId = pub.id_user || pub.id_usuario || pub.user_id || pub.idUser || pub.userID
+            const nomeUsuario = pub.nome_usuario || pub.usuario?.nome || pub.usuario?.nickname || 'Usuário Anônimo'
+            const fotoPerfil = pub.foto_perfil || pub.usuario?.foto || ''
             
             console.log(`📝 Post do Feed ${index + 1} (ID: ${pub.id_publicacao}):`, {
               estrutura_pub: Object.keys(pub),
-              id_user_original: pub.id_user,
-              id_usuario: pub.id_usuario,
-              usuario_objeto: pub.usuario,
-              userId_extraído: userId,
-              usuario_nome: pub.usuario?.nickname || pub.usuario?.nome
+              id_user: pub.id_user,
+              nome_usuario: pub.nome_usuario,
+              foto_perfil: pub.foto_perfil ? 'tem foto' : 'sem foto',
+              userId_extraído: userId
             })
             
             return {
               id: pub.id_publicacao,
-              id_user: userId, // ID do usuário extraído de várias possíveis estruturas
+              id_user: userId,
               user: {
-                // SEMPRE usar fallback genérico para ser substituído pelo enriquecimento
-                username: pub.usuario?.nome || pub.usuario?.nickname || (userId ? `Usuário ${userId}` : 'Usuário Desconhecido'),
-                avatar: pub.usuario?.foto || ''
+                // ✅ Usar dados que já vêm do feed (nome_usuario e foto_perfil)
+                username: nomeUsuario,
+                avatar: fotoPerfil
               },
               image: pub.imagem || '', 
               description: pub.descricao || '', 
@@ -2046,34 +1928,64 @@ const Social = () => {
           })
           
           console.log('🔄 Posts mapeados do feed:', apiPosts)
-          
-          // Enriquecer posts com dados dos usuários
-          const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
-          console.log('✅ Posts enriquecidos do feed (Resultado Final):', postsEnriquecidos.map(p => ({
+          console.log('✅ Posts do feed prontos (com dados completos do usuário):', apiPosts.map((p: Post) => ({
             id: p.id, 
             username: p.user.username,
             avatar: p.user.avatar ? 'tem avatar' : 'sem avatar'
           })))
-          console.log('🎯 Verificação de userundefined no feed:', postsEnriquecidos.filter(p => 
-            !p.user?.username || p.user.username.includes('undefined')
-          ).map(p => `Post ${p.id}: ${p.user?.username || 'UNDEFINED'}`))
-          setPosts(postsEnriquecidos)
-          
-          // Forçar carregamento das curtidas após carregar posts do feed
+          setPosts(apiPosts)
           console.log('✅ Posts do feed carregados - curtidas serão carregadas via useEffect')
-          
           return
         }
       }
       
-      console.log('❌ Nenhum endpoint da API retornou publicações válidas.')
-      throw new Error('Nenhum endpoint retornou dados válidos de publicações')
+      // ⚠️ FALLBACK: Se /view/feed falhar, tenta /publicacao (precisa de enriquecimento)
+      console.log('🔄 Tentativa 2: Endpoint /api/v1/gymbuddy/publicacao (fallback)')
+      const publicacaoResponse = await fetch('/api/v1/gymbuddy/publicacao')
+      
+      if (publicacaoResponse.ok) {
+        const data = await publicacaoResponse.json()
+        console.log('📄 Resposta completa do /publicacao:', data)
+        
+        let postsArray = data?.publicacao || data?.publicacoes || (Array.isArray(data) ? data : null)
+        
+        if (postsArray && Array.isArray(postsArray) && postsArray.length > 0) {
+          console.log('✅ Posts carregados de /publicacao:', postsArray.length, 'posts')
+          
+          const apiPosts = postsArray.map((pub: any) => {
+            const hashtagMatches = pub.descricao?.match(/#\w+/g) || []
+            const uniqueHashtags = [...new Set(hashtagMatches)] as string[]
+            const userId = pub.id_user || pub.id_usuario || pub.usuario?.id
+            const nomeUsuario = pub.nome_usuario || pub.usuario?.nome || pub.usuario?.nickname || (userId ? `Usuário ${userId}` : 'Usuário Desconhecido')
+            const fotoPerfil = pub.foto_perfil || pub.usuario?.foto || ''
+            
+            return {
+              id: pub.id,
+              id_user: userId,
+              user: { username: nomeUsuario, avatar: fotoPerfil },
+              image: pub.imagem || '', 
+              description: pub.descricao || '', 
+              hashtags: uniqueHashtags,
+              likes: pub.curtidas_count || 0,
+              comments: pub.comentarios_count || 0,
+              location: pub.localizacao || '',
+              date: pub.data || pub.data_publicacao || ''
+            }
+          })
+          
+          // Enriquecer posts do /publicacao (pode não ter dados completos do usuário)
+          const postsEnriquecidos = await enriquecerPostsComUsuarios(apiPosts)
+          setPosts(postsEnriquecidos)
+          console.log('✅ Posts de /publicacao carregados e enriquecidos')
+          return
+        }
+      }
+      
+      console.log('❌ Nenhum endpoint retornou publicações válidas')
+      setPosts([])
       
     } catch (error) {
-      console.error('❌ Erro ao carregar posts da API:', error)
-      console.log('⚠️ Não foi possível carregar publicações da API. Aguardando dados reais dos usuários.')
-      
-      // Não usar dados mock - deixar vazio para mostrar apenas publicações reais
+      console.error('❌ Erro ao carregar posts:', error)
       setPosts([])
     }
   }
