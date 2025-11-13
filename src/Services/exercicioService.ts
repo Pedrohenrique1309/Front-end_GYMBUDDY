@@ -11,9 +11,16 @@ export interface ExercicioPayload {
   instrucoes?: string
   observacoes?: string
   gif?: string
+  gif_hd?: string // GIF de alta definição
+  gif_high_quality?: string // GIF de alta qualidade
+  gif_original?: string // GIF na resolução original
   imagem?: string
+  image_hd?: string // Imagem de alta definição
   url_gif?: string
   gif_url?: string
+  gifUrl?: string
+  video_url?: string // URL de vídeo como alternativa
+  media_url?: string // URL de mídia genérica
 }
 
 export interface ExercicioResponse {

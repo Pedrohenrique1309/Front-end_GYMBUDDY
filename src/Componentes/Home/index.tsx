@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { BRAND } from '../../Config/branding'
 import { FiChevronRight, FiTrendingUp, FiUsers, FiActivity, FiZap, FiTarget, FiAward, FiGlobe, FiUserCheck } from 'react-icons/fi'
@@ -298,6 +298,7 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
 
   return (
     <HeroSection>
+      <BackgroundGrid />
       <div className="container">
         <Content>
           <TextArea
@@ -402,16 +403,25 @@ const HeroSection = styled.section`
   position: relative;
   overflow: hidden;
   
-  /* Modern mesh gradient background */
-  background: 
-    radial-gradient(at 0% 0%, rgba(227, 6, 19, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(20, 20, 25, 1) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(227, 6, 19, 0.12) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(15, 15, 20, 1) 0px, transparent 50%),
-    linear-gradient(180deg, #080808 0%, #0D0D0D 50%, #121212 100%);
+  /* Adaptive background based on theme */
+  background: var(--bg-primary, var(--dark-bg));
   
-  /* Camada de grid sutil para efeito tech */
+  /* Theme-aware gradient overlay */
   &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(at 0% 0%, rgba(227, 6, 19, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, var(--bg-secondary, rgba(20, 20, 25, 1)) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(227, 6, 19, 0.12) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, var(--bg-secondary, rgba(15, 15, 20, 1)) 0px, transparent 50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Camada de grid sutil adaptada ao tema */
+  &::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -421,26 +431,12 @@ const HeroSection = styled.section`
     background-size: 100px 100px;
     opacity: 0.3;
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
     -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
   }
   
-  /* Glow effect sutil no centro */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, rgba(227, 6, 19, 0.08) 0%, transparent 70%);
-    filter: blur(80px);
-    pointer-events: none;
-    z-index: 1;
-    animation: pulse-glow 8s ease-in-out infinite;
-  }
+
   
   @keyframes pulse-glow {
     0%, 100% {
@@ -490,7 +486,7 @@ const TextArea = styled(motion.div)`
     letter-spacing: -0.02em;
     text-transform: uppercase;
     margin-bottom: 3.2rem;
-    color: var(--white);
+    color: var(--text-primary, var(--white));
 
     .highlight {
       color: var(--primary);
@@ -530,7 +526,7 @@ const TextArea = styled(motion.div)`
     border-radius: 2.8rem;
     cursor: pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
-    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.25);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(255, 0, 0, 0.25));
     letter-spacing: 0.01em;
 
     &:hover {
@@ -765,13 +761,13 @@ const FloatingCard = styled(motion.div)`
   .category {
     font-size: 0.9rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.8));
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-color, rgba(255, 255, 255, 0.08));
     padding: 0.3rem 0.8rem;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
   }
   
   .card-main {
@@ -785,24 +781,35 @@ const FloatingCard = styled(motion.div)`
   .card-stat {
     font-size: 3.8rem;
     font-weight: 900;
-    color: var(--white);
     line-height: 0.9;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 8px rgba(227, 6, 19, 0.4);
     margin-bottom: 0.8rem;
-    background: linear-gradient(135deg, #ffffff 0%, rgba(227, 6, 19, 0.8) 100%);
+    background: linear-gradient(135deg, 
+      #E30613 0%, 
+      #B91C1C 30%, 
+      #DC2626 60%, 
+      #EF4444 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    color: transparent;
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    
+    /* Fallback para browsers que não suportam background-clip: text */
+    @supports not (-webkit-background-clip: text) {
+      color: #E30613;
+      background: none;
+    }
   }
   
   .card-title {
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--white);
+    color: var(--text-primary, var(--white));
     margin-bottom: 0.5rem;
     line-height: 1.3;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 4px var(--shadow-color, rgba(0,0,0,0.3));
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
@@ -843,13 +850,63 @@ const FloatingCard = styled(motion.div)`
   }
   
   &:hover .card-stat {
-    transform: scale(1.05);
-    text-shadow: 0 4px 16px rgba(227, 6, 19, 0.5);
+    transform: scale(1.08);
+    text-shadow: 0 4px 16px rgba(227, 6, 19, 0.7), 
+                 0 8px 32px rgba(227, 6, 19, 0.3);
+    background: linear-gradient(135deg, 
+      #FF0000 0%, 
+      #E30613 25%, 
+      #DC2626 50%, 
+      #B91C1C 75%, 
+      #991B1B 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    
+    /* Fallback para browsers que não suportam background-clip: text */
+    @supports not (-webkit-background-clip: text) {
+      color: #FF0000;
+      background: none;
+    }
   }
   
   &:hover .card-title {
     transform: translateX(4px);
     color: rgba(255, 255, 255, 1);
+  }
+`;
+
+// Background Grid Animation
+const backgroundGrid = keyframes`
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+`;
+
+const BackgroundGrid = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120%;
+  height: 120%;
+  background-image: 
+    linear-gradient(rgba(227, 6, 19, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(227, 6, 19, 0.08) 1px, transparent 1px);
+  background-size: 100px 100px;
+  animation: ${backgroundGrid} 20s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.6;
+  
+  [data-theme="light"] & {
+    background-image: 
+      linear-gradient(rgba(227, 6, 19, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(227, 6, 19, 0.12) 1px, transparent 1px);
+    opacity: 0.4;
   }
 `;
 
@@ -870,7 +927,7 @@ const FixedCTA = styled(motion.button)`
   border-radius: 25px;
   height: auto;
   padding: 12px 32px;
-  box-shadow: 0 12px 28px rgba(227, 6, 19, 0.35);
+  box-shadow: 0 12px 28px var(--shadow-color, rgba(227, 6, 19, 0.35));
   letter-spacing: 0.02em;
   cursor: pointer;
   display: flex;
@@ -928,7 +985,7 @@ const FixedCTA = styled(motion.button)`
     background: var(--primary-dark);
     transform: scale(1.05);
     filter: brightness(1.2);
-    box-shadow: 0 0 20px rgba(227, 6, 19, 0.6);
+    box-shadow: 0 0 20px var(--shadow-color, rgba(227, 6, 19, 0.6));
     
     /* Separação das setas no hover com posicionamento correto */
     .arrows .a1 { 

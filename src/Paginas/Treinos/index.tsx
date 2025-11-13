@@ -326,17 +326,48 @@ const Treinos: React.FC = () => {
       alert('Adicione pelo menos um exercício ao treino');
       return;
     }
+    
+    console.log('🔍 Estado atual do treino antes de salvar:', currentWorkout);
+    
     try {
-      // montar payload compatível com o back-end
-      const payload = {
-        titulo: currentWorkout.title,
-        notas: currentWorkout.notes,
-        exercicios: currentWorkout.exercises.map(ex => ({
-          id_exercicio: ex.exercise.id,
-          descanso: ex.restTime,
-          series: ex.sets.map(s => ({ repeticoes: s.reps, carga: s.weight }))
-        }))
+      // Validar dados dos exercícios
+      const invalidExercises = currentWorkout.exercises.filter(ex => 
+        !ex.exercise.id || ex.sets.length === 0
+      );
+      
+      if (invalidExercises.length > 0) {
+        console.error('❌ Exercícios inválidos encontrados:', invalidExercises);
+        alert('Alguns exercícios estão sem ID ou sem séries configuradas');
+        return;
       }
+
+      // 📝 Obter ID do usuário do contexto autenticado
+      if (!user || !user.id) {
+        alert('Usuário não autenticado. Faça login para salvar treinos.');
+        return;
+      }
+      
+      // montar payload EXATAMENTE como o backend espera
+      const payload = {
+        nome: currentWorkout.title,        // ✅ Backend espera "nome", não "titulo"
+        id_user: parseInt(String(user.id)),  // ✅ Campo obrigatório obtido do contexto autenticado!
+        exercicio: currentWorkout.exercises.map(ex => ({ // ✅ "exercicio" singular, não "exercicios"
+          id_exercicio: parseInt(ex.exercise.id) || ex.exercise.id,
+          descanso: ex.restTime || 60,
+          series: ex.sets.map(s => ({ 
+            repeticoes: s.reps || 0, 
+            carga: s.weight || 0 
+          }))
+        }))
+      };
+      
+      console.log('✅ Payload corrigido para corresponder ao backend:', {
+        camposEsperados: ['nome', 'id_user', 'exercicio'],
+        camposEnviados: Object.keys(payload),
+        payloadCompleto: payload
+      });
+      
+      console.log('📤 Payload que será enviado:', JSON.stringify(payload, null, 2));
 
       let res
       if (currentWorkout.id) {
@@ -367,8 +398,33 @@ const Treinos: React.FC = () => {
         setCurrentWorkout({ title: '', notes: '', exercises: [] })
       }
     } catch (error: any) {
-      console.error('Erro ao salvar treino', error)
-      alert(error?.message || 'Erro ao salvar treino')
+      console.error('❌ Erro ao salvar treino - Detalhes completos:', {
+        message: error?.message,
+        response: error?.response,
+        data: error?.response?.data,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        config: error?.config,
+        fullError: error
+      });
+      
+      // Mostrar mensagem mais informativa
+      const errorMessage = error?.response?.data?.message || 
+                          error?.response?.data?.error ||
+                          error?.message || 
+                          'Erro desconhecido ao salvar treino';
+      
+      const statusCode = error?.response?.status;
+      
+      if (statusCode === 400) {
+        alert(`Erro de validação (400): ${errorMessage}\n\nVerifique se todos os campos estão preenchidos corretamente.`);
+      } else if (statusCode === 401) {
+        alert('Erro de autenticação (401): Você precisa fazer login novamente.');
+      } else if (statusCode === 500) {
+        alert('Erro interno do servidor (500): Tente novamente em alguns minutos.');
+      } else {
+        alert(`Erro ao salvar treino: ${errorMessage}`);
+      }
     }
   };
 
@@ -946,36 +1002,50 @@ const ExerciseCard = styled(motion.div)<{ isSelected: boolean }>`
   backdrop-filter: blur(20px);
   border: 2px solid ${props => props.isSelected ? 'rgba(227, 6, 19, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
   border-radius: 18px;
-  padding: 2rem;
+  padding: 2.5rem;
   transition: all 0.3s ease;
+  min-width: 400px;
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(227, 6, 19, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(227, 6, 19, 0.15);
   }
 `;
 
 const ExerciseCardHeader = styled.div`
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  align-items: flex-start;
+  gap: 2rem;
   cursor: pointer;
+  flex-wrap: wrap;
+  min-height: 340px; // Reduzido drasticamente de 380px para 340px
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: auto;
+  }
 `;
-
-
 
 const ExerciseInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem; // Aumentado de 0.5rem para 0.75rem
+  justify-content: flex-end; // Empurrar conteúdo para baixo
+  padding-bottom: 0.1rem; // Praticamente eliminado
+  margin-top: 5rem; // Reduzido drasticamente de 6.5rem para 5rem
 `;
 
 const ExerciseName = styled.h3`
-  font-size: 3rem;
+  font-size: 3.5rem; // Aumentado de 3rem para 3.5rem
   font-weight: 600;
   color: white;
   margin: 0;
+  margin-bottom: 0.75rem; // Adicionado espaço abaixo do título
 `;
 
 const ExerciseMeta = styled.div`
@@ -993,20 +1063,20 @@ const ExerciseMeta = styled.div`
 const MusclesContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.75rem; // Aumentado de 0.5rem para 0.75rem
+  margin-top: 1rem; // Aumentado de 0.5rem para 1rem (mais para baixo)
 `;
 
 const MuscleTag = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 0.35rem 0.75rem;
+  padding: 0.5rem 1rem; // Aumentado padding para 0.5rem 1rem
   background: linear-gradient(135deg, rgba(227, 6, 19, 0.15), rgba(185, 28, 28, 0.1));
   border: 1px solid rgba(227, 6, 19, 0.3);
-  border-radius: 8px;
-  font-size: 0.85rem;
+  border-radius: 10px; // Aumentado de 8px para 10px
+  font-size: 1.1rem; // Aumentado de 0.85rem para 1.1rem
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9); // Aumentado opacidade de 0.85 para 0.9
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -1363,26 +1433,29 @@ const ExerciseLibraryItem = styled(motion.div)`
   }
 `;
 
-
-
 const ExerciseLibraryInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem; // Aumentado de 0.25rem para 0.5rem
+  justify-content: flex-end; // Empurrar conteúdo para baixo
+  padding-bottom: 0.05rem; // Quase zero
+  margin-top: 2.2rem; // Reduzido drasticamente - proporcional
 `;
 
 const ExerciseLibraryName = styled.h4`
-  font-size: 1.3rem;
+  font-size: 1.5rem; // Aumentado de 1.3rem para 1.5rem
   font-weight: 600;
   color: white;
   margin: 0;
+  margin-bottom: 0.5rem; // Adicionado espaçamento abaixo
 `;
 
 const ExerciseLibraryTarget = styled.span`
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.05rem; // Aumentado de 0.95rem para 1.05rem
+  color: rgba(255, 255, 255, 0.7); // Aumentado opacidade de 0.5 para 0.7
   text-transform: capitalize;
+  font-weight: 500; // Adicionado peso na fonte
 `;
 
 const AddIcon = styled.div`

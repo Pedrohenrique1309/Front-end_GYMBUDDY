@@ -20,7 +20,8 @@ const Header = ({ isVisible = true }: HeaderProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved === 'dark';
+    // Padrão é tema escuro (sol visível para alternar para claro)
+    return saved !== 'light';
   });
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileCard, setShowProfileCard] = useState(false);
@@ -122,7 +123,10 @@ const Header = ({ isVisible = true }: HeaderProps) => {
     <HeaderContainer $scrolled={scrolled} $isVisible={isVisible}>
       <div className="container">
         <Logo>
-          <LogoImage src={BRAND.logoSrc} alt={BRAND.name} />
+          <LogoImage 
+            src={isDarkMode ? BRAND.logoSrc : '/GYM_BUDDY_CLARO.png'} 
+            alt={BRAND.name} 
+          />
         </Logo>
         
         <Nav>
@@ -177,6 +181,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
             onMouseLeave={handleMouseLeaveProfile}
           >
             <UserProfile
+              theme={isDarkMode ? 'dark' : 'light'}
               onClick={() => setShowUserMenu(!showUserMenu)}
               whileHover={{ 
                 scale: 1.03,
@@ -222,7 +227,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
                     scale: 0.95,
                     filter: 'blur(8px)'
                   }}
-                  transition={{
+                  transition={{ 
                     duration: 0.4,
                     ease: [0.34, 1.56, 0.64, 1]
                   }}
@@ -441,9 +446,9 @@ const Header = ({ isVisible = true }: HeaderProps) => {
                 }}
               >
                 {isDarkMode ? (
-                  <FiMoon className="theme-icon moon" />
-                ) : (
                   <FiSun className="theme-icon sun" />
+                ) : (
+                  <FiMoon className="theme-icon moon" />
                 )}
               </motion.div>
             </AnimatePresence>
@@ -482,11 +487,26 @@ const HeaderContainer = styled.header<{ $scrolled: boolean; $isVisible: boolean 
   transition: all 0.5s ease;
   background: ${({ $scrolled }) =>
     $scrolled
-      ? 'rgba(10, 10, 10, 0.7)'
-      : 'linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0) 100%)'};
+      ? 'var(--header-bg-primary, rgba(10, 10, 10, 0.7))'
+      : 'var(--header-bg-gradient, linear-gradient(180deg, rgba(10,10,10,0.6) 0%, transparent 100%))'};
   backdrop-filter: ${({ $scrolled }) => ($scrolled ? 'saturate(120%) blur(6px)' : 'none')};
-  border-bottom: ${({ $scrolled }) => ($scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent')};
-  box-shadow: ${({ $scrolled }) => ($scrolled ? '0 4px 20px rgba(0,0,0,0.25)' : 'none')};
+  border-bottom: ${({ $scrolled }) => 
+    $scrolled 
+      ? '2px solid transparent' 
+      : '2px solid transparent'};
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: ${({ $scrolled }) => ($scrolled ? '2px' : '0px')};
+    background: var(--header-border-gradient, linear-gradient(90deg, rgba(227, 6, 19, 0.6) 0%, rgba(152, 0, 15, 0.4) 50%, rgba(227, 6, 19, 0.6) 100%));
+    transition: height 0.3s ease;
+    z-index: 1;
+  }
+  box-shadow: ${({ $scrolled }) => ($scrolled ? '0 4px 20px var(--shadow-color, rgba(0,0,0,0.25))' : 'none')};
   
   opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
   transform: ${({ $isVisible }) => ($isVisible ? 'translateY(0)' : 'translateY(-100%)')};
@@ -503,11 +523,14 @@ const HeaderContainer = styled.header<{ $scrolled: boolean; $isVisible: boolean 
 const Logo = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   margin-left: 0;
+  height: 80px;
+  position: relative;
   
   .icon {
     color: var(--primary);
@@ -516,18 +539,26 @@ const Logo = styled.div`
 `
 
 const LogoImage = styled.img`
-  height: 11rem;
+  height: 10rem !important;
   width: auto;
+  max-width: none;
   object-fit: contain;
+  object-position: center;
   transition: transform 0.3s ease;
-  margin-top: 1.3rem;
+  margin: 0;
+  display: block;
+  vertical-align: middle;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   
   &:hover {
-    transform: scale(1.05);
+    transform: translate(-50%, -50%) scale(1.05);
   }
   
   @media (max-width: 768px) {
-    height: 9rem;
+    height: 9rem !important;
   }
 `
 
@@ -548,7 +579,7 @@ const NavLink = styled(Link)`
   position: relative;
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   transition: all 0.3s ease;
   padding: 1rem 1.5rem;
   letter-spacing: 0.02em;
@@ -599,12 +630,12 @@ const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
   background: ${({ $isDarkMode }) => 
     $isDarkMode 
       ? 'linear-gradient(135deg, rgba(30, 30, 50, 0.8), rgba(50, 50, 80, 0.6))' 
-      : 'transparent'
+      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.12), rgba(30, 41, 59, 0.08))'
   };
   border: ${({ $isDarkMode }) => 
     $isDarkMode 
       ? '1px solid rgba(255, 255, 255, 0.2)' 
-      : '1px solid transparent'
+      : '1px solid rgba(147, 197, 253, 0.25)'
   };
   cursor: pointer;
   padding: 1rem;
@@ -678,13 +709,39 @@ const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
   }
   
   .moon {
-    color: #FFFFFF;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
-    animation: moon-glow 3s ease-in-out infinite alternate;
+    color: #F8FAFC;
+    filter: drop-shadow(0 0 12px rgba(248, 250, 252, 0.6)) 
+            drop-shadow(0 0 24px rgba(147, 197, 253, 0.3));
+    animation: moon-glow 4s ease-in-out infinite alternate;
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: radial-gradient(circle, 
+        rgba(147, 197, 253, 0.15) 0%, 
+        rgba(96, 165, 250, 0.1) 30%, 
+        transparent 70%);
+      border-radius: 50%;
+      z-index: -1;
+      opacity: 0.8;
+    }
     
     &:hover {
-      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
-      transform: scale(1.1);
+      color: #FAFAFA;
+      filter: drop-shadow(0 0 16px rgba(248, 250, 252, 0.8)) 
+              drop-shadow(0 0 32px rgba(147, 197, 253, 0.5))
+              drop-shadow(0 0 48px rgba(59, 130, 246, 0.2));
+      transform: scale(1.15);
+      
+      &::before {
+        opacity: 1;
+        transform: scale(1.2);
+      }
     }
   }
   
@@ -692,22 +749,36 @@ const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
     background: ${({ $isDarkMode }) => 
       $isDarkMode 
         ? 'linear-gradient(135deg, rgba(40, 40, 70, 0.9), rgba(60, 60, 100, 0.7))' 
-        : 'rgba(255, 165, 0, 0.1)'
+        : 'linear-gradient(135deg, rgba(15, 23, 42, 0.18), rgba(30, 41, 59, 0.12))'
+    };
+    border: ${({ $isDarkMode }) => 
+      $isDarkMode 
+        ? '1px solid rgba(255, 255, 255, 0.3)' 
+        : '1px solid rgba(147, 197, 253, 0.4)'
     };
     transform: translateY(-2px);
     box-shadow: ${({ $isDarkMode }) => 
       $isDarkMode 
         ? '0 8px 25px rgba(255, 255, 255, 0.15)' 
-        : '0 8px 25px rgba(255, 165, 0, 0.25)'
+        : '0 8px 25px rgba(147, 197, 253, 0.3), 0 4px 12px rgba(59, 130, 246, 0.2)'
     };
   }
   
   @keyframes moon-glow {
     0% { 
-      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
+      filter: drop-shadow(0 0 12px rgba(248, 250, 252, 0.6)) 
+              drop-shadow(0 0 24px rgba(147, 197, 253, 0.3));
+      transform: scale(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 16px rgba(248, 250, 252, 0.7)) 
+              drop-shadow(0 0 28px rgba(147, 197, 253, 0.4))
+              drop-shadow(0 0 40px rgba(59, 130, 246, 0.1));
     }
     100% { 
-      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
+      filter: drop-shadow(0 0 14px rgba(248, 250, 252, 0.65)) 
+              drop-shadow(0 0 26px rgba(147, 197, 253, 0.35));
+      transform: scale(1.02);
     }
   }
   
@@ -736,7 +807,7 @@ const Button = styled.button`
 
 const LoginButton = styled(Button)`
   background: transparent;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   border: 1px solid var(--primary);
   
   &:hover {
@@ -746,7 +817,7 @@ const LoginButton = styled(Button)`
 
 const SignUpButton = styled(Button)`
   background: var(--primary);
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   border: 1px solid var(--primary);
   box-shadow: 0 8px 24px rgba(255,0,0,0.25);
   
@@ -769,7 +840,7 @@ const UserSection = styled.div`
   }
 `;
 
-const UserProfile = styled(motion.button)`
+const UserProfile = styled(motion.button)<{ theme?: string }>`
   display: flex;
   align-items: center;
   gap: 1.4rem;
@@ -778,21 +849,31 @@ const UserProfile = styled(motion.button)`
   cursor: pointer;
   overflow: hidden;
   
-  /* Glassmorphism elegante */
-  background: linear-gradient(135deg, 
-    rgba(30, 30, 35, 0.8) 0%,
-    rgba(20, 20, 25, 0.6) 100%
-  );
+  /* Glassmorphism adaptativo ao tema */
+  background: ${({ theme }) => 
+    theme === 'dark' || !theme
+      ? 'linear-gradient(135deg, rgba(30, 30, 35, 0.8) 0%, rgba(20, 20, 25, 0.6) 100%)'
+      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)'
+  };
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: ${({ theme }) => 
+    theme === 'dark' || !theme
+      ? '1px solid rgba(255, 255, 255, 0.12)'
+      : '1px solid rgba(227, 6, 19, 0.25)'
+  };
   border-radius: 10rem;
   
-  /* Sombras em camadas */
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 8px 24px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.15);
+  /* Sombras em camadas adaptativas */
+  box-shadow: ${({ theme }) => 
+    theme === 'dark' || !theme
+      ? `inset 0 1px 0 rgba(255, 255, 255, 0.1),
+         0 8px 24px rgba(0, 0, 0, 0.2),
+         0 4px 12px rgba(0, 0, 0, 0.15)`
+      : `inset 0 1px 0 rgba(227, 6, 19, 0.1),
+         0 8px 24px rgba(0, 0, 0, 0.1),
+         0 4px 12px rgba(227, 6, 19, 0.15)`
+  };
   
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
@@ -813,16 +894,27 @@ const UserProfile = styled(motion.button)`
   }
   
   &:hover {
-    background: linear-gradient(135deg, 
-      rgba(35, 35, 40, 0.85) 0%,
-      rgba(25, 25, 30, 0.7) 100%
-    );
-    border-color: rgba(227, 6, 19, 0.35);
-    box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      0 12px 32px rgba(0, 0, 0, 0.3),
-      0 6px 16px rgba(227, 6, 19, 0.15),
-      0 0 0 1px rgba(227, 6, 19, 0.2);
+    background: ${({ theme }) => 
+      theme === 'dark' || !theme
+        ? 'linear-gradient(135deg, rgba(35, 35, 40, 0.85) 0%, rgba(25, 25, 30, 0.7) 100%)'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)'
+    };
+    border-color: ${({ theme }) => 
+      theme === 'dark' || !theme
+        ? 'rgba(227, 6, 19, 0.35)'
+        : 'rgba(227, 6, 19, 0.5)'
+    };
+    box-shadow: ${({ theme }) => 
+      theme === 'dark' || !theme
+        ? `inset 0 1px 0 rgba(255, 255, 255, 0.15),
+           0 12px 32px rgba(0, 0, 0, 0.3),
+           0 6px 16px rgba(227, 6, 19, 0.15),
+           0 0 0 1px rgba(227, 6, 19, 0.2)`
+        : `inset 0 1px 0 rgba(227, 6, 19, 0.15),
+           0 12px 32px rgba(0, 0, 0, 0.15),
+           0 6px 16px rgba(227, 6, 19, 0.25),
+           0 0 0 1px rgba(227, 6, 19, 0.3)`
+    };
     
     &::before {
       left: 100%;
@@ -918,18 +1010,30 @@ const UserInfo = styled.div`
 `;
 
 const UserName = styled.span`
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary, rgba(255, 255, 255, 0.95));
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.2));
   transition: all 0.3s ease;
   
+  /* Modo claro - texto vermelho */
+  [data-theme="light"] & {
+    color: #E30613;
+    text-shadow: 0 2px 8px rgba(227, 6, 19, 0.2);
+  }
+  
   ${UserProfile}:hover & {
-    color: rgba(255, 255, 255, 1);
+    color: var(--text-primary, rgba(255, 255, 255, 1));
     text-shadow: 0 2px 12px rgba(227, 6, 19, 0.3);
     transform: translateX(2px);
+    
+    /* Hover no modo claro - vermelho mais intenso */
+    [data-theme="light"] & {
+      color: #B91C1C;
+      text-shadow: 0 2px 12px rgba(227, 6, 19, 0.4);
+    }
   }
 `;
 
@@ -955,7 +1059,7 @@ const MenuHeader = styled.div`
   margin-bottom: 0.5rem;
   
   span {
-    color: var(--white);
+    color: var(--text-primary, var(--white));
     font-size: 1.4rem;
     font-weight: 600;
   }
