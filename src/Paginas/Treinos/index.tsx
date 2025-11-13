@@ -5,6 +5,9 @@ import { FiPlus, FiClock, FiSearch, FiX, FiChevronDown, FiSave, FiTrash2, FiArro
 import { FaDumbbell } from 'react-icons/fa';
 import { useUser } from '../../Contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import * as treinoService from '../../Services/treinoService'
+import * as serieService from '../../Services/serieService'
+import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
 
 // Interfaces
 interface Exercise {
@@ -53,6 +56,7 @@ const Treinos: React.FC = () => {
   const [loadingExercises, setLoadingExercises] = useState(false);
   const [selectedExerciseForWorkout, setSelectedExerciseForWorkout] = useState<ExerciseInWorkout | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [savedWorkouts, setSavedWorkouts] = useState<any[]>([])
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -90,6 +94,22 @@ const Treinos: React.FC = () => {
       fetchExercises();
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    const fetchSaved = async () => {
+      try {
+        const res = await treinoService.listarTreinos()
+        // assume backend returns array in res.data or res
+        const data = res.data ?? res
+        setSavedWorkouts(Array.isArray(data) ? data : [])
+      } catch (err) {
+        // não bloqueante
+        console.warn('Não foi possível carregar treinos salvos', err)
+      }
+    }
+
+    if (isLoggedIn) fetchSaved()
+  }, [isLoggedIn])
 
   useEffect(() => {
     let filtered = [...exercises];
@@ -176,13 +196,51 @@ const Treinos: React.FC = () => {
       alert('Adicione pelo menos um exercício ao treino');
       return;
     }
-    console.log('💾 Salvando treino:', currentWorkout);
-    setShowSuccessMessage(true);
-    setTimeout(() => {
-      setShowSuccessMessage(false);
-      setCurrentWorkout({ title: '', notes: '', exercises: [] });
-      setSelectedExerciseForWorkout(null);
-    }, 2000);
+    try {
+      // montar payload compatível com o back-end
+      const payload = {
+        titulo: currentWorkout.title,
+        notas: currentWorkout.notes,
+        exercicios: currentWorkout.exercises.map(ex => ({
+          id_exercicio: ex.exercise.id,
+          descanso: ex.restTime,
+          series: ex.sets.map(s => ({ repeticoes: s.reps, carga: s.weight }))
+        }))
+      }
+
+      let res
+      if (currentWorkout.id) {
+        res = await treinoService.atualizarTreino(currentWorkout.id, payload)
+      } else {
+        res = await treinoService.inserirTreino(payload)
+      }
+
+      // backend pode retornar o treino criado em diferentes formatos
+      const created = res.data ?? res
+      // se retornar id, atribuir ao estado
+      if (created?.id || created?.insertId || created?.resultado) {
+        const newId = created.id ?? created.insertId ?? created.resultado
+        setCurrentWorkout({ title: '', notes: '', exercises: [] })
+        setShowSuccessMessage(true)
+        setTimeout(() => setShowSuccessMessage(false), 2000)
+        // recarregar lista de treinos salvos
+        try {
+          const listRes = await treinoService.listarTreinos()
+          const listData = listRes.data ?? listRes
+          setSavedWorkouts(Array.isArray(listData) ? listData : [])
+        } catch (err) {
+          console.warn('Erro ao recarregar treinos', err)
+        }
+      } else {
+        // caso o backend retorne mensagem simples
+        setShowSuccessMessage(true)
+        setTimeout(() => setShowSuccessMessage(false), 2000)
+        setCurrentWorkout({ title: '', notes: '', exercises: [] })
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar treino', error)
+      alert(error?.message || 'Erro ao salvar treino')
+    }
   };
 
   if (isLoading) {
@@ -230,11 +288,12 @@ const Treinos: React.FC = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   isSelected={selectedExerciseForWorkout?.id === exerciseItem.id}
-                  onClick={() => setSelectedExerciseForWorkout(
-                    selectedExerciseForWorkout?.id === exerciseItem.id ? null : exerciseItem
-                  )}
                 >
-                  <ExerciseCardHeader>
+                  <ExerciseCardHeader
+                    onClick={() => setSelectedExerciseForWorkout(
+                      selectedExerciseForWorkout?.id === exerciseItem.id ? null : exerciseItem
+                    )}
+                  >
                     <ExerciseGif src={exerciseItem.exercise.gifUrl} alt={exerciseItem.exercise.name} />
                     <ExerciseInfo>
                       <ExerciseName>{exerciseItem.exercise.name}</ExerciseName>
@@ -265,7 +324,7 @@ const Treinos: React.FC = () => {
                           opacity: { duration: 0.3 }
                         }}
                       >
-                      <ExerciseDetails>
+                      <ExerciseDetails onClick={(e) => e.stopPropagation()}>
                         <InputGroup>
                           <InputLabel>Observações</InputLabel>
                           <StyledTextArea placeholder="Adicione observações sobre este exercício..." rows={2} />
@@ -757,7 +816,6 @@ const ExerciseCard = styled(motion.div)<{ isSelected: boolean }>`
   border: 2px solid ${props => props.isSelected ? 'rgba(227, 6, 19, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
   border-radius: 18px;
   padding: 2rem;
-  cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
@@ -770,6 +828,7 @@ const ExerciseCardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  cursor: pointer;
 `;
 
 const ExerciseGif = styled.img`
