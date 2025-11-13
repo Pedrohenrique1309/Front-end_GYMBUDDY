@@ -63,8 +63,8 @@ const LogoPopUp = styled.div`
   margin-bottom: 2rem;
   
   .logo-image {
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
     object-fit: contain;
     margin-bottom: 1rem;
     filter: drop-shadow(0 4px 12px rgba(227, 6, 19, 0.4));
