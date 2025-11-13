@@ -6,8 +6,11 @@ import { FaDumbbell } from 'react-icons/fa';
 import { useUser } from '../../Contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import * as treinoService from '../../Services/treinoService'
-import * as serieService from '../../Services/serieService'
-import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
+//import * as serieService from '../../Services/serieService'
+//import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
+import * as exercicioService from '../../Services/exercicioService'
+//import ExerciseManager from '../../Componentes/ExerciseManager'
+//import SeriesManager from '../../Componentes/SeriesManager'
 
 // Interfaces
 interface Exercise {
@@ -57,6 +60,7 @@ const Treinos: React.FC = () => {
   const [selectedExerciseForWorkout, setSelectedExerciseForWorkout] = useState<ExerciseInWorkout | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [savedWorkouts, setSavedWorkouts] = useState<any[]>([])
+  const [realExercises, setRealExercises] = useState<any[]>([])
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -68,6 +72,34 @@ const Treinos: React.FC = () => {
   useEffect(() => {
     const fetchExercises = async () => {
       setLoadingExercises(true);
+      
+      // Buscar exercícios reais do backend primeiro
+      try {
+        const response = await exercicioService.listarExercicios()
+        const realEx = response.exercicios || response.exercicio || []
+        setRealExercises(realEx)
+        
+        // Converter para formato da UI se houver exercícios reais
+        if (realEx.length > 0) {
+          const convertedExercises = realEx.map((ex: any) => ({
+            id: ex.id?.toString() || Math.random().toString(),
+            name: ex.nome || 'Exercício sem nome',
+            bodyPart: ex.grupo_muscular || 'geral',
+            equipment: ex.equipamento || 'livre',
+            gifUrl: 'https://v2.exercisedb.io/image/placeholder',
+            target: ex.grupo_muscular || 'músculos',
+            muscles: [ex.grupo_muscular || 'Geral']
+          }))
+          setExercises(convertedExercises)
+          setFilteredExercises(convertedExercises)
+          setLoadingExercises(false)
+          return
+        }
+      } catch (error) {
+        console.log('📝 Usando exercícios mock - backend indisponível')
+      }
+      
+      // Fallback para exercícios mock
       const mockExercises: Exercise[] = [
         { id: '1', name: 'Supino Reto (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/lEVlWOUhFXBwKb', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior'] },
         { id: '2', name: 'Supino Reto (Halteres)', bodyPart: 'peito', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/7pKN4ktbR6SMvN', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior', 'Core'] },
@@ -99,8 +131,8 @@ const Treinos: React.FC = () => {
     const fetchSaved = async () => {
       try {
         const res = await treinoService.listarTreinos()
-        // assume backend returns array in res.data or res
-        const data = res.data ?? res
+        // usar treinos da interface definida
+        const data = res.treinos ?? res.treino ?? []
         setSavedWorkouts(Array.isArray(data) ? data : [])
       } catch (err) {
         // não bloqueante
@@ -187,6 +219,12 @@ const Treinos: React.FC = () => {
     }));
   };
 
+  const handleExerciseAdded = () => {
+    // Atualizar lista de exercícios quando um novo for criado
+    console.log('🔄 Exercício adicionado - atualizando lista...');
+    // Pode adicionar lógica para recarregar exercícios disponíveis se necessário
+  };
+
   const handleSaveWorkout = async () => {
     if (!currentWorkout.title.trim()) {
       alert('Por favor, adicione um título ao treino');
@@ -216,17 +254,16 @@ const Treinos: React.FC = () => {
       }
 
       // backend pode retornar o treino criado em diferentes formatos
-      const created = res.data ?? res
+      const created = res.treino ?? res.treinos ?? res
       // se retornar id, atribuir ao estado
-      if (created?.id || created?.insertId || created?.resultado) {
-        const newId = created.id ?? created.insertId ?? created.resultado
+      if (res.status) {
         setCurrentWorkout({ title: '', notes: '', exercises: [] })
         setShowSuccessMessage(true)
         setTimeout(() => setShowSuccessMessage(false), 2000)
         // recarregar lista de treinos salvos
         try {
           const listRes = await treinoService.listarTreinos()
-          const listData = listRes.data ?? listRes
+          const listData = listRes.treinos ?? listRes.treino ?? []
           setSavedWorkouts(Array.isArray(listData) ? listData : [])
         } catch (err) {
           console.warn('Erro ao recarregar treinos', err)
@@ -501,6 +538,8 @@ const Treinos: React.FC = () => {
       </PageWrapper>
 
       <AnimatePresence>
+
+
         {showSuccessMessage && (
           <SuccessMessage
             initial={{ opacity: 0, y: -50, scale: 0.9 }}
@@ -1120,32 +1159,6 @@ const LibraryTitle = styled.h2`
   font-weight: 700;
   color: white;
   margin: 0 0 1rem 0;
-`;
-
-const TabsContainer = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.5rem;
-  border-radius: 10px;
-`;
-
-const Tab = styled.button<{ active: boolean }>`
-  flex: 1;
-  padding: 0.75rem;
-  background: ${props => props.active ? 'linear-gradient(135deg, #E30613, #B91C1C)' : 'transparent'};
-  color: ${props => props.active ? 'white' : 'rgba(255, 255, 255, 0.6)'};
-  border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: ${props => props.active ? 'linear-gradient(135deg, #E30613, #B91C1C)' : 'rgba(255, 255, 255, 0.05)'};
-    color: white;
-  }
 `;
 
 const SearchBox = styled.div`

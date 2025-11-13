@@ -129,7 +129,7 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
       const resposta = await buscarUsuarioPorToken(codigo)
       
       if (resposta && resposta.recupercoes_senha && resposta.recupercoes_senha[0]) {
-        const usuario = resposta.recupercoes_senha[0].user[0]
+        const usuario = resposta.recupercoes_senha[0].user?.[0]
         if (usuario && usuario.id) {
           setIdUsuario(usuario.id)
           setSucesso('Código válido!')
