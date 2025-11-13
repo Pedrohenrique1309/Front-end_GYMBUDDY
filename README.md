@@ -16,5 +16,5 @@ O site da **Gym Buddy**, feito para o TCC do curso de Desenvolvimento de Sistema
 
 ## Tecnologias utilizadas no projeto
 
-[![My Skills](https://skillicons.dev/icons?i=html,css,ts,react,vite,github)](https://skillicons.dev)
+[![My Skills](https://skillicons.dev/icons?i=html,ts,react,vite,github)](https://skillicons.dev)
 
