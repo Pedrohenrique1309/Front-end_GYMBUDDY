@@ -1,15 +1,39 @@
 import { motion, useScroll, useTransform, useMotionValue, useTransform as useTransformMotion } from 'framer-motion'
 import { FaUsers, FaChartLine } from 'react-icons/fa'
 import { SiOpenai } from 'react-icons/si'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import styled, { keyframes } from 'styled-components'
 
 const Resources = () => {
   const containerRef = useRef(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [showBg, setShowBg] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Detecta preferências do usuário e viewport para adaptar animações
+    if (typeof window !== 'undefined') {
+      const mqlReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const mqlMobile = window.matchMedia('(max-width: 768px)');
+      setReduceMotion(mqlReduce.matches);
+      setIsMobile(mqlMobile.matches);
+      const onChangeReduce = (e: MediaQueryListEvent) => setReduceMotion(e.matches);
+      const onChangeMobile = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+      mqlReduce.addEventListener?.('change', onChangeReduce);
+      mqlMobile.addEventListener?.('change', onChangeMobile);
+      const id = requestAnimationFrame(() => setShowBg(true));
+      return () => {
+        cancelAnimationFrame(id);
+        mqlReduce.removeEventListener?.('change', onChangeReduce);
+        mqlMobile.removeEventListener?.('change', onChangeMobile);
+      };
+    }
+  }, []);
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -20,12 +44,14 @@ const Resources = () => {
   const cardsY = useTransform(scrollYProgress, [0, 1], [100, -50]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>, cardId: number) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
-    
-    mouseX.set(x);
-    mouseY.set(y);
+    rafRef.current = requestAnimationFrame(() => {
+      mouseX.set(x);
+      mouseY.set(y);
+    });
   };
 
   const rotateX = useTransformMotion(mouseY, [0, 1], [15, -15]);
@@ -33,7 +59,7 @@ const Resources = () => {
   const shadowX = useTransformMotion(mouseX, [0, 1], [15, -15]);
   const shadowY = useTransformMotion(mouseY, [0, 1], [15, -15]);
 
-  const resources = [
+  const resources = useMemo(() => ([
     {
       id: 1,
       title: "CENTRAL DE APOIO PRA INICIANTES",
@@ -56,15 +82,15 @@ const Resources = () => {
       icon: FaChartLine,
       gradient: "linear-gradient(135deg, #B91C1C 0%, #7F1D1D 100%)"
     }
-  ];
+  ]), []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.3,
-        delayChildren: 0.2
+        staggerChildren: 0.15,
+        delayChildren: 0.1
       }
     }
   };
@@ -82,7 +108,7 @@ const Resources = () => {
       scale: 1,
       rotateX: 0,
       transition: {
-        duration: 0.8,
+        duration: 0.6,
         ease: [0.25, 0.46, 0.45, 0.94]
       }
     }
@@ -94,7 +120,7 @@ const Resources = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 1,
+        duration: 0.7,
         ease: "easeOut"
       }
     }
@@ -102,11 +128,13 @@ const Resources = () => {
 
   return (
     <ResourcesContainer ref={containerRef}>
-      {/* Animated Background */}
-      <AnimatedBackground style={{ y: backgroundY }}>
-        <BackgroundGrid />
-        <FloatingOrbs />
-      </AnimatedBackground>
+      {/* Animated Background (adiado e desativado em reduce-motion) */}
+      {!reduceMotion && showBg && (
+        <AnimatedBackground style={{ y: backgroundY }}>
+          <BackgroundGrid />
+          <FloatingOrbs />
+        </AnimatedBackground>
+      )}
 
       {/* Hero Section */}
       <HeroSection>
@@ -161,8 +189,8 @@ const Resources = () => {
                   }}
                   whileTap={{ scale: 0.95 }}
                   style={{
-                    rotateX: hoveredCard === resource.id ? rotateX : 0,
-                    rotateY: hoveredCard === resource.id ? rotateY : 0,
+                    rotateX: !isMobile && hoveredCard === resource.id ? rotateX : 0,
+                    rotateY: !isMobile && hoveredCard === resource.id ? rotateY : 0,
                     transformStyle: "preserve-3d",
                   }}
                   transition={{
@@ -174,24 +202,25 @@ const Resources = () => {
                   <ResourceCard 
                     gradient={resource.gradient}
                     style={{
-                      transform: hoveredCard === resource.id ? "translateZ(50px)" : "translateZ(0px)",
+                      transform: !isMobile && hoveredCard === resource.id ? "translateZ(40px)" : "translateZ(0px)",
                       boxShadow: hoveredCard === resource.id ? 
-                        `${shadowX.get()}px ${shadowY.get()}px 40px rgba(227, 6, 19, 0.5)` : 
-                        "0 20px 40px rgba(0, 0, 0, 0.3)",
+                        `${shadowX.get()}px ${shadowY.get()}px 28px rgba(227, 6, 19, 0.35)` : 
+                        "0 16px 28px rgba(0, 0, 0, 0.25)",
                       transition: "all 0.3s ease"
                     } as React.CSSProperties}
                   >
                     <CardGlow />
-                    <MouseLight
-                      style={{
-                        background: `radial-gradient(
-                          600px circle at ${mouseX.get() * 100}% ${mouseY.get() * 100}%,
-                          rgba(255, 255, 255, 0.15),
-                          transparent 40%
-                        )`,
-                        opacity: hoveredCard === resource.id ? 1 : 0
-                      }}
-                    />
+                    {hoveredCard === resource.id && (
+                      <MouseLight
+                        style={{
+                          background: `radial-gradient(
+                            400px circle at ${mouseX.get() * 100}% ${mouseY.get() * 100}%,
+                            rgba(255, 255, 255, 0.14),
+                            transparent 50%
+                          )`
+                        }}
+                      />
+                    )}
                     <CardContent>
                       <IconWrapper>
                         <motion.div

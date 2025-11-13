@@ -417,6 +417,7 @@ const Title = styled.div`
   
   h3 {
     font-size: 1.8rem;
+    font-family: var(--font-title);
     margin: 0;
   }
   

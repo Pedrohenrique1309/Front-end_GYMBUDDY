@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi'
-import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { signupUser, SignupResponse, checkEmailExists, checkUsernameExists } from '../../Config/api'
 import { useUser } from '../../Contexts/UserContext'
@@ -63,24 +62,26 @@ const LogoPopUp = styled.div`
   align-items: center;
   margin-bottom: 2rem;
   
-  .logo-icon {
-    color: var(--primary);
-    font-size: 3.5rem;
+  .logo-image {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
     margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 12px rgba(227, 6, 19, 0.4));
   }
   
   h2 {
     color: var(--white);
     font-size: 1.8rem;
     font-weight: 700;
+    font-family: var(--font-title);
     letter-spacing: 0.1em;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
+    display: none;
   }
   
   .divider {
-    width: 4rem;
-    height: 2px;
-    background: var(--primary);
+    display: none;
   }
 `
 
@@ -88,6 +89,7 @@ const Titulo = styled.h1`
   color: var(--white);
   font-size: 2.4rem;
   font-weight: 800;
+  font-family: var(--font-title);
   text-align: center;
   margin-bottom: 3rem;
   letter-spacing: 0.05em;
@@ -723,9 +725,11 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
               </BotaoFechar>
               
               <LogoPopUp>
-                <FaDumbbell className="logo-icon" />
-                <h2>GYM BUDDY</h2>
-                <div className="divider" />
+                <img 
+                  src="/gym-buddy-logo.png" 
+                  alt="GYM BUDDY Logo" 
+                  className="logo-image" 
+                />
               </LogoPopUp>
 
               <Titulo>CADASTRAR-SE</Titulo>

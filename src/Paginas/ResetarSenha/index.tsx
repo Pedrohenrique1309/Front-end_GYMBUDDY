@@ -336,6 +336,7 @@ const Titulo = styled.h1`
   color: var(--white);
   font-size: 2.5rem;
   font-weight: 800;
+  font-family: var(--font-title);
   text-align: center;
   margin-bottom: 1rem;
 `

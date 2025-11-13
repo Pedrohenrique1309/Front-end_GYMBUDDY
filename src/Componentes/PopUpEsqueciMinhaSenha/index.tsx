@@ -458,7 +458,6 @@ const PopupEsqueciSenha = ({ estaAberto, aoFechar, aoVoltarParaLogin }: PropsPop
 
               <SecaoLogo>
                 <img src="/gym-buddy-logo.png" alt="GYM BUDDY" className="logo-imagem" />
-                <div className="divisor" />
               </SecaoLogo>
 
               <AnimatePresence mode="wait">
@@ -480,8 +479,8 @@ const FundoEscuro = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 9, 9, 0.7);
+  backdrop-filter: blur(6px);
   z-index: 10100;
   display: flex;
   align-items: center;
@@ -513,16 +512,14 @@ const SecaoLogo = styled.div`
   margin-bottom: 2rem;
   
   .logo-imagem {
-    width: 12rem;
+    width: 16rem;
     height: auto;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     filter: drop-shadow(0 4px 12px rgba(227, 6, 19, 0.3));
   }
   
   .divisor {
-    width: 4rem;
-    height: 2px;
-    background: var(--primary);
+    display: none;
   }
 `
 

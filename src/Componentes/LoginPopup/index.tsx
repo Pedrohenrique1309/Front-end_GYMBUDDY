@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
-import { FaDumbbell } from 'react-icons/fa'
 import styled from 'styled-components'
 import { loginUser, LoginResponse } from '../../Config/api'
 import { useUser } from '../../Contexts/UserContext'
@@ -123,9 +122,11 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
               </BotaoFechar>
             
             <SecaoLogo>
-              <FaDumbbell className="icone-logo" />
-              <h2>GYM BUDDY</h2>
-              <div className="divisor" />
+              <img 
+                src="/gym-buddy-logo.png" 
+                alt="GYM BUDDY Logo" 
+                className="logo-image" 
+              />
             </SecaoLogo>
 
             <Titulo>ENTRAR NA CONTA</Titulo>
@@ -207,8 +208,8 @@ const FundoEscuro = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 9, 9, 0.7);
+  backdrop-filter: blur(6px);
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -254,24 +255,26 @@ const SecaoLogo = styled.div`
   align-items: center;
   margin-bottom: 2rem;
   
-  .icone-logo {
-    color: var(--primary);
-    font-size: 3.5rem;
+  .logo-image {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
     margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 12px rgba(227, 6, 19, 0.4));
   }
   
   h2 {
     color: var(--white);
     font-size: 1.8rem;
     font-weight: 700;
+    font-family: var(--font-title);
     letter-spacing: 0.1em;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
+    display: none;
   }
   
   .divisor {
-    width: 4rem;
-    height: 2px;
-    background: var(--primary);
+    display: none;
   }
 `
 
@@ -279,6 +282,7 @@ const Titulo = styled.h1`
   color: var(--white);
   font-size: 2.4rem;
   font-weight: 800;
+  font-family: var(--font-title);
   text-align: center;
   margin-bottom: 3rem;
   letter-spacing: 0.05em;

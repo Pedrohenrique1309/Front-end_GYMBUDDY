@@ -1258,6 +1258,7 @@ const UserInfoSection = styled.div`
 const UserName = styled.h1`
   font-size: 3rem;
   font-weight: 700;
+  font-family: var(--font-title);
   color: var(--white);
   margin-bottom: 0.5rem;
 `
@@ -1685,6 +1686,7 @@ const PhotosSection = styled(motion.div)`
 const SectionTitle = styled.h2`
   font-size: 2.4rem;
   font-weight: 700;
+  font-family: var(--font-title);
   background: linear-gradient(135deg, var(--primary), #FF1744);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

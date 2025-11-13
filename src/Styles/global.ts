@@ -1,6 +1,14 @@
 import { createGlobalStyle } from 'styled-components'
 
 export const StylesGlobal = createGlobalStyle`
+  @font-face {
+    font-family: 'GetVoIP Grotesque';
+    src: url('/GetVoIP Grotesque.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
   * {
     margin: 0;
     padding: 0;
@@ -17,7 +25,9 @@ export const StylesGlobal = createGlobalStyle`
     --gray-900: #0F0F10;
     --dark-bg: #0A0A0A;
     --container-max: 120rem; 
-    --gutter: 2.4rem;       
+    --gutter: 2.4rem;
+    --font-title: 'GetVoIP Grotesque', 'Poppins', sans-serif;
+    --font-body: 'Poppins', sans-serif;
   }
 
   /* Tema claro */
@@ -46,7 +56,7 @@ export const StylesGlobal = createGlobalStyle`
   }
 
   body {
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-body);
     background-color: var(--dark-bg);
     color: var(--white);
     overflow-x: hidden;
@@ -62,6 +72,11 @@ export const StylesGlobal = createGlobalStyle`
   a {
     text-decoration: none;
     color: inherit;
+  }
+  
+  /* Títulos usam a fonte GetVoIP */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-title);
   }
 
   ul {

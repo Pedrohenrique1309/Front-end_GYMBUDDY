@@ -29,6 +29,7 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
     speed: 50,
     scrambleSpeed: 30,
     delay: hasStarted ? 400 : 9999999,
+    trigger: triggerRescrample,
     characters: '0123456789%+kK/'
   });
   
@@ -38,6 +39,7 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
     speed: 40,
     scrambleSpeed: 25,
     delay: hasStarted ? 500 : 9999999,
+    trigger: triggerRescrample,
     characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '
   });
   
@@ -47,10 +49,21 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
     speed: 35,
     scrambleSpeed: 20,
     delay: hasStarted ? 600 : 9999999,
+    trigger: triggerRescrample,
     characters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
   });
   
-  // Re-scramble aleatório após carregamento inicial
+  // Loop contínuo de re-scramble a cada 17 segundos
+  useEffect(() => {
+    if (!hasStarted) return;
+    
+    const scrambleLoop = setInterval(() => {
+      setTriggerRescramble(prev => prev + 1);
+    }, 17000); // 17 segundos
+    
+    return () => clearInterval(scrambleLoop);
+  }, [hasStarted]);
+  
   // GSAP Animations
   useLayoutEffect(() => {
     if (!cardRef.current) return;

@@ -6,6 +6,7 @@ interface UseScrambleTextOptions {
   scrambleSpeed?: number // velocidade de troca de caracteres
   delay?: number // delay antes de começar
   characters?: string // caracteres para usar no scramble
+  trigger?: number // número que quando muda retriggera o efeito
 }
 
 export const useScrambleText = ({
@@ -14,6 +15,7 @@ export const useScrambleText = ({
   scrambleSpeed = 30,
   delay = 0,
   characters = '0123456789%+kK',
+  trigger = 0,
 }: UseScrambleTextOptions) => {
   const [displayText, setDisplayText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
@@ -25,6 +27,7 @@ export const useScrambleText = ({
     const timeout = setTimeout(() => {
       let currentIndex = 0;
       let scrambleInterval: NodeJS.Timeout;
+      let scrambleUpdater: NodeJS.Timeout;
       
       const revealNextChar = () => {
         if (currentIndex <= text.length) {
@@ -57,7 +60,7 @@ export const useScrambleText = ({
       setDisplayText(initialScramble);
       
       // Atualiza o scramble rapidamente
-      const scrambleUpdater = setInterval(() => {
+      scrambleUpdater = setInterval(() => {
         const revealed = text.slice(0, currentIndex);
         const scrambleCount = Math.max(0, text.length - currentIndex);
         
@@ -81,8 +84,10 @@ export const useScrambleText = ({
       };
     }, delay);
 
-    return () => clearTimeout(timeout);
-  }, [text, speed, scrambleSpeed, delay, characters]);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [text, speed, scrambleSpeed, delay, characters, trigger]);
 
   return { displayText, isComplete };
 };
