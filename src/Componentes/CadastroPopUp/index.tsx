@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi'
 import styled from 'styled-components'
@@ -14,12 +14,16 @@ const Overlay = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--bg-primary, rgba(0, 0, 0, 0.8));
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
   backdrop-filter: blur(8px);
+  
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.5);
+  }
 `
 
 const PopupContainer = styled(motion.div)`
@@ -29,11 +33,17 @@ const PopupContainer = styled(motion.div)`
   margin: 0 auto;
   z-index: 10001;
   pointer-events: auto;
-  background: #0A0A0A;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-primary, #0A0A0A);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 1.6rem;
   padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-color, 0 20px 60px rgba(0, 0, 0, 0.5));
+  
+  [data-theme="light"] & {
+    background: var(--md-sys-color-surface-container-highest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  }
 `
 
 const BotaoFechar = styled.button`
@@ -42,7 +52,7 @@ const BotaoFechar = styled.button`
   right: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -51,8 +61,16 @@ const BotaoFechar = styled.button`
   z-index: 10;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--md-sys-color-surface-container-low, rgba(255, 255, 255, 0.1));
     transform: scale(1.1);
+  }
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface);
+    
+    &:hover {
+      background: var(--md-sys-color-surface-container-low);
+    }
   }
 `
 
@@ -86,13 +104,17 @@ const LogoPopUp = styled.div`
 `
 
 const Titulo = styled.h1`
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2.4rem;
   font-weight: 800;
   font-family: var(--font-title);
   text-align: center;
   margin-bottom: 3rem;
   letter-spacing: 0.05em;
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface);
+  }
 `
 
 const CaixaCadastro = styled.form`
@@ -113,6 +135,11 @@ const MensagemValidacao = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  
+  [data-theme="light"] & {
+    /* Cores já são aplicadas inline, mas garantindo legibilidade */
+    filter: contrast(1.1);
+  }
 `
 
 const Input = styled.input<{ $isValid?: boolean | null }>`
@@ -121,16 +148,16 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
   border: 1px solid ${props => 
     props.$isValid === true ? '#10B981' : 
     props.$isValid === false ? '#EF4444' : 
-    'rgba(255, 255, 255, 0.2)'
+    'var(--border-color, rgba(255, 255, 255, 0.2))'
   };
   border-radius: 0.8rem;
   padding: 1.4rem ${props => (props.name === 'password' || props.name === 'confirmPassword') ? '4.5rem' : '1.6rem'} 1.4rem 1.6rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 1.5rem;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   }
   
   &:focus {
@@ -145,6 +172,33 @@ const Input = styled.input<{ $isValid?: boolean | null }>`
       props.$isValid === false ? 'rgba(239, 68, 68, 0.2)' : 
       'rgba(227, 6, 19, 0.2)'
     };
+  }
+  
+  [data-theme="light"] & {
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid ${props => 
+      props.$isValid === true ? '#10B981' : 
+      props.$isValid === false ? '#EF4444' : 
+      'var(--md-sys-color-outline-variant)'
+    };
+    color: var(--md-sys-color-on-surface);
+    
+    &::placeholder {
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    
+    &:focus {
+      border-color: ${props => 
+        props.$isValid === true ? '#10B981' : 
+        props.$isValid === false ? '#EF4444' : 
+        'var(--md-sys-color-secondary)'
+      };
+      box-shadow: 0 0 0 2px ${props => 
+        props.$isValid === true ? 'rgba(16, 185, 129, 0.2)' : 
+        props.$isValid === false ? 'rgba(239, 68, 68, 0.2)' : 
+        'rgba(152, 0, 15, 0.2)'
+      };
+    }
   }
 `
 
@@ -216,7 +270,7 @@ const VerSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
@@ -228,11 +282,19 @@ const VerSenha = styled.button`
   height: 2.4rem;
   
   &:hover {
-    color: var(--white);
+    color: var(--text-primary, var(--white));
   }
   
   svg {
     display: block;
+  }
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface-variant);
+    
+    &:hover {
+      color: var(--md-sys-color-on-surface);
+    }
   }
 `
 
@@ -241,24 +303,38 @@ const FerramentaDeSenha = styled(motion.div)`
   top: 50%;
   right: 120%;
   transform: translateY(-50%);
-  background: linear-gradient(135deg, 
+  background: var(--bg-secondary, linear-gradient(135deg, 
     rgba(227, 6, 19, 0.15) 0%, 
     rgba(139, 69, 19, 0.12) 50%,
     rgba(0, 0, 0, 0.8) 100%
-  );
+  ));
   backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid rgba(227, 6, 19, 0.25);
+  border: 1px solid var(--border-color, rgba(227, 6, 19, 0.25));
   border-radius: 1.6rem;
   padding: 1.4rem 1.6rem;
   min-width: 24rem;
-  box-shadow: 
+  box-shadow: var(--shadow-color, 
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2),
     0 12px 40px rgba(0, 0, 0, 0.3),
-    0 6px 20px rgba(227, 6, 19, 0.15);
+    0 6px 20px rgba(227, 6, 19, 0.15));
   z-index: 1000;
   pointer-events: none;
   overflow: hidden;
+  
+  [data-theme="light"] & {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.95) 0%, 
+      rgba(248, 250, 252, 0.9) 50%,
+      rgba(241, 245, 249, 0.85) 100%
+    );
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      0 6px 20px rgba(152, 0, 15, 0.1);
+  }
 
   /* Liquid glass shine effect */
   &::before {
@@ -322,10 +398,15 @@ const FerramentaDeSenha = styled(motion.div)`
     }
 
     span {
-      color: var(--white);
+      color: var(--text-primary, var(--white));
       font-size: 1.4rem;
       font-weight: 700;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      
+      [data-theme="light"] & {
+        color: var(--md-sys-color-on-surface);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
     }
   }
 
@@ -339,15 +420,23 @@ const FerramentaDeSenha = styled(motion.div)`
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary, rgba(255, 255, 255, 0.9));
     font-size: 1.3rem;
     font-weight: 500;
     padding: 0.4rem 0;
     transition: all 0.2s ease;
 
     &:hover {
-      color: rgba(255, 255, 255, 1);
+      color: var(--text-primary, rgba(255, 255, 255, 1));
       transform: translateX(2px);
+    }
+    
+    [data-theme="light"] & {
+      color: var(--md-sys-color-on-surface-variant);
+      
+      &:hover {
+        color: var(--md-sys-color-on-surface);
+      }
     }
 
     .bullet {
@@ -369,6 +458,12 @@ const MensagemDeErro = styled(motion.div)`
   font-size: 1.4rem;
   text-align: center;
   margin: 1rem 0;
+  
+  [data-theme="light"] & {
+    background: rgba(220, 38, 38, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+  }
 `
 
 const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
@@ -391,10 +486,14 @@ const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
 `
 
 const EnviarParaLogin = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface-variant);
+  }
 `
 
 const RedLogin = styled.a`
@@ -432,8 +531,27 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
   const [isValidatingUsername, setIsValidatingUsername] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   
   const { login } = useUser();
+
+  // Detectar tema atual
+  useEffect(() => {
+    const theme = document.documentElement.getAttribute('data-theme')
+    setIsDarkMode(theme !== 'light')
+    
+    const observer = new MutationObserver(() => {
+      const currentTheme = document.documentElement.getAttribute('data-theme')
+      setIsDarkMode(currentTheme !== 'light')
+    })
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
+  }, []);
 
   // função para resetar o pop up qnd sair
   const resetForm = () => {
@@ -726,7 +844,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSwitchToLo
               
               <LogoPopUp>
                 <img 
-                  src="/gym-buddy-logo.png" 
+                  src={isDarkMode ? "/gym-buddy-logo.png" : "/logoclaro.png"} 
                   alt="GYM BUDDY Logo" 
                   className="logo-image" 
                 />

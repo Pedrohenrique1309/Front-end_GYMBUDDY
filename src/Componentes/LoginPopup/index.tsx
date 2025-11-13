@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
 import styled from 'styled-components'
@@ -20,9 +20,28 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
     email: '',
     senha: ''
   })
+  const [isDarkMode, setIsDarkMode] = useState(true)
   
   const { login } = useUser()
   const { switchToForgotPassword } = usePopup()
+
+  // Detectar tema atual
+  useEffect(() => {
+    const theme = document.documentElement.getAttribute('data-theme')
+    setIsDarkMode(theme !== 'light')
+    
+    const observer = new MutationObserver(() => {
+      const currentTheme = document.documentElement.getAttribute('data-theme')
+      setIsDarkMode(currentTheme !== 'light')
+    })
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
+  }, [])
 
   // Função pra limpar o formulário
   const limparFormulario = () => {
@@ -123,7 +142,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
             
             <SecaoLogo>
               <img 
-                src="/gym-buddy-logo.png" 
+                src={isDarkMode ? "/gym-buddy-logo.png" : "/logoclaro.png"} 
                 alt="GYM BUDDY Logo" 
                 className="logo-image" 
               />
@@ -208,12 +227,16 @@ const FundoEscuro = styled(motion.div)`
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 9, 9, 0.7);
+  background: var(--bg-primary, rgba(10, 9, 9, 0.7));
   backdrop-filter: blur(6px);
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.5);
+  }
 `
 
 const ContainerPopup = styled(motion.div)`
@@ -223,11 +246,17 @@ const ContainerPopup = styled(motion.div)`
   margin: 0 auto;
   z-index: 10001;
   pointer-events: auto;
-  background: #0A0A0A;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-primary, #0A0A0A);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 1.6rem;
   padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-color, 0 20px 60px rgba(0, 0, 0, 0.5));
+  
+  [data-theme="light"] & {
+    background: var(--md-sys-color-surface-container-highest);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  }
 `
 
 const BotaoFechar = styled.button`
@@ -236,7 +265,7 @@ const BotaoFechar = styled.button`
   right: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -244,8 +273,16 @@ const BotaoFechar = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--md-sys-color-surface-container-low, rgba(255, 255, 255, 0.1));
     transform: scale(1.1);
+  }
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface);
+    
+    &:hover {
+      background: var(--md-sys-color-surface-container-low);
+    }
   }
 `
 
@@ -279,13 +316,17 @@ const SecaoLogo = styled.div`
 `
 
 const Titulo = styled.h1`
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2.4rem;
   font-weight: 800;
   font-family: var(--font-title);
   text-align: center;
   margin-bottom: 3rem;
   letter-spacing: 0.05em;
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface);
+  }
 `
 
 const FormularioLogin = styled.form`
@@ -301,21 +342,36 @@ const GrupoCampo = styled.div`
 const Campo = styled.input`
   width: 100%;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
   border-radius: 0.8rem;
   padding: 1.4rem 1.6rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 1.5rem;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   }
   
   &:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.2);
+  }
+  
+  [data-theme="light"] & {
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface);
+    
+    &::placeholder {
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    
+    &:focus {
+      border-color: var(--md-sys-color-secondary);
+      box-shadow: 0 0 0 2px rgba(152, 0, 15, 0.2);
+    }
   }
 `
 
@@ -326,13 +382,21 @@ const BotaoMostrarSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
   
   &:hover {
-    color: var(--white);
+    color: var(--text-primary, var(--white));
+  }
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface-variant);
+    
+    &:hover {
+      color: var(--md-sys-color-on-surface);
+    }
   }
 `
 
@@ -380,10 +444,14 @@ const BotaoEnviar = styled(motion.button)<{ disabled?: boolean }>`
 `
 
 const TextoCadastro = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   font-size: 1.4rem;
   text-align: center;
   margin-top: 2rem;
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface-variant);
+  }
 `
 
 const LinkCadastro = styled.a`
