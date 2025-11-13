@@ -10,6 +10,7 @@ gsap.registerPlugin(ScrollTrigger)
 const SobreNos = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(true)
   
   // Refs para animações GSAP
   const heroRef = useRef<HTMLDivElement>(null)
@@ -20,6 +21,24 @@ const SobreNos = () => {
   const textItemsRef = useRef<(HTMLDivElement | null)[]>([])
   const parallaxBgRef = useRef<HTMLDivElement>(null)
   const parallaxLayersRef = useRef<(HTMLDivElement | null)[]>([])
+  
+  // Detectar mudanças de tema
+  useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme')
+      setIsDarkMode(theme !== 'light')
+    }
+    
+    checkTheme()
+    
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
+  }, [])
   
   useLayoutEffect(() => {
     if (!containerRef.current) return
@@ -341,7 +360,7 @@ const SobreNos = () => {
             {/* imagem do homem musculoso d fundo*/}
             <CardImageBackground ref={imageBackgroundRef}>
               <img 
-                src="/images/muscular-man.png" 
+                src={isDarkMode ? "/images/muscular-man.png" : "/homem_negro.png"} 
                 alt="Homem musculoso treinando"
               />
             </CardImageBackground>
@@ -511,6 +530,12 @@ const CardImageBackground = styled.div`
   opacity: 0.15;
   z-index: 0;
   will-change: transform;
+  transition: all 0.5s ease;
+  
+  /* Posição mais alta para o modo claro (homem negro) */
+  [data-theme="light"] & {
+    top: -35%;
+  }
   
   img {
     width: 100%;
@@ -533,6 +558,10 @@ const CardImageBackground = styled.div`
     opacity: 0.08;
     top: -15%;
     height: 130%;
+    
+    [data-theme="light"] & {
+      top: -30%;
+    }
   }
 `
 

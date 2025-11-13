@@ -8,6 +8,7 @@ const SobreNos = () => {
   const containerRef = useRef(null)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [isDarkMode, setIsDarkMode] = useState(true)
   const controls = useAnimationControls()
   
   const { scrollYProgress } = useScroll({
@@ -30,6 +31,24 @@ const SobreNos = () => {
     
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
+
+  // Detectar mudanças de tema
+  useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme')
+      setIsDarkMode(theme !== 'light')
+    }
+    
+    checkTheme()
+    
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
   }, [])
 
   const handleSwitchToLogin = () => {
@@ -152,7 +171,7 @@ const SobreNos = () => {
               }}
             >
               <img 
-                src="/images/muscular-man.png" 
+                src={isDarkMode ? "/images/muscular-man.png" : "/homem_negro.png"} 
                 alt="Homem musculoso treinando"
               />
             </CardImageBackground>
@@ -362,6 +381,12 @@ const CardImageBackground = styled(motion.div)`
   height: 120%;
   opacity: 0.15;
   z-index: 0;
+  transition: all 0.5s ease;
+  
+  /* Posição mais alta para o modo claro (homem negro) */
+  [data-theme="light"] & {
+    top: -25%;
+  }
   
   img {
     width: 100%;
@@ -381,6 +406,10 @@ const CardImageBackground = styled(motion.div)`
     width: 100%;
     right: 0;
     opacity: 0.08;
+    
+    [data-theme="light"] & {
+      top: -20%;
+    }
   }
 `
 

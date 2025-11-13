@@ -279,7 +279,26 @@ const CardWithScramble = ({ card, icon: IconComponent, index, totalCards }: { ca
 const Hero = ({ onOpenSignup }: HeroProps) => {
   const { isLoggedIn } = useUser()
   const navigate = useNavigate()
-  const floatingCards = BRAND.floatingCards;
+  const floatingCards = BRAND.floatingCards
+  const [isDarkMode, setIsDarkMode] = useState(true)
+
+  // Detectar mudanças de tema
+  useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme')
+      setIsDarkMode(theme !== 'light')
+    }
+    
+    checkTheme()
+    
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    return () => observer.disconnect()
+  }, [])
 
   // Mapeamento de ícones para cada card
   const cardIcons = {
@@ -322,13 +341,15 @@ const Hero = ({ onOpenSignup }: HeroProps) => {
             transition={{ duration: 1.2, ease: 'easeOut' }}
           >
             <img 
-              src={BRAND.heroSrc}
+              src={isDarkMode ? BRAND.heroSrc : '/Untitled.png'}
               alt="Homem musculoso" 
               className="hero-image"
               onError={(e) => {
                 const img = e.currentTarget as HTMLImageElement;
-                if (!img.src.endsWith('/hero-image.png')) {
+                if (isDarkMode && !img.src.endsWith('/hero-image.png')) {
                   img.src = '/hero-image.png';
+                } else if (!isDarkMode && !img.src.endsWith('/Untitled.png')) {
+                  img.src = '/Untitled.png';
                 }
               }}
             />
@@ -577,6 +598,14 @@ const ImageContainer = styled.div`
     position: relative;
     animation: float 6s ease-in-out infinite;
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.45));
+    transition: all 0.5s ease;
+  }
+
+  /* Imagem MUITO maior para o modo claro (homem negro) */
+  [data-theme="light"] & .hero-image {
+    width: clamp(300rem, 280vw, 600rem);
+    max-height: 220vh;
+    transform: scale(5.0);
   }
 
   @keyframes float {
