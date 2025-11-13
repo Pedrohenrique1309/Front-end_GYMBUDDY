@@ -209,6 +209,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
             <AnimatePresence>
               {showProfileCard && !showUserMenu && (
                 <ProfileHoverCard
+                  theme={isDarkMode ? 'dark' : 'light'}
                   initial={{ 
                     opacity: 0,
                     y: 20,
@@ -254,27 +255,8 @@ const Header = ({ isVisible = true }: HeaderProps) => {
                         {user?.email || 'Membro ativo do GYM BUDDY focado em resultados.'}
                       </ProfileCardBio>
                       
-                      <ProfileCardStatsInline>
-                        <StatInlineItem>
-                          <FiShare2 style={{ fontSize: '1.6rem' }} />
-                          <span>24 publicações</span>
-                        </StatInlineItem>
-                      </ProfileCardStatsInline>
                     </ProfileCardInfo>
                   </ProfileCardImageContainer>
-                  
-                  <ProfileCardFooter>
-                    <ProfileCardButton
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        setShowProfileCard(false);
-                        // Navegar para perfil
-                      }}
-                    >
-                      Seguir <span style={{ marginLeft: '0.4rem' }}>+</span>
-                    </ProfileCardButton>
-                  </ProfileCardFooter>
                 </ProfileHoverCard>
               )}
             </AnimatePresence>
@@ -627,28 +609,68 @@ const NavLink = styled(Link)`
 `;
 
 const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
+  /* Glassmorphism Background - Visível em ambos os temas */
   background: ${({ $isDarkMode }) => 
     $isDarkMode 
-      ? 'linear-gradient(135deg, rgba(30, 30, 50, 0.8), rgba(50, 50, 80, 0.6))' 
-      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.12), rgba(30, 41, 59, 0.08))'
+      ? 'rgba(30, 30, 50, 0.4)' 
+      : 'rgba(15, 23, 42, 0.15)'
   };
+  
+  /* Glassmorphism Effects */
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  
+  /* Adaptive Borders - Mais visíveis */
   border: ${({ $isDarkMode }) => 
     $isDarkMode 
-      ? '1px solid rgba(255, 255, 255, 0.2)' 
-      : '1px solid rgba(147, 197, 253, 0.25)'
+      ? '1px solid rgba(255, 255, 255, 0.18)' 
+      : '1px solid rgba(15, 23, 42, 0.3)'
   };
+  
+  /* Enhanced Box Shadow for Glassmorphism */
+  box-shadow: ${({ $isDarkMode }) => 
+    $isDarkMode 
+      ? `0 8px 32px rgba(0, 0, 0, 0.3),
+         0 2px 8px rgba(0, 0, 0, 0.2),
+         inset 0 1px 0 rgba(255, 255, 255, 0.1)`
+      : `0 8px 32px rgba(15, 23, 42, 0.2),
+         0 2px 8px rgba(15, 23, 42, 0.15),
+         inset 0 1px 0 rgba(255, 255, 255, 0.6)`
+  };
+  
   cursor: pointer;
   padding: 1rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.4s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: 1.5rem;
   position: relative;
   overflow: hidden;
   width: 4.8rem;
   height: 4.8rem;
+  
+  /* Hover Effects */
+  &:hover {
+    transform: translateY(-2px) scale(1.05);
+    
+    background: ${({ $isDarkMode }) => 
+      $isDarkMode 
+        ? 'rgba(30, 30, 50, 0.6)' 
+        : 'rgba(15, 23, 42, 0.25)'
+    };
+    
+    box-shadow: ${({ $isDarkMode }) => 
+      $isDarkMode 
+        ? `0 12px 40px rgba(0, 0, 0, 0.4),
+           0 4px 12px rgba(0, 0, 0, 0.3),
+           inset 0 1px 0 rgba(255, 255, 255, 0.15)`
+        : `0 12px 40px rgba(15, 23, 42, 0.3),
+           0 4px 12px rgba(15, 23, 42, 0.2),
+           inset 0 1px 0 rgba(255, 255, 255, 0.8)`
+    };
+  }
   
   &::before {
     content: '';
@@ -1041,33 +1063,70 @@ const UserMenu = styled(motion.div)`
   position: absolute;
   top: calc(100% + 1rem);
   right: 0;
-  background: #0A0A0A;
+  
+  /* Background translúcido adaptativo */
+  background: var(--md-sys-color-surface, #0A0A0A);
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.85);
+  }
+  
+  /* Bordas adaptativas */
   border: 1px solid rgba(255, 255, 255, 0.1);
+  [data-theme="light"] & {
+    border: 1px solid rgba(227, 6, 19, 0.3);
+  }
+  
   border-radius: 1.2rem;
   padding: 1rem 0;
   min-width: 20rem;
+  
+  /* Sombras adaptativas */
   box-shadow: 
     0 20px 60px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
+  [data-theme="light"] & {
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(227, 6, 19, 0.1);
+  }
+  
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   z-index: 1000;
 `;
 
 const MenuHeader = styled.div`
   padding: 1rem 1.5rem;
+  
+  /* Bordas adaptativas */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  [data-theme="light"] & {
+    border-bottom: 1px solid rgba(227, 6, 19, 0.2);
+  }
+  
   margin-bottom: 0.5rem;
   
   span {
     color: var(--text-primary, var(--white));
     font-size: 1.4rem;
     font-weight: 600;
+    
+    /* Texto adaptativo para modo claro */
+    [data-theme="light"] & {
+      color: #1F2937;
+    }
   }
 `;
 
 const MenuDivider = styled.div`
   height: 1px;
+  
+  /* Background adaptativo */
   background: rgba(255, 255, 255, 0.1);
+  [data-theme="light"] & {
+    background: rgba(227, 6, 19, 0.15);
+  }
+  
   margin: 0.5rem 0;
   
   @keyframes pulse {
@@ -1241,7 +1300,7 @@ const LogoutButton = styled(motion.button)`
 `;
 
 // Profile Hover Card Styles
-const ProfileHoverCard = styled(motion.div)`
+const ProfileHoverCard = styled(motion.div)<{ theme?: string }>`
   position: absolute;
   top: calc(100% + 1.5rem);
   right: 0;
@@ -1250,17 +1309,34 @@ const ProfileHoverCard = styled(motion.div)`
   overflow: hidden;
   z-index: 1001;
   
-  /* Background escuro */
-  background: rgba(20, 20, 25, 0.98);
+  /* Background verdadeiramente translúcido para ver o fundo */
+  background: ${({ theme }) => 
+    theme === 'dark' || !theme
+      ? 'rgba(20, 20, 25, 0.4)'
+      : 'rgba(255, 255, 255, 0.3)'
+  };
+  
+  /* Glassmorphism para ver através */
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 2px solid rgba(40, 40, 45, 0.8);
   
-  /* Sombras profundas */
-  box-shadow: 
-    0 24px 64px rgba(0, 0, 0, 0.5),
-    0 12px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  /* Bordas vermelhas finas da paleta */
+  border: ${({ theme }) => 
+    theme === 'dark' || !theme
+      ? '2px solid rgba(40, 40, 45, 0.8)'
+      : '1px solid rgba(227, 6, 19, 0.25)'
+  };
+  
+  /* Sombras suaves adaptativas */
+  box-shadow: ${({ theme }) => 
+    theme === 'dark' || !theme
+      ? `0 24px 64px rgba(0, 0, 0, 0.4),
+         0 12px 32px rgba(0, 0, 0, 0.25),
+         inset 0 1px 0 rgba(255, 255, 255, 0.05)`
+      : `0 24px 64px rgba(0, 0, 0, 0.12),
+         0 12px 32px rgba(227, 6, 19, 0.08),
+         inset 0 1px 0 rgba(227, 6, 19, 0.03)`
+  };
 `;
 
 const ProfileCardImageContainer = styled.div`
@@ -1280,7 +1356,19 @@ const ProfileCardImage = styled.img`
 const ProfileCardImagePlaceholder = styled.div`
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #2a2a2f, #1a1a1f);
+  
+  /* Background mais translúcido para ver o fundo */
+  background: linear-gradient(135deg, 
+    rgba(42, 42, 47, 0.6), 
+    rgba(26, 26, 31, 0.4)
+  );
+  [data-theme="light"] & {
+    background: linear-gradient(135deg, 
+      rgba(248, 250, 252, 0.5), 
+      rgba(241, 245, 249, 0.3)
+    );
+  }
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1292,12 +1380,24 @@ const ProfileCardImageOverlay = styled.div`
   left: 0;
   right: 0;
   height: 70%;
+  
+  /* Overlay mais translúcido para ver através */
   background: linear-gradient(to top, 
-    rgba(0, 0, 0, 0.95) 0%,
-    rgba(0, 0, 0, 0.7) 40%,
-    rgba(0, 0, 0, 0.3) 70%,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.4) 40%,
+    rgba(0, 0, 0, 0.1) 70%,
     transparent 100%
   );
+  
+  [data-theme="light"] & {
+    background: linear-gradient(to top, 
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.3) 40%,
+      rgba(255, 255, 255, 0.1) 70%,
+      transparent 100%
+    );
+  }
+  
   pointer-events: none;
 `;
 
@@ -1320,9 +1420,15 @@ const ProfileCardName = styled.div`
   gap: 0.8rem;
   font-size: 2.8rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 1);
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+  color: var(--text-primary, rgba(255, 255, 255, 1));
+  text-shadow: 0 2px 16px var(--shadow-color, rgba(0, 0, 0, 0.8));
   text-align: center;
+  
+  /* Modo claro - texto vermelho */
+  [data-theme="light"] & {
+    color: #E30613;
+    text-shadow: 0 2px 16px rgba(227, 6, 19, 0.3);
+  }
 `;
 
 const VerifiedBadge = styled.span`
@@ -1347,11 +1453,17 @@ const VerifiedBadge = styled.span`
 
 const ProfileCardBio = styled.p`
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.85));
   line-height: 1.6;
   margin: 0;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 12px var(--shadow-color, rgba(0, 0, 0, 0.8));
   text-align: center;
+  
+  /* Modo claro - texto vermelho mais claro */
+  [data-theme="light"] & {
+    color: #B91C1C;
+    text-shadow: 0 2px 12px rgba(227, 6, 19, 0.2);
+  }
 `;
 
 const ProfileCardStatsInline = styled.div`

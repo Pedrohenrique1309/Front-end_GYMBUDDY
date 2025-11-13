@@ -609,7 +609,7 @@ const FloatingCardWrap = styled(motion.div)`
     rgba(227, 6, 19, 0.1) 100%
   );
   backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(227, 6, 19, 0.4);
   border-radius: 2rem;
   padding: 2rem 2.4rem;
   min-width: 24rem;
@@ -710,7 +710,7 @@ const FloatingCardWrap = styled(motion.div)`
       rgba(255, 255, 255, 0.12) 50%,
       rgba(227, 6, 19, 0.2) 100%
     );
-    border-color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(227, 6, 19, 0.6);
     backdrop-filter: blur(30px) saturate(200%);
     box-shadow:
       inset 0 2px 0 rgba(255,255,255,0.4),
