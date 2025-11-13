@@ -303,37 +303,33 @@ const FerramentaDeSenha = styled(motion.div)`
   top: 50%;
   right: 120%;
   transform: translateY(-50%);
-  background: var(--bg-secondary, linear-gradient(135deg, 
-    rgba(227, 6, 19, 0.15) 0%, 
-    rgba(139, 69, 19, 0.12) 50%,
-    rgba(0, 0, 0, 0.8) 100%
-  ));
-  backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid var(--border-color, rgba(227, 6, 19, 0.25));
+  background: linear-gradient(135deg, 
+    rgba(227, 6, 19, 0.08) 0%, 
+    rgba(139, 69, 19, 0.06) 50%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(227, 6, 19, 0.15);
   border-radius: 1.6rem;
   padding: 1.4rem 1.6rem;
   min-width: 24rem;
-  box-shadow: var(--shadow-color, 
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    0 12px 40px rgba(0, 0, 0, 0.3),
-    0 6px 20px rgba(227, 6, 19, 0.15));
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(227, 6, 19, 0.1);
   z-index: 1000;
   pointer-events: none;
   overflow: hidden;
   
   [data-theme="light"] & {
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.95) 0%, 
-      rgba(248, 250, 252, 0.9) 50%,
-      rgba(241, 245, 249, 0.85) 100%
-    );
-    border: 1px solid var(--md-sys-color-outline-variant);
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(227, 6, 19, 0.2);
     box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.8),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.05),
-      0 12px 40px rgba(0, 0, 0, 0.15),
-      0 6px 20px rgba(152, 0, 15, 0.1);
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.02),
+      0 12px 40px rgba(0, 0, 0, 0.08),
+      0 6px 20px rgba(152, 0, 15, 0.05);
   }
 
   /* Liquid glass shine effect */
@@ -387,6 +383,15 @@ const FerramentaDeSenha = styled(motion.div)`
     border-radius: 0.8rem;
     padding: 0.8rem 1rem;
     margin: -0.4rem -0.6rem 1.2rem -0.6rem;
+    
+    [data-theme="light"] & {
+      background: linear-gradient(135deg, 
+        var(--primary) 0%, 
+        var(--primary-dark) 50%,
+        #B91C1C 100%
+      );
+      border-bottom: 1px solid rgba(185, 28, 28, 0.3);
+    }
 
     .tooltip-icon {
       color: rgba(227, 6, 19, 0.9);
@@ -395,6 +400,12 @@ const FerramentaDeSenha = styled(motion.div)`
       padding: 0.4rem;
       border-radius: 0.6rem;
       border: 1px solid rgba(227, 6, 19, 0.3);
+      
+      [data-theme="light"] & {
+        color: white;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
     }
 
     span {
@@ -404,8 +415,8 @@ const FerramentaDeSenha = styled(motion.div)`
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       
       [data-theme="light"] & {
-        color: var(--md-sys-color-on-surface);
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       }
     }
   }
@@ -420,22 +431,22 @@ const FerramentaDeSenha = styled(motion.div)`
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: var(--text-primary, rgba(255, 255, 255, 0.9));
+    color: rgba(255, 255, 255, 0.7);
     font-size: 1.3rem;
     font-weight: 500;
     padding: 0.4rem 0;
     transition: all 0.2s ease;
 
     &:hover {
-      color: var(--text-primary, rgba(255, 255, 255, 1));
+      color: rgba(255, 255, 255, 0.9);
       transform: translateX(2px);
     }
     
     [data-theme="light"] & {
-      color: var(--md-sys-color-on-surface-variant);
+      color: rgba(255, 255, 255, 0.8);
       
       &:hover {
-        color: var(--md-sys-color-on-surface);
+        color: rgba(255, 255, 255, 0.95);
       }
     }
 

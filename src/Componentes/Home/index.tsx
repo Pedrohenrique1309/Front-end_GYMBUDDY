@@ -569,7 +569,7 @@ const ImageContainer = styled.div`
   justify-self: center;
   width: 100%;
   margin-top: -10rem; // Aumenta a sobreposição da imagem sobre o texto
-  z-index: 3; // Garante que a imagem fique sobre o texto
+  z-index: 3; // Garante que a imagem fique sobre o texto mas abaixo dos cards
   
   @media (max-width: 1024px) {
     margin-top: -4rem; // Menos sobreposição em mobile
@@ -591,12 +591,11 @@ const ImageContainer = styled.div`
 
   .hero-image {
     width: clamp(40rem, 42vw, 64rem);
-    height: auto;
-    max-height: 78vh;
+    height: 150px;
+    max-height: 10vh;
     object-fit: contain;
     z-index: 10; // Aumenta o z-index para garantir sobreposição
     position: relative;
-    animation: float 6s ease-in-out infinite;
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.45));
     transition: all 0.5s ease;
   }
@@ -608,10 +607,6 @@ const ImageContainer = styled.div`
     transform: scale(5.0);
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
-  }
 `;
 
 const FloatingCards = styled(motion.div)`
@@ -621,6 +616,7 @@ const FloatingCards = styled(motion.div)`
   top: 0;
   left: 0;
   pointer-events: none;
+  z-index: 15; /* Garante que os cards fiquem acima da imagem */
 `;
 
 const FloatingCardWrap = styled(motion.div)`
@@ -655,7 +651,7 @@ const FloatingCardWrap = styled(motion.div)`
     inset 0 -1px 0 rgba(0,0,0,0.1),
     0 8px 32px rgba(0,0,0,0.12),
     0 4px 16px rgba(227, 6, 19, 0.1);
-  z-index: 2;
+  z-index: 20; /* Z-index maior que a imagem para garantir visibilidade */
   overflow: hidden;
   
   &::before {

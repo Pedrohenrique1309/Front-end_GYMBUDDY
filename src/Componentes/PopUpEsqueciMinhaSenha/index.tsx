@@ -649,6 +649,12 @@ const MensagemErro = styled(motion.div)`
   color: #ef4444;
   font-size: 1.4rem;
   text-align: center;
+  
+  [data-theme="light"] & {
+    background: rgba(220, 38, 38, 0.05);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+  }
 `
 
 const MensagemSucesso = styled(motion.div)`
@@ -686,7 +692,7 @@ const BotaoVoltar = styled.button`
   left: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -694,8 +700,16 @@ const BotaoVoltar = styled.button`
   transition: all 0.2s ease;
   
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--md-sys-color-surface-container-low, rgba(255, 255, 255, 0.1));
     transform: scale(1.1);
+  }
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface);
+    
+    &:hover {
+      background: var(--md-sys-color-surface-container-low);
+    }
   }
 `
 
@@ -720,13 +734,21 @@ const BotaoMostrarSenha = styled.button`
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   font-size: 1.8rem;
   cursor: pointer;
   transition: color 0.2s ease;
   
   &:hover {
-    color: var(--white);
+    color: var(--text-primary, var(--white));
+  }
+  
+  [data-theme="light"] & {
+    color: var(--md-sys-color-on-surface-variant);
+    
+    &:hover {
+      color: var(--md-sys-color-on-surface);
+    }
   }
 `
 
@@ -741,16 +763,16 @@ const InputCodigo = styled.input`
   width: 5rem;
   height: 5rem;
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--border-color, rgba(255, 255, 255, 0.2));
   border-radius: 1rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
   transition: all 0.3s ease;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.3));
   }
   
   &:focus {
@@ -758,6 +780,21 @@ const InputCodigo = styled.input`
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.2);
     transform: scale(1.05);
+  }
+  
+  [data-theme="light"] & {
+    background: var(--md-sys-color-surface-container-low);
+    border: 2px solid var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface);
+    
+    &::placeholder {
+      color: var(--md-sys-color-on-surface-variant);
+    }
+    
+    &:focus {
+      border-color: var(--md-sys-color-secondary);
+      box-shadow: 0 0 0 3px rgba(152, 0, 15, 0.2);
+    }
   }
   
   &:hover {
