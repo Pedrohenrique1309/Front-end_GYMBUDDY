@@ -10,6 +10,10 @@ export interface ExercicioPayload {
   nivel_dificuldade?: string
   instrucoes?: string
   observacoes?: string
+  gif?: string
+  imagem?: string
+  url_gif?: string
+  gif_url?: string
 }
 
 export interface ExercicioResponse {

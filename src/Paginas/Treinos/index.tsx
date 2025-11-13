@@ -43,6 +43,70 @@ interface Workout {
   exercises: ExerciseInWorkout[];
 }
 
+// Componente para GIF de exercício com tratamento de erro
+interface ExerciseGifWithFallbackProps {
+  src: string;
+  alt: string;
+  className?: string;
+  width?: string;
+  height?: string;
+}
+
+const ExerciseGifWithFallback: React.FC<ExerciseGifWithFallbackProps> = ({ src, alt, className, width = '240px', height = '240px' }) => {
+  const [hasError, setHasError] = useState(false);
+  
+  const handleError = () => {
+    console.log(`❌ Erro ao carregar GIF: ${src}`);
+    setHasError(true);
+  };
+  
+  const fallbackUrl = `https://via.placeholder.com/${width.replace('px', '')}x${height.replace('px', '')}/E30613/FFFFFF?text=${encodeURIComponent(alt)}`;
+  
+  return (
+    <img
+      src={hasError ? fallbackUrl : src}
+      alt={alt}
+      className={className}
+      onError={handleError}
+      style={{
+        width,
+        height,
+        borderRadius: '16px',
+        objectFit: 'cover',
+        background: 'rgba(255, 255, 255, 0.05)'
+      }}
+    />
+  );
+};
+
+// Componente para GIF da biblioteca com tratamento de erro
+const ExerciseLibraryGifWithFallback: React.FC<ExerciseGifWithFallbackProps> = ({ src, alt, className }) => {
+  const [hasError, setHasError] = useState(false);
+  
+  const handleError = () => {
+    console.log(`❌ Erro ao carregar GIF da biblioteca: ${src}`);
+    setHasError(true);
+  };
+  
+  const fallbackUrl = `https://via.placeholder.com/100x100/E30613/FFFFFF?text=${encodeURIComponent(alt.slice(0, 8))}`;
+  
+  return (
+    <img
+      src={hasError ? fallbackUrl : src}
+      alt={alt}
+      className={className}
+      onError={handleError}
+      style={{
+        width: '100px',
+        height: '100px',
+        borderRadius: '10px',
+        objectFit: 'cover',
+        background: 'rgba(255, 255, 255, 0.05)'
+      }}
+    />
+  );
+};
+
 const Treinos: React.FC = () => {
   const { user, isLoggedIn, isLoading } = useUser();
   const navigate = useNavigate();
@@ -75,21 +139,49 @@ const Treinos: React.FC = () => {
       
       // Buscar exercícios reais do backend primeiro
       try {
+        console.log('🔍 Buscando exercícios do backend...');
         const response = await exercicioService.listarExercicios()
         const realEx = response.exercicios || response.exercicio || []
+        console.log('📊 Exercícios recebidos do backend:', realEx);
         setRealExercises(realEx)
+        
+        // Função para validar e obter GIF do exercício
+        const getExerciseGif = (ex: any): string => {
+          // Buscar GIF em diferentes possíveis campos do backend
+          const possibleGifFields = [
+            ex.gif, ex.imagem, ex.url_gif, ex.gif_url, ex.gifUrl,
+            ex.image, ex.gif_image, ex.animation, ex.demo_url
+          ];
+          
+          // Encontrar o primeiro campo válido (não vazio e não null)
+          const foundGif = possibleGifFields.find(field => 
+            field && field.trim() !== '' && field !== 'null'
+          );
+          
+          // Fallback para placeholder se nenhum GIF válido for encontrado
+          return foundGif || `https://via.placeholder.com/400x300/E30613/FFFFFF?text=${encodeURIComponent(ex.nome || 'Exercício')}`;
+        };
         
         // Converter para formato da UI se houver exercícios reais
         if (realEx.length > 0) {
-          const convertedExercises = realEx.map((ex: any) => ({
-            id: ex.id?.toString() || Math.random().toString(),
-            name: ex.nome || 'Exercício sem nome',
-            bodyPart: ex.grupo_muscular || 'geral',
-            equipment: ex.equipamento || 'livre',
-            gifUrl: 'https://v2.exercisedb.io/image/placeholder',
-            target: ex.grupo_muscular || 'músculos',
-            muscles: [ex.grupo_muscular || 'Geral']
-          }))
+          const convertedExercises = realEx.map((ex: any) => {
+            const gifUrl = getExerciseGif(ex);
+            
+            console.log(`🎬 Exercício "${ex.nome}":`); 
+            console.log(`   - ID: ${ex.id}`);
+            console.log(`   - GIF: ${gifUrl}`);
+            console.log(`   - Dados completos:`, ex);
+            
+            return {
+              id: ex.id?.toString() || Math.random().toString(),
+              name: ex.nome || 'Exercício sem nome',
+              bodyPart: ex.grupo_muscular || 'geral',
+              equipment: ex.equipamento || 'livre',
+              gifUrl: gifUrl,
+              target: ex.grupo_muscular || 'músculos',
+              muscles: [ex.grupo_muscular || 'Geral']
+            };
+          })
           setExercises(convertedExercises)
           setFilteredExercises(convertedExercises)
           setLoadingExercises(false)
@@ -331,7 +423,7 @@ const Treinos: React.FC = () => {
                       selectedExerciseForWorkout?.id === exerciseItem.id ? null : exerciseItem
                     )}
                   >
-                    <ExerciseGif src={exerciseItem.exercise.gifUrl} alt={exerciseItem.exercise.name} />
+                    <ExerciseGifWithFallback src={exerciseItem.exercise.gifUrl} alt={exerciseItem.exercise.name} />
                     <ExerciseInfo>
                       <ExerciseName>{exerciseItem.exercise.name}</ExerciseName>
                       <MusclesContainer>
@@ -513,7 +605,7 @@ const Treinos: React.FC = () => {
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <ExerciseLibraryGif src={exercise.gifUrl} alt={exercise.name} />
+                      <ExerciseLibraryGifWithFallback src={exercise.gifUrl} alt={exercise.name} />
                       <ExerciseLibraryInfo>
                         <ExerciseLibraryName>{exercise.name}</ExerciseLibraryName>
                         <ExerciseLibraryTarget>{exercise.target}</ExerciseLibraryTarget>
@@ -870,13 +962,7 @@ const ExerciseCardHeader = styled.div`
   cursor: pointer;
 `;
 
-const ExerciseGif = styled.img`
-  width: 240px;
-  height: 240px;
-  border-radius: 16px;
-  object-fit: cover;
-  background: rgba(255, 255, 255, 0.05);
-`;
+
 
 const ExerciseInfo = styled.div`
   flex: 1;
@@ -1277,13 +1363,7 @@ const ExerciseLibraryItem = styled(motion.div)`
   }
 `;
 
-const ExerciseLibraryGif = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 10px;
-  object-fit: cover;
-  background: rgba(255, 255, 255, 0.05);
-`;
+
 
 const ExerciseLibraryInfo = styled.div`
   flex: 1;
