@@ -534,7 +534,7 @@ const CardImageBackground = styled.div`
   
   /* Posição mais alta para o modo claro (homem negro) */
   [data-theme="light"] & {
-    top: -35%;
+    top: -90%;
   }
   
   img {
@@ -552,18 +552,22 @@ const CardImageBackground = styled.div`
     );
   }
 
+  [data-theme="light"] & img {
+    object-fit: contain;
+  }
+
   @media (max-width: 768px) {
     width: 100%;
     right: 0;
     opacity: 0.08;
     top: -15%;
     height: 130%;
-    
+
     [data-theme="light"] & {
-      top: -30%;
+      top: -99%;
     }
   }
-`
+`;
 
 const CardContent = styled.div`
   position: relative;
