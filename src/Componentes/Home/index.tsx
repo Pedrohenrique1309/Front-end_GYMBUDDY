@@ -590,14 +590,15 @@ const ImageContainer = styled.div`
   }
 
   .hero-image {
-    width: clamp(40rem, 42vw, 64rem);
+    width: clamp(300rem, 280vw, 600rem);
     height: 150px;
-    max-height: 10vh;
+    max-height: 220vh;
     object-fit: contain;
     z-index: 10; // Aumenta o z-index para garantir sobreposição
     position: relative;
     filter: drop-shadow(0 20px 40px rgba(0,0,0,0.45));
     transition: all 0.5s ease;
+    transform: scale(5.0);
   }
 
   /* Imagem MUITO maior para o modo claro (homem negro) */
