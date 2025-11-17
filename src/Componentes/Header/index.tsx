@@ -521,7 +521,7 @@ const Logo = styled.div`
 `
 
 const LogoImage = styled.img`
-  height: 10rem !important;
+  height: 6rem !important;
   width: auto;
   max-width: none;
   object-fit: contain;

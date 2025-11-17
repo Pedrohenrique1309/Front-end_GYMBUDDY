@@ -2534,13 +2534,6 @@ return (
       <FiChevronRight style={{ transform: 'rotate(180deg)' }} />
     </ChatCloseButton>
     
-    {/* Cabeçalho */}
-    <Header $visible={!showAiChat}>
-      <Logo>
-        <LogoImage role="img" aria-label="GYM BUDDY" />
-      </Logo>
-    </Header>
-    
     {/* Conteúdo Principal */}
     <MainContent>
       <ContentArea>
