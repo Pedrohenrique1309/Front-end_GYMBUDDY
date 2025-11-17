@@ -780,12 +780,25 @@ const PopupOverlay = styled(motion.div)`
     );
     pointer-events: none;
   }
+
+  /* Ajuste do overlay para modo claro: fosco e mais suave */
+  [data-theme="light"] & {
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  [data-theme="light"] &::before {
+    background: radial-gradient(
+      circle at center,
+      rgba(227, 6, 19, 0.12) 0%,
+      transparent 70%
+    );
+  }
 `
 
 const PopupContainer = styled(motion.div)`
   background: rgba(26, 26, 26, 0.98);
   backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
   border-radius: 2rem;
   width: 100%;
   max-width: 60rem;
@@ -834,6 +847,19 @@ const PopupContainer = styled(motion.div)`
       transparent
     );
   }
+
+  /* Versão fosca para modo claro */
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: var(--border-color, rgba(0, 0, 0, 0.06));
+    box-shadow:
+      0 24px 60px rgba(15, 23, 42, 0.18),
+      0 0 0 1px rgba(148, 163, 184, 0.15);
+  }
+
+  [data-theme="light"] &::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.04);
+  }
 `
 
 const PopupHeader = styled.div`
@@ -841,13 +867,13 @@ const PopupHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 2.5rem 3rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
 `
 
 const HeaderTitle = styled.h2`
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   margin: 0;
   background: linear-gradient(135deg, #E53935, #FF5722);
   -webkit-background-clip: text;
@@ -860,7 +886,7 @@ const BotaoFechar = styled.button`
   right: 1.5rem;
   background: transparent;
   border: none;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -879,7 +905,7 @@ const UserInfo = styled.div`
   align-items: center;
   gap: 1.5rem;
   padding: 2rem 3rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
 `
 
 const UserAvatar = styled.div`
@@ -909,19 +935,19 @@ const UserDetails = styled.div`
 const UserName = styled.span`
   font-size: 1.6rem;
   font-weight: 600;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
 `
 
 const UserNickname = styled.span`
   font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
 `
 
 const DateDisplay = styled.div`
   padding: 1.5rem 3rem 0;
   font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -958,12 +984,12 @@ const ContentInput = styled.textarea`
   min-height: 12rem;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 1.5rem;
   padding: 2rem;
   font-size: 1.6rem;
   line-height: 1.6;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   resize: vertical;
   font-family: inherit;
   transition: all 0.3s ease;
@@ -976,7 +1002,7 @@ const ContentInput = styled.textarea`
   }
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.4));
   }
   
   &:disabled {
@@ -990,7 +1016,7 @@ const CharacterCount = styled.div<{ $isNearLimit: boolean }>`
   bottom: 1rem;
   right: 1.5rem;
   font-size: 1.2rem;
-  color: ${props => props.$isNearLimit ? '#FF5722' : 'rgba(255, 255, 255, 0.5)'};
+  color: ${props => props.$isNearLimit ? '#FF5722' : 'var(--text-secondary, rgba(255, 255, 255, 0.5))'};
   font-weight: 500;
 `
 
@@ -1084,11 +1110,11 @@ const HashtagInput = styled.input`
   width: 100%;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 1.2rem;
   padding: 1.5rem 1.8rem 1.5rem 5rem;
   font-size: 1.4rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   transition: all 0.3s ease;
   
   &:focus {
@@ -1098,7 +1124,7 @@ const HashtagInput = styled.input`
   }
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.4));
   }
 `
 
@@ -1128,11 +1154,11 @@ const LocationIcon = styled.div`
 const LocationInput = styled.input`
   width: 100%;
   background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 1.5rem;
   padding: 1.5rem 2rem 1.5rem 5.5rem;
   font-size: 1.4rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   transition: all 0.3s ease;
   
   &:focus {
@@ -1167,7 +1193,7 @@ const ImageUploadButton = styled.button`
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.2rem;
   padding: 1.2rem 2rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
   font-size: 1.4rem;
   font-weight: 500;
   cursor: pointer;
@@ -1183,7 +1209,7 @@ const ImageUploadButton = styled.button`
   &:hover {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(229, 57, 53, 0.3);
-    color: var(--white);
+    color: var(--text-primary, var(--white));
   }
   
   &:disabled {
@@ -1411,7 +1437,7 @@ const MusicDetails = styled.div`
 `
 
 const MusicTitle = styled.strong`
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-size: 1.5rem;
   font-weight: 600;
   display: -webkit-box;
@@ -1421,7 +1447,7 @@ const MusicTitle = styled.strong`
 `
 
 const MusicArtist = styled.span`
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   font-size: 1.3rem;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -1466,7 +1492,7 @@ const MusicSearchModal = styled.div`
   right: 0;
   background: rgba(26, 26, 26, 0.98);
   backdrop-filter: blur(25px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 1.5rem;
   padding: 1.5rem;
   max-height: 40rem;
@@ -1511,12 +1537,12 @@ const MusicSearchInput = styled.div`
     flex: 1;
     background: transparent;
     border: none;
-    color: var(--white);
+    color: var(--text-primary, var(--white));
     font-size: 1.4rem;
     outline: none;
     
     &::placeholder {
-      color: rgba(255, 255, 255, 0.4);
+      color: var(--text-secondary, rgba(255, 255, 255, 0.4));
     }
   }
   

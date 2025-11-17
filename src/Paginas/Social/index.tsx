@@ -273,6 +273,35 @@ const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
     transition: all 0.3s ease;
     transform: ${props => props.isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
   }
+
+  /* Ajustes específicos para modo claro */
+  [data-theme="light"] & {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.95) 50%,
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(227, 6, 19, 0.2);
+  }
+
+  [data-theme="light"] &:hover {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.97) 50%,
+      rgba(255, 255, 255, 0.94) 100%
+    );
+    box-shadow:
+      0 12px 32px rgba(0, 0, 0, 0.18),
+      0 0 0 1px rgba(227, 6, 19, 0.25);
+  }
+
+  [data-theme="light"] & svg {
+    color: rgba(227, 6, 19, 0.95);
+    filter: drop-shadow(0 2px 6px rgba(227, 6, 19, 0.45));
+  }
 `
 
 const ChatCloseButton = styled(motion.div)<{ isOpen?: boolean }>`
