@@ -535,6 +535,14 @@ const ModernCard = styled.div`
     0 0 80px rgba(227, 6, 19, 0.1);
   transform-style: preserve-3d;
   perspective: 1000px;
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(227, 6, 19, 0.6);
+    box-shadow:
+      0 18px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(227, 6, 19, 0.1);
+  }
 `
 
 const CardImageBackground = styled.div`
@@ -543,7 +551,7 @@ const CardImageBackground = styled.div`
   right: -10%;
   width: 70%;
   height: 140%;
-  opacity: 0.15;
+  opacity: 1.8;
   z-index: 0;
   will-change: transform;
   transition: all 0.5s ease;
@@ -558,7 +566,7 @@ const CardImageBackground = styled.div`
     height: 100%;
     object-fit: cover;
     object-position: center top;
-    filter: grayscale(100%) contrast(1.2);
+    filter: grayscale(45%) contrast(1.08);
     mask-image: linear-gradient(
       to left,
       rgba(0,0,0,1) 0%,
@@ -575,7 +583,7 @@ const CardImageBackground = styled.div`
   @media (max-width: 768px) {
     width: 100%;
     right: 0;
-    opacity: 0.08;
+    opacity: 0.16;
     top: -15%;
     height: 130%;
 
@@ -619,6 +627,10 @@ const HeaderTitle = styled.h2`
   color: var(--white);
   line-height: 1.2;
   margin: 0;
+
+  [data-theme="light"] & {
+    color: #111111;
+  }
 `
 
 const TextItemsGrid = styled.div`
@@ -644,6 +656,17 @@ const ModernTextItem = styled.div`
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(227, 6, 19, 0.3);
     box-shadow: 0 10px 30px rgba(227, 6, 19, 0.1);
+  }
+
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+
+    &:hover {
+      background: rgba(227, 6, 19, 0.04);
+      border-color: rgba(227, 6, 19, 0.35);
+      box-shadow: 0 10px 30px rgba(227, 6, 19, 0.12);
+    }
   }
 `
 
@@ -722,6 +745,10 @@ const ItemText = styled.p`
   color: rgba(255, 255, 255, 0.9);
   font-weight: 400;
   margin: 0;
+
+  [data-theme="light"] & {
+    color: #222222;
+  }
 `
 
 const ItemBar = styled.div<{ gradient: string }>`
