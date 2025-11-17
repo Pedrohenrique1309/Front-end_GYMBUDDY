@@ -17,6 +17,7 @@ import { gymbuddyIA } from '../../Services/gymbuddyIA'
 import gsap from 'gsap'
 import { ScrollTrigger, ScrollToPlugin } from 'gsap/all'
 import ShinyText from '../../Components/ShinyText/ShinyText'
+import { BRAND } from '../../Config/branding'
 
 // Registrar plugins GSAP
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)
@@ -85,8 +86,8 @@ const renderMarkdown = (text: string) => {
 // Styled Components
 const Container = styled.div`
   min-height: 100vh;
-  background: #1a1a1a;
-  color: white;
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
   position: relative;
 `
 
@@ -347,10 +348,10 @@ const Header = styled(motion.header)<{ $visible?: boolean }>`
   left: 50px;
   right: 0;
   height: 70px;
-  background: rgba(26, 26, 26, 0.95);
+  background: var(--header-bg-primary, rgba(26, 26, 26, 0.95));
   backdrop-filter: blur(10px);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 0 3rem;
   z-index: 1;
@@ -363,8 +364,21 @@ const Header = styled(motion.header)<{ $visible?: boolean }>`
 `
 
 const Logo = styled.div`
-  img {
-    height: 40px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+`
+
+const LogoImage = styled.div`
+  width: 160px;
+  height: 40px;
+  background-image: url(${BRAND.logoSrc});
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+
+  [data-theme="light"] & {
+    background-image: url('/GYM_BUDDY_CLARO.png');
   }
 `
 
@@ -401,20 +415,20 @@ const SearchBar = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.08));
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 12px;
   padding: 1.5rem 2rem;
   transition: all 0.3s ease;
   
   &:focus-within {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--bg-secondary, rgba(255, 255, 255, 0.12));
+    border-color: var(--border-color, rgba(255, 255, 255, 0.2));
   }
   
   svg {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
     font-size: 20px;
   }
   
@@ -422,11 +436,11 @@ const SearchBar = styled.div`
     flex: 1;
     background: transparent;
     border: none;
-    color: white;
+    color: var(--text-primary, #ffffff);
     font-size: 1.5rem;
     
     &::placeholder {
-      color: rgba(255, 255, 255, 0.4);
+      color: var(--text-secondary, rgba(255, 255, 255, 0.4));
     }
     
     &:focus {
@@ -438,7 +452,7 @@ const SearchBar = styled.div`
 const SectionTitle = styled.h2`
   font-size: 1.8rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
 `
 
 const PostsGrid = styled.div`
@@ -448,15 +462,15 @@ const PostsGrid = styled.div`
 `
 
 const PostCard = styled.div`
-  background: #2a2a2a;
+  background: var(--bg-secondary, #2a2a2a);
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
   
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 15px 40px var(--shadow-color, rgba(0, 0, 0, 0.6));
     border-color: rgba(229, 57, 53, 0.2);
   }
 `
@@ -502,7 +516,7 @@ const UserAvatar = styled.div`
 const Username = styled.span`
   font-size: 1.4rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   cursor: pointer;
   transition: color 0.3s ease;
   
@@ -513,7 +527,7 @@ const Username = styled.span`
 
 const PostDescription = styled.p`
   font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
   line-height: 1.5;
   margin: 0.8rem 0;
 `
@@ -544,7 +558,7 @@ const StatItem = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   
   svg {
     font-size: 18px;
@@ -562,7 +576,7 @@ const LikeButton = styled.button<{ $isLiked?: boolean }>`
   gap: 0.5rem;
   background: none;
   border: none;
-  color: ${props => props.$isLiked ? '#E30613' : 'rgba(255, 255, 255, 0.6)'};
+  color: ${props => props.$isLiked ? '#E30613' : 'var(--text-secondary, rgba(255, 255, 255, 0.6))'};
   cursor: pointer;
   padding: 0.75rem;
   border-radius: 12px;
@@ -573,7 +587,7 @@ const LikeButton = styled.button<{ $isLiked?: boolean }>`
   svg {
     transition: all 0.3s ease;
     fill: ${props => props.$isLiked ? '#E30613' : 'transparent'};
-    stroke: ${props => props.$isLiked ? '#E30613' : 'rgba(255, 255, 255, 0.6)'};
+    stroke: ${props => props.$isLiked ? '#E30613' : 'var(--text-secondary, rgba(255, 255, 255, 0.6))'};
   }
   
   &:hover:not(:disabled) {
@@ -603,7 +617,7 @@ const CommentButton = styled.button`
   gap: 0.5rem;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   cursor: pointer;
   padding: 0.75rem;
   border-radius: 12px;
@@ -613,7 +627,7 @@ const CommentButton = styled.button`
   
   svg {
     transition: all 0.3s ease;
-    stroke: rgba(255, 255, 255, 0.6);
+    stroke: var(--text-secondary, rgba(255, 255, 255, 0.6));
   }
   
   &:hover {
@@ -633,7 +647,7 @@ const CommentButton = styled.button`
 `
 
 const LikesCount = styled.span`
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
   font-size: 1.3rem;
   font-weight: 600;
   cursor: pointer;
@@ -649,7 +663,7 @@ const LikesCount = styled.span`
 `
 
 const CommentsCount = styled.span`
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
   font-size: 1.3rem;
   font-weight: 600;
 `
@@ -802,9 +816,9 @@ const UserUsername = styled.span`
 `
 
 const FriendsSidebar = styled.div`
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 20px;
   padding: 2rem;
   height: fit-content;
@@ -815,21 +829,21 @@ const FriendsSidebar = styled.div`
 const FriendsSearch = styled.div`
   input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-primary, rgba(255, 255, 255, 0.08));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
     border-radius: 10px;
     padding: 1rem 1.5rem;
-    color: white;
+    color: var(--text-primary, #ffffff);
     font-size: 1.4rem;
     
     &::placeholder {
-      color: rgba(255, 255, 255, 0.4);
+      color: var(--text-secondary, rgba(255, 255, 255, 0.4));
     }
     
     &:focus {
       outline: none;
-      border-color: rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--border-color, rgba(255, 255, 255, 0.2));
+      background: var(--bg-secondary, rgba(255, 255, 255, 0.12));
     }
   }
 `
@@ -891,7 +905,7 @@ const FriendName = styled.div`
 
 const FriendStatus = styled.div`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   line-height: 1.4;
   max-width: 100%;
   overflow: hidden;
@@ -904,7 +918,7 @@ const FriendStatus = styled.div`
 
 const PostsCount = styled.div`
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   margin-top: 0.4rem;
   font-weight: 500;
 `
@@ -2522,6 +2536,9 @@ return (
     
     {/* Cabeçalho */}
     <Header $visible={!showAiChat}>
+      <Logo>
+        <LogoImage role="img" aria-label="GYM BUDDY" />
+      </Logo>
     </Header>
     
     {/* Conteúdo Principal */}
@@ -2811,8 +2828,8 @@ const EmptyState = styled(motion.div)`
   justify-content: center;
   min-height: 40rem;
   text-align: center;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
   border-radius: 2rem;
   padding: 4rem 2rem;
   margin: 3rem 0;
@@ -2832,13 +2849,13 @@ const EmptyIcon = styled.div`
 const EmptyTitle = styled.h3`
   font-size: 2.4rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   margin-bottom: 1rem;
 `
 
 const EmptyDescription = styled.p`
   font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   line-height: 1.6;
   max-width: 40rem;
   margin-bottom: 3rem;
