@@ -364,9 +364,17 @@ const UserProfile = () => {
 // Styled Components
 const Container = styled(motion.div)`
   min-height: 100vh;
-  background: #0A0A0A;
+  background: var(--bg-primary, #0A0A0A);
   position: relative;
   overflow-x: hidden;
+  
+  [data-theme="light"] & {
+    background: linear-gradient(
+      135deg,
+      var(--md-sys-color-surface) 0%,
+      var(--md-sys-color-surface-container-low) 100%
+    );
+  }
 `
 
 const BackgroundGradient = styled.div`
@@ -387,6 +395,19 @@ const BackgroundGradient = styled.div`
   );
   pointer-events: none;
   z-index: 0;
+
+  [data-theme="light"] & {
+    background: radial-gradient(
+      ellipse at top right,
+      rgba(227, 6, 19, 0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at bottom left,
+      rgba(227, 6, 19, 0.03) 0%,
+      transparent 50%
+    );
+  }
 `
 
 const Header = styled.div`
@@ -395,13 +416,13 @@ const Header = styled.div`
   left: 0;
   right: 0;
   height: 80px;
-  background: rgba(10, 10, 10, 0.9);
+  background: var(--header-bg-primary, rgba(10, 10, 10, 0.9));
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   padding: 0 2rem;
   z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
 `
 
 const BackButton = styled.button`
@@ -409,10 +430,10 @@ const BackButton = styled.button`
   align-items: center;
   gap: 0.8rem;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 12px;
   padding: 1rem 1.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   font-size: 1.4rem;
   font-weight: 500;
   cursor: pointer;
@@ -421,7 +442,11 @@ const BackButton = styled.button`
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(227, 6, 19, 0.3);
-    color: white;
+    color: var(--text-primary, #ffffff);
+  }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.9);
   }
   
   svg {
@@ -440,7 +465,7 @@ const ProfileContent = styled.div`
 const ProfileCard = styled(motion.div)`
   background: rgba(20, 20, 20, 0.4);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 3rem;
   padding: 4rem;
   box-shadow: 
@@ -462,6 +487,13 @@ const ProfileCard = styled(motion.div)`
       rgba(227, 6, 19, 0.5),
       transparent
     );
+  }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 
+      0 18px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(227, 6, 19, 0.06);
   }
 `
 
@@ -513,7 +545,7 @@ const UserInfo = styled.div`
 const UserName = styled.h1`
   font-size: 3.2rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-primary, #ffffff);
   margin: 0;
 `
 
@@ -526,7 +558,7 @@ const UserNickname = styled.h2`
 
 const UserDescription = styled.p`
   font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   line-height: 1.6;
   margin: 1rem 0 0;
 `
@@ -537,8 +569,8 @@ const StatsSection = styled.div`
   gap: 2rem;
   margin-bottom: 3rem;
   padding: 2rem 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
 `
 
 const StatCard = styled.div<{ highlight?: boolean }>`
@@ -547,7 +579,7 @@ const StatCard = styled.div<{ highlight?: boolean }>`
     : 'rgba(255, 255, 255, 0.05)'};
   border: 1px solid ${props => props.highlight 
     ? 'rgba(227, 6, 19, 0.3)' 
-    : 'rgba(255, 255, 255, 0.1)'};
+    : 'var(--border-color, rgba(255, 255, 255, 0.1))'};
   border-radius: 16px;
   padding: 2rem;
   text-align: center;
@@ -559,18 +591,24 @@ const StatCard = styled.div<{ highlight?: boolean }>`
       ? 'rgba(227, 6, 19, 0.15)' 
       : 'rgba(255, 255, 255, 0.08)'};
   }
+
+  [data-theme="light"] & {
+    background: ${props => props.highlight 
+      ? 'rgba(227, 6, 19, 0.08)' 
+      : 'rgba(255, 255, 255, 0.9)'};
+  }
 `
 
 const StatValue = styled.div`
   font-size: 2.4rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-primary, #ffffff);
   margin-bottom: 0.5rem;
 `
 
 const StatLabel = styled.div`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   text-transform: uppercase;
   letter-spacing: 0.05em;
 `
@@ -585,7 +623,7 @@ const SectionTitle = styled.h3`
   gap: 1rem;
   font-size: 2rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   margin-bottom: 2rem;
   
   svg {
@@ -604,9 +642,13 @@ const DetailItem = styled.div`
   align-items: center;
   gap: 1.5rem;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 16px;
   padding: 1.5rem;
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.96);
+  }
 `
 
 const DetailIcon = styled.div`
@@ -629,13 +671,13 @@ const DetailContent = styled.div`
 
 const DetailLabel = styled.div`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   margin-bottom: 0.3rem;
 `
 
 const DetailValue = styled.div`
   font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   font-weight: 500;
 `
 
@@ -663,13 +705,13 @@ const LoadingSpinner = styled.div`
 `
 
 const LoadingText = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   font-size: 1.6rem;
   margin: 0;
 `
 
 const LoadingSubtext = styled.p`
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   font-size: 1.4rem;
   margin: 0;
   font-weight: 500;
@@ -690,14 +732,14 @@ const ErrorIcon = styled.div`
 `
 
 const ErrorText = styled.p`
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   font-size: 1.8rem;
   text-align: center;
   margin: 0;
 `
 
 const ErrorSubtext = styled.p`
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   font-size: 1.4rem;
   text-align: center;
   margin: 0;
