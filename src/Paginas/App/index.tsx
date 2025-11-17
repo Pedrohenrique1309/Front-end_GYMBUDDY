@@ -33,6 +33,7 @@ const App = () => {
         <FloatingShape className="shape-3" />
         <FloatingShape className="shape-4" />
         <GridPattern />
+        <OrbitalRings />
         <GlowOrb className="glow-1" />
         <GlowOrb className="glow-2" />
       </BackgroundElements>
@@ -298,6 +299,53 @@ const GlowOrb = styled.div`
     50% {
       opacity: 0.6;
       transform: scale(1.1);
+    }
+  }
+`
+
+const OrbitalRings = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 9999px;
+    border: 1px solid rgba(227, 6, 19, 0.4);
+    width: 40rem;
+    height: 40rem;
+    opacity: 0.35;
+    animation: orbit 26s linear infinite;
+  }
+
+  &::after {
+    width: 56rem;
+    height: 56rem;
+    opacity: 0.22;
+    animation-duration: 40s;
+    animation-direction: reverse;
+  }
+
+  [data-theme="light"] &::before,
+  [data-theme="light"] &::after {
+    border-color: rgba(227, 6, 19, 0.25);
+  }
+
+  @keyframes orbit {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.03);
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
     }
   }
 `
