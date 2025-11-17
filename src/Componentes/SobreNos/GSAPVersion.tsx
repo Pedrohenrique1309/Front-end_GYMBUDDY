@@ -343,13 +343,15 @@ const SobreNos = () => {
       <SecaoPrincipal ref={heroRef}>
         <CentroParticles />
         <TituloPrincipal ref={titleRef}>
-          <span>Podemos ajudar você a</span>{' '}
+          <TituloIntro>Podemos ajudar você a</TituloIntro>{' '}
           <TextoComDegrade>
             <span>cumprir todas as suas metas</span>
           </TextoComDegrade>
         </TituloPrincipal>
         <HeroSubtitle ref={subtitleRef}>
-          Faça parte desse projeto hoje mesmo!
+          <HeroSubtitleIntro>
+            Faça parte desse projeto hoje mesmo!
+          </HeroSubtitleIntro>
         </HeroSubtitle>
       </SecaoPrincipal>
 
@@ -405,7 +407,9 @@ const SobreNos = () => {
       {/* CTA Section */}
       <CTASection>
         <CTAText>
-          Torne-se já um membro! Acesse ou crie sua conta na{' '}
+          <CTATextIntro>
+            Torne-se já um membro! Acesse ou crie sua conta na
+          </CTATextIntro>{' '}
           <CTAHighlight 
             className="cta-highlight"
             onClick={() => setShowSignupPopup(true)}
@@ -479,6 +483,12 @@ const TituloPrincipal = styled.h1`
   letter-spacing: -0.02em;
 `
 
+const TituloIntro = styled.span`
+  [data-theme="light"] & {
+    color: #111111;
+  }
+`
+
 const TextoComDegrade = styled.span`
   background: linear-gradient(135deg, #E30613 0%, #ff4757 50%, #ff6348 100%);
   -webkit-background-clip: text;
@@ -493,6 +503,12 @@ const HeroSubtitle = styled.p`
   font-weight: 400;
   max-width: 60rem;
   margin: 0 auto;
+`
+
+const HeroSubtitleIntro = styled.span`
+  [data-theme="light"] & {
+    color: #111111;
+  }
 `
 
 const ContentSection = styled.section`
@@ -758,6 +774,12 @@ const CTAText = styled.h2`
   line-height: 1.3;
   color: var(--white);
   margin: 0;
+`
+
+const CTATextIntro = styled.span`
+  [data-theme="light"] & {
+    color: #111111;
+  }
 `
 
 const CTAHighlight = styled.span`
