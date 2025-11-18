@@ -124,6 +124,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
       <div className="container">
         <Logo>
           <LogoImage 
+            $isDarkMode={isDarkMode}
             src={isDarkMode ? BRAND.logoSrc : '/GYM_BUDDY_CLARO.png'} 
             alt={BRAND.name} 
           />
@@ -537,20 +538,26 @@ const Logo = styled.div`
   }
 `
 
-const LogoImage = styled.img`
-  height: 6rem !important;
+const LogoImage = styled.img<{ $isDarkMode?: boolean }>`
   width: auto;
   max-width: none;
   object-fit: contain;
   object-position: center;
   transition: transform 0.3s ease;
-  margin: 0;
+  margin: auto;
   display: block;
   vertical-align: middle;
   position: absolute;
-  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  
+  ${props => props.$isDarkMode ? `
+    height: 13.5rem !important;
+    top: 52%;
+  ` : `
+    height: 12rem !important;
+    top: 50%;
+  `}
   
   &:hover {
     transform: translate(-50%, -50%) scale(1.05);
