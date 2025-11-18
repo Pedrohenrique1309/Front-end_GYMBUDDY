@@ -2588,7 +2588,9 @@ return (
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <EmptyIcon>📱</EmptyIcon>
+              <EmptyIcon>
+                <FiPlus />
+              </EmptyIcon>
               <EmptyTitle>Nenhuma publicação encontrada</EmptyTitle>
               <EmptyDescription>
                 {searchQuery.trim() ? 
@@ -2865,7 +2867,26 @@ const EmptyState = styled(motion.div)`
 const EmptyIcon = styled.div`
   font-size: 6rem;
   margin-bottom: 2rem;
-  opacity: 0.6;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #E30613;
+
+  svg {
+    width: 1em;
+    height: 1em;
+  }
+
+  [data-theme="light"] & {
+    color: rgba(227, 6, 19, 0.95);
+    text-shadow: 0 8px 24px rgba(227, 6, 19, 0.35);
+  }
+
+  [data-theme="dark"] & {
+    color: #E30613;
+    text-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  }
 `
 
 const EmptyTitle = styled.h3`
@@ -2884,7 +2905,7 @@ const EmptyDescription = styled.p`
 `
 
 const CreateFirstPostButton = styled(motion.button)`
-  background: linear-gradient(135deg, #E53935, #FF5722);
+  background: linear-gradient(135deg, #E30613, #B91C1C);
   border: none;
   border-radius: 1.5rem;
   padding: 1.5rem 3rem;
@@ -2893,10 +2914,11 @@ const CreateFirstPostButton = styled(motion.button)`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(229, 57, 53, 0.3);
+  box-shadow: 0 8px 25px rgba(227, 6, 19, 0.35);
   
   &:hover {
-    box-shadow: 0 12px 35px rgba(229, 57, 53, 0.4);
+    box-shadow: 0 12px 35px rgba(227, 6, 19, 0.5);
+    transform: translateY(-2px);
   }
 `
 

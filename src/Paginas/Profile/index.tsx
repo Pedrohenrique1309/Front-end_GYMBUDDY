@@ -1292,7 +1292,7 @@ const UserEmail = styled.p`
 
 const UserEmailSecondary = styled.p`
   font-size: 1.4rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   font-weight: 400;
 `
 
@@ -1687,14 +1687,16 @@ const SaveButton = styled(EditButton)`
 `
 
 const CancelButton = styled(EditButton)`
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, var(--primary), #FF1744);
+  box-shadow: 
+    0 10px 30px rgba(227, 6, 19, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: none;
+
+  [data-theme="light"] & {
+    box-shadow:
+      0 12px 30px rgba(227, 6, 19, 0.24),
+      0 0 0 1px rgba(227, 6, 19, 0.2);
   }
 `
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FaDumbbell } from 'react-icons/fa'
-import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity, FiShare2 } from 'react-icons/fi'
+import { FiSun, FiMoon, FiLogOut, FiUser, FiUsers, FiActivity, FiGlobe } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
@@ -390,6 +390,23 @@ const Header = ({ isVisible = true }: HeaderProps) => {
           </AuthButtons>
         )}
         
+        <AnimatePresence>
+          {location.pathname !== '/' && (
+            <SocialButton
+              as={Link}
+              to="/social"
+              initial={{ opacity: 0, x: 20, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.9 }}
+              transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiGlobe className="icon" />
+            </SocialButton>
+          )}
+        </AnimatePresence>
+        
         <ThemeToggle 
           onClick={toggleTheme}
           whileHover={{ scale: 1.1 }}
@@ -645,7 +662,7 @@ const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
   align-items: center;
   justify-content: center;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 1.5rem;
+  left: -3.9rem;
   position: relative;
   overflow: hidden;
   width: 4.8rem;
@@ -804,6 +821,47 @@ const ThemeToggle = styled(motion.button)<{ $isDarkMode: boolean }>`
     }
   }
   
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const SocialButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.8rem;
+  height: 4.8rem;
+  border-radius: 50%;
+  border: 1px solid var(--primary-dark, #8b000f);
+  background: linear-gradient(135deg, var(--primary), #ff4b5c);
+  color: #ffffff;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(227, 6, 19, 0.35);
+  margin-left: 0.2rem;
+
+  .icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    color: #ffffff;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 55%);
+    opacity: 0.9;
+    mix-blend-mode: screen;
+  }
+
+  &:hover {
+    box-shadow: 0 12px 32px rgba(227, 6, 19, 0.45);
+    transform: translateY(-2px);
+  }
+
   @media (max-width: 768px) {
     display: none;
   }

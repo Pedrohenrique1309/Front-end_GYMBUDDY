@@ -1,16 +1,16 @@
 import { FaDumbbell, FaClipboardList, FaRobot, FaFire } from 'react-icons/fa'
 import { useRef, useState, useEffect, useLayoutEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
-import SignupPopup from '../CadastroPopUp'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { usePopup } from '../../Contexts/PopupContext'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const SobreNos = () => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [showSignupPopup, setShowSignupPopup] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true)
+  const { openSignup } = usePopup()
   
   // Refs para animações GSAP
   const heroRef = useRef<HTMLDivElement>(null)
@@ -288,10 +288,6 @@ const SobreNos = () => {
     return () => clearInterval(interval)
   }, [])
 
-  const handleSwitchToLogin = () => {
-    setShowSignupPopup(false)
-  }
-
   const textItems = [
     {
       icon: FaDumbbell,
@@ -412,20 +408,16 @@ const SobreNos = () => {
           </CTATextIntro>{' '}
           <CTAHighlight 
             className="cta-highlight"
-            onClick={() => setShowSignupPopup(true)}
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+              openSignup()
+            }}
           >
             GymBuddy
             <SparkleEffect />
           </CTAHighlight>
         </CTAText>
       </CTASection>
-
-      {/* Signup Popup */}
-      <SignupPopup 
-        isOpen={showSignupPopup} 
-        onClose={() => setShowSignupPopup(false)}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
 
       {/* elementos do fundo animado */}
       <AnimatedBackground>
