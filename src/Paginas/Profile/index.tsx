@@ -1114,11 +1114,19 @@ const Profile = () => {
 
 const ProfileContainer = styled(motion.div)`
   min-height: 100vh;
-  background: #0A0A0A;
+  background: var(--bg-primary, #0A0A0A);
   padding-top: 10rem;
   padding-bottom: 4rem;
   position: relative;
   overflow-x: hidden;
+
+  [data-theme="light"] & {
+    background: linear-gradient(
+      135deg,
+      var(--md-sys-color-surface) 0%,
+      var(--md-sys-color-surface-container-low) 100%
+    );
+  }
 `
 
 const BackgroundGradient = styled.div`
@@ -1139,6 +1147,19 @@ const BackgroundGradient = styled.div`
   );
   pointer-events: none;
   z-index: 0;
+  
+  [data-theme="light"] & {
+    background: radial-gradient(
+      ellipse at top right,
+      rgba(227, 6, 19, 0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at bottom left,
+      rgba(227, 6, 19, 0.03) 0%,
+      transparent 50%
+    );
+  }
 `
 
 const ProfileContent = styled.div`
@@ -1159,7 +1180,7 @@ const ProfileHeader = styled.div`
 const HeaderGlassCard = styled(motion.div)`
   background: rgba(20, 20, 20, 0.4);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 3rem;
   padding: 4rem;
   width: 100%;
@@ -1183,6 +1204,13 @@ const HeaderGlassCard = styled(motion.div)`
       rgba(227, 6, 19, 0.5),
       transparent
     );
+  }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow:
+      0 18px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(227, 6, 19, 0.06);
   }
 `
 
@@ -1259,7 +1287,7 @@ const UserName = styled.h1`
   font-size: 3rem;
   font-weight: 700;
   font-family: var(--font-title);
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   margin-bottom: 0.5rem;
 `
 
@@ -1278,7 +1306,7 @@ const UserEmailSecondary = styled.p`
 
 const UserDescription = styled.p`
   font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
   line-height: 1.6;
   margin: 1rem 0 0 0;
   text-align: center;
@@ -1287,7 +1315,7 @@ const UserDescription = styled.p`
   
   &:empty::before {
     content: 'Nenhuma descrição adicionada ainda.';
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.4));
   }
 `
 
@@ -1332,7 +1360,7 @@ const StyledEditInput = styled.input`
   border-radius: 1.6rem;
   padding: 1.4rem 1.8rem 1.4rem 5rem;
   font-size: 1.6rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:focus {
@@ -1344,14 +1372,14 @@ const StyledEditInput = styled.input`
   }
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.3));
   }
 `
 
 const UnitLabel = styled.span`
   position: absolute;
   right: 1.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   font-size: 1.6rem;
   pointer-events: none;
 `
@@ -1363,7 +1391,7 @@ const DetailsSection = styled.div`
 const DetailsGlassCard = styled(motion.div)`
   background: rgba(20, 20, 20, 0.3);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
   border-radius: 2.5rem;
   padding: 3rem;
   width: 100%;
@@ -1372,6 +1400,13 @@ const DetailsGlassCard = styled(motion.div)`
   box-shadow: 
     0 15px 40px rgba(0, 0, 0, 0.2),
     inset 0 0 20px rgba(227, 6, 19, 0.01);
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow:
+      0 18px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(227, 6, 19, 0.04);
+  }
 `
 
 const EditableDetails = styled(motion.div)`
@@ -1446,7 +1481,7 @@ const DetailsGrid = styled.div`
 
 const DescriptionText = styled.p`
   font-size: 1.6rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   line-height: 1.8;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.02);
@@ -1495,7 +1530,7 @@ const InfoContent = styled.div`
 
 const InfoLabel = styled.p`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   margin-bottom: 0.3rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1503,7 +1538,7 @@ const InfoLabel = styled.p`
 
 const InfoValue = styled.p`
   font-size: 1.6rem;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   font-weight: 500;
 `
 
@@ -1537,13 +1572,13 @@ const StatCard = styled.div<{ isHighlight?: boolean }>`
 const StatValue = styled.div`
   font-size: 3rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text-primary, var(--white));
   margin-bottom: 0.5rem;
 `
 
 const StatLabel = styled.div`
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.5));
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `
@@ -1570,7 +1605,7 @@ const ExpandButton = styled(motion.button)`
   &:hover {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(227, 6, 19, 0.3);
-    color: var(--white);
+    color: var(--text-primary, var(--white));
     transform: translateY(-1px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   }
@@ -1675,7 +1710,7 @@ const PhotosSection = styled(motion.div)`
   margin-top: 4rem;
   background: rgba(20, 20, 20, 0.3);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
   border-radius: 2.5rem;
   padding: 3rem;
   box-shadow: 
@@ -1876,7 +1911,7 @@ const PostInfo = styled.div`
 `
 
 const PostDescription = styled.p`
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   font-size: 0.95rem;
   line-height: 1.5;
   margin: 0 0 1rem 0;
@@ -1889,7 +1924,7 @@ const PostHashtags = styled.div`
   margin-bottom: 1rem;
   
   span {
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
     font-size: 0.85rem;
   }
 `
@@ -1922,7 +1957,7 @@ const LoadingContainer = styled.div`
   align-items: center;
   gap: 1rem;
   padding: 3rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   
   span {
     font-size: 1rem;
@@ -1958,7 +1993,7 @@ const EmptyPostsState = styled.div`
   }
   
   h3 {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--text-primary, rgba(255, 255, 255, 0.8));
     font-size: 1.2rem;
     margin: 0;
   }
