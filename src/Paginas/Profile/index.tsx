@@ -1071,14 +1071,6 @@ const Profile = () => {
               ))}
             </PhotoGrid>
           )}
-          
-          {!isLoadingPosts && userPosts.length === 0 && (
-            <EmptyPostsState>
-              <FiCamera size={48} />
-              <h3>Nenhuma foto ainda</h3>
-              <p>Suas fotos das publicações aparecerão aqui quando você compartilhar algo na rede social.</p>
-            </EmptyPostsState>
-          )}
         </PhotosSection>
 
 
@@ -1593,9 +1585,9 @@ const ExpandButton = styled(motion.button)`
   padding: 1.2rem 2rem;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(227, 6, 19, 0.5);
   border-radius: 1.2rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
   font-size: 1.4rem;
   font-weight: 500;
   cursor: pointer;
@@ -1604,7 +1596,7 @@ const ExpandButton = styled(motion.button)`
   
   &:hover {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(227, 6, 19, 0.3);
+    border-color: rgba(227, 6, 19, 0.8);
     color: var(--text-primary, var(--white));
     transform: translateY(-1px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
@@ -1708,14 +1700,25 @@ const CancelButton = styled(EditButton)`
 
 const PhotosSection = styled(motion.div)`
   margin-top: 4rem;
-  background: rgba(20, 20, 20, 0.3);
-  backdrop-filter: blur(20px);
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 55%),
+    rgba(20, 20, 30, 0.8);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
   border-radius: 2.5rem;
   padding: 3rem;
   box-shadow: 
-    0 15px 40px rgba(0, 0, 0, 0.2),
-    inset 0 0 20px rgba(227, 6, 19, 0.01);
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    inset 0 0 20px rgba(227, 6, 19, 0.02);
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    box-shadow:
+      0 18px 40px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(227, 6, 19, 0.04);
+  }
 `
 
 const SectionTitle = styled.h2`
@@ -1753,10 +1756,10 @@ const PhotoCard = styled(motion.div)`
   aspect-ratio: 1;
   border-radius: 1.8rem;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 25, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   
   &::before {
     content: '';
@@ -1825,8 +1828,14 @@ const DeletePhotoButton = styled(motion.button)`
 const PlaceholderCard = styled.div`
   aspect-ratio: 1;
   border-radius: 1.2rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(227, 6, 19, 0.25);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(227, 6, 19, 0.18);
+  }
 `
 
 // Styled Components para a seção de posts
