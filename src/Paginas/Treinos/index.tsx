@@ -712,6 +712,10 @@ const Container = styled.div`
   padding: 1rem 2rem 2rem 2rem;
   padding-top: 9rem;
 
+  [data-theme="light"] & {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  }
+
   @media (max-width: 1024px) {
     padding: 1rem;
     padding-top: 9rem;
@@ -725,6 +729,10 @@ const LoadingContainer = styled.div`
   align-items: center;
   height: 100vh;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+
+  [data-theme="light"] & {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  }
 `;
 
 const LoadingSpinner = styled.div`
@@ -744,6 +752,10 @@ const LoadingText = styled.p`
   color: white;
   font-size: 1.2rem;
   margin-top: 1rem;
+
+  [data-theme="light"] & {
+    color: #1e293b;
+  }
 `;
 
 const PageWrapper = styled(motion.div)`
@@ -784,6 +796,18 @@ const RightColumn = styled.div`
   position: sticky;
   top: 11rem;
 
+  [data-theme="light"] & {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.95) 50%,
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(227, 6, 19, 0.2);
+  }
+
   @media (max-width: 1024px) {
     position: relative;
     top: 0;
@@ -817,6 +841,18 @@ const HeaderIcon = styled.div`
     color: #E30613;
     transform: scale(1.05);
   }
+
+  [data-theme="light"] & {
+    background: rgba(227, 6, 19, 0.08);
+    border-color: rgba(227, 6, 19, 0.15);
+    color: #E30613;
+  }
+
+  [data-theme="light"] &:hover {
+    background: rgba(227, 6, 19, 0.12);
+    border-color: rgba(227, 6, 19, 0.25);
+    color: #C41810;
+  }
 `;
 
 const HeaderTitle = styled.h1`
@@ -824,6 +860,10 @@ const HeaderTitle = styled.h1`
   font-weight: 700;
   color: white;
   flex: 1;
+
+  [data-theme="light"] & {
+    color: #1e293b;
+  }
 `;
 
 const SaveButton = styled(motion.button)`
@@ -921,6 +961,34 @@ const SaveButton = styled(motion.button)`
     }
   }
 
+  [data-theme="light"] & {
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.12) 0%,
+      rgba(185, 28, 28, 0.08) 50%,
+      rgba(227, 6, 19, 0.06) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.2);
+    color: #E30613;
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 0 rgba(227, 6, 19, 0.1);
+  }
+
+  [data-theme="light"] &:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.18) 0%,
+      rgba(185, 28, 28, 0.12) 50%,
+      rgba(227, 6, 19, 0.1) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.3);
+    color: #C41810;
+    box-shadow: 
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 0 rgba(227, 6, 19, 0.15);
+  }
+
   &:active {
     transform: translateY(0);
     box-shadow: 
@@ -945,6 +1013,10 @@ const InputLabel = styled.label`
   color: rgba(255, 255, 255, 0.8);
   font-size: 2rem;
   font-weight: 600;
+
+  [data-theme="light"] & {
+    color: #1e293b;
+  }
 `;
 
 const StyledInput = styled.input`
@@ -965,6 +1037,22 @@ const StyledInput = styled.input`
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.3);
+  }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+  }
+
+  [data-theme="light"] &:focus {
+    border-color: rgba(227, 6, 19, 0.3);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.1);
+  }
+
+  [data-theme="light"] &::placeholder {
+    color: rgba(0, 0, 0, 0.4);
   }
 `;
 
@@ -989,6 +1077,22 @@ const StyledTextArea = styled.textarea`
   &::placeholder {
     color: rgba(255, 255, 255, 0.3);
   }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+  }
+
+  [data-theme="light"] &:focus {
+    border-color: rgba(227, 6, 19, 0.3);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.1);
+  }
+
+  [data-theme="light"] &::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+  }
 `;
 
 const ExercisesList = styled.div`
@@ -1011,6 +1115,26 @@ const ExerciseCard = styled(motion.div)<{ isSelected: boolean }>`
     border-color: rgba(227, 6, 19, 0.3);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(227, 6, 19, 0.15);
+  }
+
+  [data-theme="light"] & {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.95) 50%,
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    border-color: ${props => props.isSelected ? 'rgba(227, 6, 19, 0.3)' : 'rgba(0, 0, 0, 0.06)'};
+    box-shadow: ${props => props.isSelected ? '0 8px 24px rgba(227, 6, 19, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.08)'};
+  }
+
+  [data-theme="light"] &:hover {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.97) 50%,
+      rgba(255, 255, 255, 0.94) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.25);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
   }
 `;
 
@@ -1046,6 +1170,10 @@ const ExerciseName = styled.h3`
   color: white;
   margin: 0;
   margin-bottom: 0.75rem; // Adicionado espaço abaixo do título
+
+  [data-theme="light"] & {
+    color: #E30613;
+  }
 `;
 
 const ExerciseMeta = styled.div`
@@ -1057,6 +1185,14 @@ const ExerciseMeta = styled.div`
 
   span:nth-child(2) {
     color: rgba(255, 255, 255, 0.3);
+  }
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  [data-theme="light"] & span:nth-child(2) {
+    color: rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -1080,6 +1216,12 @@ const MuscleTag = styled.span`
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
+
+  [data-theme="light"] & {
+    background: linear-gradient(135deg, rgba(227, 6, 19, 0.1), rgba(185, 28, 28, 0.08));
+    border-color: rgba(227, 6, 19, 0.2);
+    color: #C41810;
+  }
 `;
 
 const RemoveButton = styled(motion.button)`
@@ -1148,6 +1290,20 @@ const RestTimeInput = styled.div`
     color: rgba(255, 255, 255, 0.6);
     font-size: 1.4rem;
   }
+
+  [data-theme="light"] & {
+    background: rgba(227, 6, 19, 0.08);
+    border-color: rgba(227, 6, 19, 0.15);
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  [data-theme="light"] & input {
+    color: #1e293b;
+  }
+
+  [data-theme="light"] & span {
+    color: rgba(0, 0, 0, 0.6);
+  }
 `;
 
 const SetsTable = styled.table`
@@ -1158,6 +1314,10 @@ const SetsTable = styled.table`
     tr {
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
+      [data-theme="light"] & {
+        border-bottom-color: rgba(0, 0, 0, 0.08);
+      }
+
       th {
         padding: 1rem;
         text-align: left;
@@ -1166,6 +1326,10 @@ const SetsTable = styled.table`
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+
+      [data-theme="light"] & th {
+        color: rgba(0, 0, 0, 0.6);
       }
     }
   }
@@ -1178,6 +1342,12 @@ const SetsTable = styled.table`
         background: rgba(255, 255, 255, 0.03);
       }
 
+      [data-theme="light"] & {
+        &:hover {
+          background: rgba(227, 6, 19, 0.04);
+        }
+      }
+
       td {
         padding: 1rem;
         color: white;
@@ -1188,6 +1358,14 @@ const SetsTable = styled.table`
           font-weight: 600;
           font-size: 1.7rem;
         }
+      }
+
+      [data-theme="light"] & td {
+        color: #1e293b;
+      }
+
+      [data-theme="light"] & td:first-child {
+        color: rgba(0, 0, 0, 0.6);
       }
     }
   }
@@ -1210,6 +1388,18 @@ const SetInput = styled.input`
     outline: none;
     border-color: rgba(227, 6, 19, 0.5);
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+  }
+
+  [data-theme="light"] &:focus {
+    border-color: rgba(227, 6, 19, 0.3);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.1);
   }
 `;
 
@@ -1304,6 +1494,32 @@ const AddSetButton = styled(motion.button)`
       0 4px 16px 0 rgba(0, 0, 0, 0.2),
       inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
   }
+
+  [data-theme="light"] & {
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.1) 0%,
+      rgba(227, 6, 19, 0.06) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.15);
+    color: #E30613;
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 0 rgba(227, 6, 19, 0.1);
+  }
+
+  [data-theme="light"] &:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(227, 6, 19, 0.15) 0%,
+      rgba(227, 6, 19, 0.1) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.25);
+    color: #C41810;
+    box-shadow: 
+      0 8px 24px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 0 rgba(227, 6, 19, 0.15);
+  }
 `;
 
 const LibraryHeader = styled.div`
@@ -1315,6 +1531,10 @@ const LibraryTitle = styled.h2`
   font-weight: 700;
   color: white;
   margin: 0 0 1rem 0;
+
+  [data-theme="light"] & {
+    color: #1e293b;
+  }
 `;
 
 const SearchBox = styled.div`
@@ -1352,6 +1572,29 @@ const SearchBox = styled.div`
     &::placeholder {
       color: rgba(255, 255, 255, 0.3);
     }
+  }
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  [data-theme="light"] &:focus-within {
+    border-color: rgba(227, 6, 19, 0.3);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.1);
+  }
+
+  [data-theme="light"] & svg:first-child {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  [data-theme="light"] & input {
+    color: #1e293b;
+  }
+
+  [data-theme="light"] & input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
   }
 `;
 
@@ -1407,6 +1650,10 @@ const LibrarySubtitle = styled.h3`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0;
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.6);
+  }
 `;
 
 const ExercisesGrid = styled.div`
@@ -1431,6 +1678,24 @@ const ExerciseLibraryItem = styled(motion.div)`
     border-color: rgba(227, 6, 19, 0.3);
     transform: translateX(4px);
   }
+
+  [data-theme="light"] & {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.95) 50%,
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+
+  [data-theme="light"] &:hover {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.97) 50%,
+      rgba(255, 255, 255, 0.94) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.2);
+  }
 `;
 
 const ExerciseLibraryInfo = styled.div`
@@ -1449,6 +1714,10 @@ const ExerciseLibraryName = styled.h4`
   color: white;
   margin: 0;
   margin-bottom: 0.5rem; // Adicionado espaçamento abaixo
+
+  [data-theme="light"] & {
+    color: #E30613;
+  }
 `;
 
 const ExerciseLibraryTarget = styled.span`
@@ -1456,6 +1725,10 @@ const ExerciseLibraryTarget = styled.span`
   color: rgba(255, 255, 255, 0.7); // Aumentado opacidade de 0.5 para 0.7
   text-transform: capitalize;
   font-weight: 500; // Adicionado peso na fonte
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.7);
+  }
 `;
 
 const AddIcon = styled.div`
@@ -1484,6 +1757,10 @@ const EmptyState = styled.div`
     margin: 0;
     font-size: 1rem;
   }
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const LoadingState = styled.div`
@@ -1497,6 +1774,10 @@ const LoadingState = styled.div`
   span {
     color: rgba(255, 255, 255, 0.6);
     font-size: 0.95rem;
+  }
+
+  [data-theme="light"] & span {
+    color: rgba(0, 0, 0, 0.6);
   }
 `;
 
