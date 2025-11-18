@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin, FiMusic, FiSearch } from 'react-icons/fi'
+import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin, FiMusic, FiSearch, FiPlay, FiPause } from 'react-icons/fi'
 import { useUser } from '../../Contexts/UserContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 import ImageEditor from '../EditorImagem'
+import MusicPicker from '../MusicPicker'
 import { usePublicationActions } from '../../Hooks/usePublicationActions'
+import { formatarDuracao, temPreview } from '../../Services/deezerService'
 
 // Configuração do Azure Storage 
 const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'
@@ -51,11 +53,10 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
   const [mostrarEditorImagem, setMostrarEditorImagem] = useState(false)
   
   // Estados para música do Deezer
-  const [buscaMusica, setBuscaMusica] = useState('')
-  const [resultadosMusica, setResultadosMusica] = useState<any[]>([])
   const [musicaSelecionada, setMusicaSelecionada] = useState<any>(null)
-  const [mostrarBuscaMusica, setMostrarBuscaMusica] = useState(false)
-  const [carregandoMusicas, setCarregandoMusicas] = useState(false)
+  const [mostrarMusicPicker, setMostrarMusicPicker] = useState(false)
+  const [reproducaoMusicaId, setReproducaoMusicaId] = useState<number | null>(null)
+  const audioPreviewRef = useRef<HTMLAudioElement>(null)
 
   // Função de configuração do upload 
   const getUploadParams = (file: File) => {
@@ -188,58 +189,47 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setChipsHashtag(prev => prev.filter(tag => tag !== tagParaRemover))
   }
 
-  // Função para buscar músicas no Deezer
-  const buscarMusicasDeezer = async (query: string) => {
-    setCarregandoMusicas(true)
-    try {
-      let url: string
-      
-      if (!query.trim()) {
-        // Se não há busca, mostrar top charts
-        url = 'https://api.deezer.com/chart'
-        console.log('🎵 Carregando top charts do Deezer...')
-      } else {
-        // Se há busca, usar search
-        url = `https://api.deezer.com/search?q=${encodeURIComponent(query)}`
-        console.log('🎵 Buscando músicas:', query)
+  // Função para tocar/parar a prévia da música selecionada
+  const handleTogglePreviewMusica = () => {
+    if (!musicaSelecionada || !temPreview(musicaSelecionada)) {
+      console.warn('🎵 Música não tem prévia disponível')
+      return
+    }
+
+    if (reproducaoMusicaId === musicaSelecionada.id && audioPreviewRef.current) {
+      // Parar
+      audioPreviewRef.current.pause()
+      setReproducaoMusicaId(null)
+    } else {
+      // Iniciar
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.src = musicaSelecionada.preview
+        audioPreviewRef.current.play().catch(error => {
+          console.error('❌ Erro ao reproduzir prévia:', error)
+        })
+        setReproducaoMusicaId(musicaSelecionada.id)
       }
-      
-      const response = await fetch(url)
-      const data = await response.json()
-      
-      // Chart retorna {tracks: {data: [...]}} e search retorna {data: [...]}
-      const musicas = data.tracks?.data || data.data || []
-      console.log('🎵 Músicas encontradas:', musicas.length)
-      setResultadosMusica(musicas)
-    } catch (error) {
-      console.error('Erro ao buscar músicas:', error)
-      setResultadosMusica([])
-    } finally {
-      setCarregandoMusicas(false)
     }
   }
 
-  // Carregar músicas quando abrir o modal
-  useEffect(() => {
-    if (!mostrarBuscaMusica) return
-    
-    const timer = setTimeout(() => {
-      buscarMusicasDeezer(buscaMusica)
-    }, 500)
-    
-    return () => clearTimeout(timer)
-  }, [buscaMusica, mostrarBuscaMusica])
-
-  const selecionarMusica = (musica: any) => {
-    setMusicaSelecionada(musica)
-    setMostrarBuscaMusica(false)
-    setBuscaMusica('')
-    setResultadosMusica([])
-    console.log('🎵 Música selecionada:', musica.title, '-', musica.artist.name)
+  const removerMusica = () => {
+    if (audioPreviewRef.current) {
+      audioPreviewRef.current.pause()
+    }
+    setMusicaSelecionada(null)
+    setReproducaoMusicaId(null)
   }
 
-  const removerMusica = () => {
-    setMusicaSelecionada(null)
+  const handleSelecionarMusica = (musica: any) => {
+    setMusicaSelecionada(musica)
+    setMostrarMusicPicker(false)
+    setReproducaoMusicaId(null)
+    console.log('✅ Música selecionada:', musica.title, '-', musica.artist.name)
+  }
+
+  // Parar reprodução quando a música terminar
+  const handleAudioEnded = () => {
+    setReproducaoMusicaId(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -407,9 +397,11 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       setChipsHashtag([])
       setProgressoUpload(0)
       setMusicaSelecionada(null)
-      setBuscaMusica('')
-      setResultadosMusica([])
-      setMostrarBuscaMusica(false)
+      setMostrarMusicPicker(false)
+      setReproducaoMusicaId(null)
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause()
+      }
       
       // Chamar callback para recarregar posts
       if (onPostCreated) {
@@ -438,9 +430,11 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setChipsHashtag([])
     setProgressoUpload(0)
     setMusicaSelecionada(null)
-    setBuscaMusica('')
-    setResultadosMusica([])
-    setMostrarBuscaMusica(false)
+    setMostrarMusicPicker(false)
+    setReproducaoMusicaId(null)
+    if (audioPreviewRef.current) {
+      audioPreviewRef.current.pause()
+    }
     onClose()
   }
 
@@ -610,77 +604,55 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
             {/* Seção de Música */}
             <MusicSection>
               {musicaSelecionada ? (
-                <SelectedMusic>
-                  <MusicInfo>
-                    <MusicCover src={musicaSelecionada.album.cover_small} alt={musicaSelecionada.album.title} />
-                    <MusicDetails>
-                      <MusicTitle>{musicaSelecionada.title}</MusicTitle>
-                      <MusicArtist>{musicaSelecionada.artist.name}</MusicArtist>
-                    </MusicDetails>
-                  </MusicInfo>
-                  <RemoveMusicButton
-                    type="button"
-                    onClick={removerMusica}
-                    disabled={enviando}
-                  >
-                    <FiX />
-                  </RemoveMusicButton>
-                </SelectedMusic>
+                <SelectedMusicCard>
+                  <MusicCardContent>
+                    <MusicCover 
+                      src={musicaSelecionada.album?.cover_medium || musicaSelecionada.album?.cover_small} 
+                      alt={musicaSelecionada.album?.title} 
+                    />
+                    <MusicInfoDetailed>
+                      <MusicTitleDetailed>{musicaSelecionada.title}</MusicTitleDetailed>
+                      <MusicArtistDetailed>{musicaSelecionada.artist?.name}</MusicArtistDetailed>
+                      <MusicAlbumDetailed>{musicaSelecionada.album?.title}</MusicAlbumDetailed>
+                      <MusicDurationDetailed>
+                        {formatarDuracao(musicaSelecionada.duration)}
+                      </MusicDurationDetailed>
+                    </MusicInfoDetailed>
+                  </MusicCardContent>
+                  
+                  <MusicActionsDetailed>
+                    {temPreview(musicaSelecionada) && (
+                      <PreviewPlayButton
+                        type="button"
+                        onClick={handleTogglePreviewMusica}
+                        isPlaying={reproducaoMusicaId === musicaSelecionada.id}
+                        title={reproducaoMusicaId === musicaSelecionada.id ? 'Parar prévia' : 'Ouvir prévia'}
+                      >
+                        {reproducaoMusicaId === musicaSelecionada.id ? (
+                          <FiPause />
+                        ) : (
+                          <FiPlay />
+                        )}
+                      </PreviewPlayButton>
+                    )}
+                    <RemoveMusicButton
+                      type="button"
+                      onClick={removerMusica}
+                      disabled={enviando}
+                    >
+                      <FiX />
+                    </RemoveMusicButton>
+                  </MusicActionsDetailed>
+                </SelectedMusicCard>
               ) : (
                 <MusicSearchButton
                   type="button"
-                  onClick={() => setMostrarBuscaMusica(!mostrarBuscaMusica)}
+                  onClick={() => setMostrarMusicPicker(!mostrarMusicPicker)}
                   disabled={enviando}
                 >
                   <FiMusic />
-                  {mostrarBuscaMusica ? 'Fechar busca' : 'Adicionar música'}
+                  {mostrarMusicPicker ? 'Fechar busca' : 'Adicionar música'}
                 </MusicSearchButton>
-              )}
-
-              {/* Modal de busca de música */}
-              {mostrarBuscaMusica && !musicaSelecionada && (
-                <MusicSearchModal>
-                  <MusicSearchInput>
-                    <FiSearch />
-                    <input
-                      type="text"
-                      value={buscaMusica}
-                      onChange={(e) => setBuscaMusica(e.target.value)}
-                      placeholder="Buscar música no Deezer..."
-                      autoFocus
-                    />
-                  </MusicSearchInput>
-
-                  {carregandoMusicas && (
-                    <LoadingMusic>
-                      <Spinner />
-                      Buscando músicas...
-                    </LoadingMusic>
-                  )}
-
-                  {!carregandoMusicas && resultadosMusica.length > 0 && (
-                    <MusicResults>
-                      {resultadosMusica.slice(0, 10).map((musica) => (
-                        <MusicResultItem
-                          key={musica.id}
-                          onClick={() => selecionarMusica(musica)}
-                        >
-                          <img src={musica.album.cover_small} alt={musica.album.title} />
-                          <div>
-                            <strong>{musica.title}</strong>
-                            <span>{musica.artist.name}</span>
-                          </div>
-                        </MusicResultItem>
-                      ))}
-                    </MusicResults>
-                  )}
-
-                  {!carregandoMusicas && resultadosMusica.length === 0 && (
-                    <NoResults>
-                      {buscaMusica.trim() ? 'Nenhuma música encontrada' : 'Não foi possível carregar as músicas'}
-                    </NoResults>
-                  )}
-                </MusicSearchModal>
               )}
             </MusicSection>
 
@@ -742,6 +714,20 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
           }}
         />
       )}
+
+      {/* Music Picker Modal */}
+      <MusicPicker
+        isOpen={mostrarMusicPicker}
+        onSelect={handleSelecionarMusica}
+        onClose={() => setMostrarMusicPicker(false)}
+      />
+
+      {/* Audio player oculto para preview */}
+      <audio
+        ref={audioPreviewRef}
+        onEnded={handleAudioEnded}
+        crossOrigin="anonymous"
+      />
     </AnimatePresence>
   )
 }
@@ -1624,6 +1610,153 @@ const NoResults = styled.div`
   padding: 2rem;
   color: rgba(255, 255, 255, 0.5);
   font-size: 1.4rem;
+`
+
+// Novos Styled Components para música melhorada
+const SelectedMusicCard = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, rgba(229, 57, 53, 0.15), rgba(255, 87, 34, 0.1));
+  border: 2px solid rgba(229, 57, 53, 0.4);
+  border-radius: 1.5rem;
+  padding: 1.8rem;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: linear-gradient(135deg, rgba(229, 57, 53, 0.25), rgba(255, 87, 34, 0.15));
+    border-color: rgba(229, 57, 53, 0.6);
+    box-shadow: 0 8px 25px rgba(229, 57, 53, 0.15);
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+`
+
+const MusicCardContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`
+
+const MusicInfoDetailed = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+`
+
+const MusicTitleDetailed = styled.strong`
+  color: white;
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: linear-gradient(135deg, #E53935, #FF5722);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`
+
+const MusicArtistDetailed = styled.span`
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.4rem;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`
+
+const MusicAlbumDetailed = styled.span`
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+`
+
+const MusicDurationDetailed = styled.div`
+  display: inline-block;
+  background: rgba(229, 57, 53, 0.2);
+  border: 1px solid rgba(229, 57, 53, 0.4);
+  color: rgba(229, 57, 53, 0.8);
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.6rem;
+  margin-top: 0.4rem;
+  width: fit-content;
+`
+
+const MusicActionsDetailed = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: flex-end;
+  }
+`
+
+const PreviewPlayButton = styled.button<{ isPlaying: boolean }>`
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: ${props => props.isPlaying
+    ? 'rgba(229, 57, 53, 0.6)'
+    : 'rgba(76, 175, 80, 0.2)'};
+  border: 2px solid ${props => props.isPlaying
+    ? 'rgba(229, 57, 53, 0.5)'
+    : 'rgba(76, 175, 80, 0.4)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: ${props => props.isPlaying ? '#FF5722' : '#4CAF50'};
+  font-size: 1.8rem;
+  padding: 0;
+
+  &:hover {
+    background: ${props => props.isPlaying
+      ? 'rgba(229, 57, 53, 0.8)'
+      : 'rgba(76, 175, 80, 0.4)'};
+    border-color: ${props => props.isPlaying
+      ? 'rgba(229, 57, 53, 0.7)'
+      : 'rgba(76, 175, 80, 0.6)'};
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px ${props => props.isPlaying
+      ? 'rgba(229, 57, 53, 0.3)'
+      : 'rgba(76, 175, 80, 0.2)'};
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @media (max-width: 640px) {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
 `
 
 export default PopupCriarPost
