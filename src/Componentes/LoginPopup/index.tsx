@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
 import styled from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { loginUser, LoginResponse } from '../../Config/api'
 import { useUser } from '../../Contexts/UserContext'
 import { usePopup } from '../../Contexts/PopupContext'
@@ -22,8 +23,9 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
   })
   const [isDarkMode, setIsDarkMode] = useState(true)
   
+  const navigate = useNavigate()
   const { login } = useUser()
-  const { switchToForgotPassword } = usePopup()
+  const { switchToForgotPassword, closeAllPopups } = usePopup()
 
   // Detectar tema atual
   useEffect(() => {
@@ -54,6 +56,19 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
     setEstaCarregando(false)
   }
 
+  // Limpar erro e formulário quando popup é fechado
+  useEffect(() => {
+    if (!estaAberto) {
+      setErro(null)
+      setDadosFormulario({
+        email: '',
+        senha: ''
+      })
+      setMostrarSenha(false)
+      setEstaCarregando(false)
+    }
+  }, [estaAberto])
+
   // Função pra fechar o popup
   const aoFecharPopup = () => {
     limparFormulario()
@@ -68,20 +83,59 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
     try {
       const resposta: LoginResponse = await loginUser(dadosFormulario.email, dadosFormulario.senha)
 
-      if (resposta && resposta.status === true) {
+      console.log('📋 Resposta completa da API:', resposta)
+
+      // Verificar se há dados do usuário na resposta (indicador mais confiável de sucesso)
+      // A API pode retornar em diferentes formatos: item, usuario, user, ou data
+      const userData = resposta?.item?.[0] || resposta?.usuario?.[0] || resposta?.user || resposta?.data
+      
+      // Verificar se o login foi bem-sucedido
+      // Checar status, status_code, ou presença de dados do usuário
+      // Também verificar se a mensagem indica sucesso
+      const mensagemSucesso = resposta?.message?.toLowerCase().includes('logado') || 
+                               resposta?.message?.toLowerCase().includes('sucesso') ||
+                               resposta?.message?.toLowerCase().includes('success')
+      
+      const loginSucesso = resposta && (
+        resposta.status === true || 
+        resposta.status === 'true' || 
+        resposta.status === 1 ||
+        resposta.status_code === 200 ||
+        (!!userData && mensagemSucesso) ||
+        !!userData
+      )
+
+      if (loginSucesso) {
         // Login bem-sucedido
-        const userData = resposta.usuario?.[0] || resposta.user || resposta.data
-        
         console.log('🎯 Dados do usuário extraídos:', userData)
         
         if (userData) {
-          // Atualizar contexto do usuário
+          // Garantir que não há mensagem de erro exibida
+          setErro(null)
+          
+          // Atualizar contexto do usuário PRIMEIRO
           login(userData, resposta.token)
           
-          // Fechar popup e limpar formulário
-          aoFecharPopup()
-          
           console.log('✅ Login realizado com sucesso!', userData)
+          
+          // Fechar TODOS os popups ANTES de redirecionar
+          closeAllPopups()
+          
+          // Fechar também o popup diretamente
+          aoFechar()
+          
+          // Limpar formulário
+          limparFormulario()
+          
+          // Aguardar um pouco para garantir que o estado foi atualizado e popup foi fechado
+          setTimeout(() => {
+            // Redirecionar para a página de treinos (home do usuário logado)
+            console.log('🚀 Redirecionando para /treinos')
+            navigate('/treinos', { replace: true })
+          }, 300)
+          
+          // Não definir setEstaCarregando(false) aqui - deixar que o componente desmonte
+          return // Sair da função para não executar o finally
         } else {
           console.error('❌ Estrutura da resposta:', resposta)
           throw new Error('Dados do usuário não encontrados na resposta.')
@@ -96,6 +150,7 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
         }
         
         setErro(mensagemErro)
+        setEstaCarregando(false)
       }
     } catch (erro) {
       console.error('Erro no login:', erro)
@@ -107,7 +162,6 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
       }
       
       setErro(mensagemErro)
-    } finally {
       setEstaCarregando(false)
     }
   }

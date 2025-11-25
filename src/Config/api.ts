@@ -3,13 +3,14 @@ const API_BASE_URL = '/api/v1/gymbuddy'
 
 // resosta de login
 export interface LoginResponse {
-  status: boolean
-  message: string
+  status?: boolean
+  message?: string
   status_code?: number
   token?: string
   user?: UserData
   data?: UserData
   usuario?: UserData[] // campo que a api pode retornar 
+  item?: UserData[] // campo que a api pode retornar (formato alternativo)
 }
 
 // interface de dados do usuário
