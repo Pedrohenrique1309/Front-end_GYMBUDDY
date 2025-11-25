@@ -462,7 +462,18 @@ const Treinos: React.FC = () => {
         const searchId = String(user.id)
         const res = await treinoService.buscarTreinoByUser(searchId)
         const data = res.treinos ?? res.treino ?? []
-        const userWorkouts = Array.isArray(data) ? data : []
+        let userWorkouts = Array.isArray(data) ? data : []
+
+        // Fallback: se vazio, tentar listar por query param
+        if (userWorkouts.length === 0) {
+          try {
+            const listRes = await treinoService.listarTreinos(searchId)
+            const listData = listRes.treinos ?? listRes.treino ?? []
+            userWorkouts = Array.isArray(listData) ? listData : []
+          } catch (innerErr) {
+            console.warn('Fallback listarTreinos falhou', innerErr)
+          }
+        }
 
         console.log(`✅ Treinos do usuário carregados:`, userWorkouts.length)
         setSavedWorkouts(userWorkouts)
@@ -478,7 +489,7 @@ const Treinos: React.FC = () => {
     } else {
       setSavedWorkouts([])
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, user?.id])
 
   useEffect(() => {
     let filtered = [...exercises];
