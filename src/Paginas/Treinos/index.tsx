@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiClock, FiSearch, FiX, FiChevronDown, FiSave, FiTrash2, FiArrowLeft } from 'react-icons/fi';
+import { FiPlus, FiClock, FiSearch, FiX, FiChevronDown, FiSave, FiTrash2, FiArrowLeft, FiEdit2, FiEye } from 'react-icons/fi';
 import { FaDumbbell } from 'react-icons/fa';
 import { useUser } from '../../Contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import * as treinoService from '../../Services/treinoService'
 //import * as serieService from '../../Services/serieService'
-//import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
+import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
 import * as exercicioService from '../../Services/exercicioService'
 //import ExerciseManager from '../../Componentes/ExerciseManager'
 //import SeriesManager from '../../Componentes/SeriesManager'
@@ -54,56 +54,202 @@ interface ExerciseGifWithFallbackProps {
 
 const ExerciseGifWithFallback: React.FC<ExerciseGifWithFallbackProps> = ({ src, alt, className, width = '240px', height = '240px' }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [imageSrc, setImageSrc] = useState<string>('');
+  const imgRef = React.useRef<HTMLImageElement>(null);
   
-  const handleError = () => {
-    console.log(`❌ Erro ao carregar GIF: ${src}`);
-    setHasError(true);
+  // Validar URL antes de usar - mais flexível
+  const isValidUrl = (url: string): boolean => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim();
+    if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') return false;
+    
+    // Aceitar qualquer string que pareça uma URL ou caminho
+    return trimmed.length > 0;
   };
   
   const fallbackUrl = `https://via.placeholder.com/${width.replace('px', '')}x${height.replace('px', '')}/E30613/FFFFFF?text=${encodeURIComponent(alt)}`;
   
+  // Atualizar imageSrc quando src mudar
+  useEffect(() => {
+    if (!src || !isValidUrl(src)) {
+      setImageSrc(fallbackUrl);
+    } else {
+      setImageSrc(src);
+    }
+    setRetryCount(0);
+    setHasError(false);
+    setIsLoading(true);
+  }, [src, alt, width]);
+  
+  const handleError = () => {
+    console.log(`❌ Erro ao carregar GIF: ${imageSrc}`);
+    
+    // Tentar novamente se ainda não tentou 2 vezes e a URL parece válida
+    if (retryCount < 2 && src && src.trim() !== '' && isValidUrl(src)) {
+      console.log(`🔄 Tentando novamente (tentativa ${retryCount + 1}/2)...`);
+      const newRetryCount = retryCount + 1;
+      setRetryCount(newRetryCount);
+      setIsLoading(true);
+      // Forçar recarregamento mudando a URL ligeiramente
+      const retrySrc = src.includes('?') ? `${src}&retry=${newRetryCount}` : `${src}?retry=${newRetryCount}`;
+      setTimeout(() => {
+        setImageSrc(retrySrc);
+      }, 1000);
+      return;
+    }
+    
+    setHasError(true);
+    setIsLoading(false);
+    setImageSrc(fallbackUrl);
+  };
+  
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+    console.log(`✅ GIF carregado com sucesso: ${imageSrc}`);
+  };
+  
+  // Se houver erro, usar fallback
+  const finalSrc = hasError ? fallbackUrl : imageSrc;
+  
   return (
-    <img
-      src={hasError ? fallbackUrl : src}
-      alt={alt}
-      className={className}
-      onError={handleError}
-      style={{
-        width,
-        height,
-        borderRadius: '16px',
-        objectFit: 'cover',
-        background: 'rgba(255, 255, 255, 0.05)'
-      }}
-    />
+    <div style={{ position: 'relative', width, height, borderRadius: '16px', overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)' }}>
+      {isLoading && !hasError && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0, 0, 0, 0.3)',
+          zIndex: 1
+        }}>
+          <LoadingSpinner style={{ width: '30px', height: '30px', borderWidth: '3px' }} />
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={finalSrc}
+        alt={alt}
+        className={className}
+        onError={handleError}
+        onLoad={handleLoad}
+        style={{
+          width: '100%',
+          height: '100%',
+          borderRadius: '16px',
+          objectFit: 'cover',
+          display: 'block',
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease'
+        }}
+        loading="lazy"
+      />
+    </div>
   );
 };
 
 // Componente para GIF da biblioteca com tratamento de erro
 const ExerciseLibraryGifWithFallback: React.FC<ExerciseGifWithFallbackProps> = ({ src, alt, className }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [imageSrc, setImageSrc] = useState<string>('');
+  const imgRef = React.useRef<HTMLImageElement>(null);
   
-  const handleError = () => {
-    console.log(`❌ Erro ao carregar GIF da biblioteca: ${src}`);
-    setHasError(true);
+  // Validar URL antes de usar - mais flexível
+  const isValidUrl = (url: string): boolean => {
+    if (!url || typeof url !== 'string') return false;
+    const trimmed = url.trim();
+    if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') return false;
+    return trimmed.length > 0;
   };
   
   const fallbackUrl = `https://via.placeholder.com/100x100/E30613/FFFFFF?text=${encodeURIComponent(alt.slice(0, 8))}`;
   
+  // Atualizar imageSrc quando src mudar
+  useEffect(() => {
+    if (!src || !isValidUrl(src)) {
+      setImageSrc(fallbackUrl);
+    } else {
+      setImageSrc(src);
+    }
+    setRetryCount(0);
+    setHasError(false);
+    setIsLoading(true);
+  }, [src, alt]);
+  
+  const handleError = () => {
+    console.log(`❌ Erro ao carregar GIF da biblioteca: ${imageSrc}`);
+    
+    // Tentar novamente se ainda não tentou 2 vezes
+    if (retryCount < 2 && src && src.trim() !== '' && isValidUrl(src)) {
+      console.log(`🔄 Tentando novamente (tentativa ${retryCount + 1}/2)...`);
+      const newRetryCount = retryCount + 1;
+      setRetryCount(newRetryCount);
+      setIsLoading(true);
+      const retrySrc = src.includes('?') ? `${src}&retry=${newRetryCount}` : `${src}?retry=${newRetryCount}`;
+      setTimeout(() => {
+        setImageSrc(retrySrc);
+      }, 1000);
+      return;
+    }
+    
+    setHasError(true);
+    setIsLoading(false);
+    setImageSrc(fallbackUrl);
+  };
+  
+  const handleLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+  
+  // Se houver erro, usar fallback
+  const finalSrc = hasError ? fallbackUrl : imageSrc;
+  
   return (
-    <img
-      src={hasError ? fallbackUrl : src}
-      alt={alt}
-      className={className}
-      onError={handleError}
-      style={{
-        width: '100px',
-        height: '100px',
-        borderRadius: '10px',
-        objectFit: 'cover',
-        background: 'rgba(255, 255, 255, 0.05)'
-      }}
-    />
+    <div style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)' }}>
+      {isLoading && !hasError && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0, 0, 0, 0.3)',
+          zIndex: 1
+        }}>
+          <LoadingSpinner style={{ width: '20px', height: '20px', borderWidth: '2px' }} />
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={finalSrc}
+        alt={alt}
+        className={className}
+        onError={handleError}
+        onLoad={handleLoad}
+        style={{
+          width: '100%',
+          height: '100%',
+          borderRadius: '10px',
+          objectFit: 'cover',
+          display: 'block',
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease'
+        }}
+        loading="lazy"
+      />
+    </div>
   );
 };
 
@@ -125,6 +271,11 @@ const Treinos: React.FC = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [savedWorkouts, setSavedWorkouts] = useState<any[]>([])
   const [realExercises, setRealExercises] = useState<any[]>([])
+  const [editingWorkoutId, setEditingWorkoutId] = useState<string | number | null>(null)
+  const [viewingWorkoutId, setViewingWorkoutId] = useState<string | number | null>(null)
+  const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | number | null>(null)
+  const [workoutDetails, setWorkoutDetails] = useState<Record<string | number, any>>({})
+  const [loadingWorkoutDetails, setLoadingWorkoutDetails] = useState<Record<string | number, boolean>>({})
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -150,27 +301,80 @@ const Treinos: React.FC = () => {
           // Buscar GIF em diferentes possíveis campos do backend
           const possibleGifFields = [
             ex.gif, ex.imagem, ex.url_gif, ex.gif_url, ex.gifUrl,
-            ex.image, ex.gif_image, ex.animation, ex.demo_url
+            ex.image, ex.gif_image, ex.animation, ex.demo_url,
+            ex.gif_hd, ex.gif_high_quality, ex.gif_original,
+            ex.image_hd, ex.video_url, ex.media_url
           ];
           
           // Encontrar o primeiro campo válido (não vazio e não null)
-          const foundGif = possibleGifFields.find(field => 
-            field && field.trim() !== '' && field !== 'null'
-          );
+          const foundGif = possibleGifFields.find(field => {
+            if (!field) return false;
+            // Verificar se é string e não está vazia
+            if (typeof field === 'string') {
+              const trimmed = field.trim();
+              return trimmed !== '' && trimmed !== 'null' && trimmed !== 'undefined';
+            }
+            // Se não for string, considerar inválido
+            return false;
+          });
+          
+          // Se encontrou um GIF, validar e retornar
+          if (foundGif && typeof foundGif === 'string') {
+            const gifUrl = foundGif.trim();
+            
+            // Se já é uma URL completa (http/https), retornar diretamente
+            if (gifUrl.startsWith('http://') || gifUrl.startsWith('https://')) {
+              return gifUrl;
+            }
+            
+            // Se começa com //, adicionar https:
+            if (gifUrl.startsWith('//')) {
+              return `https:${gifUrl}`;
+            }
+            
+            // Se é um caminho relativo, tentar construir URL completa
+            // (assumindo que o backend retorna caminhos relativos)
+            if (gifUrl.startsWith('/')) {
+              // Se você tem um baseURL configurado, use-o aqui
+              // Por enquanto, retornar como está se parecer válido
+              return gifUrl;
+            }
+            
+            // Se parece ser uma URL válida mas sem protocolo, adicionar https
+            if (gifUrl.includes('.') && !gifUrl.includes(' ')) {
+              return `https://${gifUrl}`;
+            }
+            
+            // Se chegou aqui, o GIF pode ser inválido, mas vamos tentar usar mesmo assim
+            return gifUrl;
+          }
           
           // Fallback para placeholder se nenhum GIF válido for encontrado
-          return foundGif || `https://via.placeholder.com/400x300/E30613/FFFFFF?text=${encodeURIComponent(ex.nome || 'Exercício')}`;
+          return `https://via.placeholder.com/400x300/E30613/FFFFFF?text=${encodeURIComponent(ex.nome || 'Exercício')}`;
         };
         
         // Converter para formato da UI se houver exercícios reais
         if (realEx.length > 0) {
+          console.log('📦 Primeiro exercício completo (para debug):', realEx[0]);
+          
           const convertedExercises = realEx.map((ex: any) => {
             const gifUrl = getExerciseGif(ex);
             
             console.log(`🎬 Exercício "${ex.nome}":`); 
             console.log(`   - ID: ${ex.id}`);
-            console.log(`   - GIF: ${gifUrl}`);
-            console.log(`   - Dados completos:`, ex);
+            console.log(`   - GIF URL final: ${gifUrl}`);
+            console.log(`   - Tipo da URL: ${typeof gifUrl}`);
+            console.log(`   - Comprimento da URL: ${gifUrl?.length || 0}`);
+            console.log(`   - Campos GIF disponíveis:`, {
+              gif: ex.gif,
+              imagem: ex.imagem,
+              url_gif: ex.url_gif,
+              gif_url: ex.gif_url,
+              gifUrl: ex.gifUrl,
+              gif_hd: ex.gif_hd,
+              image: ex.image
+            });
+            console.log(`   - Todos os campos do exercício:`, Object.keys(ex));
             
             return {
               id: ex.id?.toString() || Math.random().toString(),
@@ -182,6 +386,8 @@ const Treinos: React.FC = () => {
               muscles: [ex.grupo_muscular || 'Geral']
             };
           })
+          console.log(`✅ ${convertedExercises.length} exercícios convertidos com sucesso`);
+          console.log('📋 Primeiro exercício convertido:', convertedExercises[0]);
           setExercises(convertedExercises)
           setFilteredExercises(convertedExercises)
           setLoadingExercises(false)
@@ -225,14 +431,22 @@ const Treinos: React.FC = () => {
         const res = await treinoService.listarTreinos()
         // usar treinos da interface definida
         const data = res.treinos ?? res.treino ?? []
-        setSavedWorkouts(Array.isArray(data) ? data : [])
+        const allWorkouts = Array.isArray(data) ? data : []
+        
+        console.log(`✅ Treinos carregados:`, allWorkouts.length, 'treinos totais')
+        setSavedWorkouts(allWorkouts)
       } catch (err) {
         // não bloqueante
         console.warn('Não foi possível carregar treinos salvos', err)
+        setSavedWorkouts([])
       }
     }
 
-    if (isLoggedIn) fetchSaved()
+    if (isLoggedIn) {
+      fetchSaved()
+    } else {
+      setSavedWorkouts([])
+    }
   }, [isLoggedIn])
 
   useEffect(() => {
@@ -317,6 +531,190 @@ const Treinos: React.FC = () => {
     // Pode adicionar lógica para recarregar exercícios disponíveis se necessário
   };
 
+  // Função para carregar treino para edição
+  const handleLoadWorkoutForEdit = async (workoutId: string | number) => {
+    try {
+      const response = await treinoService.buscarTreino(workoutId);
+      const workoutData = response.treino || response.treinos;
+      
+      if (workoutData && workoutData.length > 0) {
+        const workout = Array.isArray(workoutData) ? workoutData[0] : workoutData;
+        
+        // Converter dados do backend para formato da UI
+        const convertedExercises: ExerciseInWorkout[] = [];
+        
+        // Se o treino tiver exercícios, convertê-los
+        if (workout.exercicios || workout.exercicio) {
+          const exercicios = workout.exercicios || workout.exercicio || [];
+          
+          for (const exData of exercicios) {
+            // Buscar o exercício completo na lista de exercícios disponíveis
+            const fullExercise = exercises.find(e => e.id === String(exData.id_exercicio || exData.id));
+            
+            if (fullExercise) {
+              const exerciseInWorkout: ExerciseInWorkout = {
+                id: Date.now().toString() + Math.random(),
+                exercise: fullExercise,
+                sets: (exData.series || exData.serie || []).map((s: any, idx: number) => ({
+                  id: Date.now().toString() + idx,
+                  reps: s.repeticoes || s.reps || 10,
+                  weight: s.carga || s.weight || 0
+                })),
+                restTime: exData.descanso || exData.restTime || 60
+              };
+              convertedExercises.push(exerciseInWorkout);
+            }
+          }
+        }
+        
+        setCurrentWorkout({
+          id: workout.id,
+          title: workout.nome || workout.titulo || '',
+          notes: workout.notas || workout.descricao || '',
+          exercises: convertedExercises
+        });
+        
+        setEditingWorkoutId(workoutId);
+        // Scroll para o topo do formulário
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar treino para edição:', error);
+      alert('Erro ao carregar treino para edição. Tente novamente.');
+    }
+  };
+
+  // Função para visualizar treino
+  const handleViewWorkout = async (workoutId: string | number) => {
+    // Se já está visualizando, apenas fechar
+    if (viewingWorkoutId === workoutId) {
+      setViewingWorkoutId(null);
+      return;
+    }
+    
+    setViewingWorkoutId(workoutId);
+    
+    // Se já temos os detalhes carregados, não buscar novamente
+    if (workoutDetails[workoutId]) {
+      return;
+    }
+    
+    // Buscar detalhes completos do treino
+    setLoadingWorkoutDetails(prev => ({ ...prev, [workoutId]: true }));
+    
+    try {
+      console.log('🔍 Buscando detalhes completos do treino:', workoutId);
+      
+      // Buscar treino completo
+      const treinoResponse = await treinoService.buscarTreino(workoutId);
+      const treinoData = treinoResponse.treino || treinoResponse.treinos;
+      const workout = Array.isArray(treinoData) ? treinoData[0] : treinoData;
+      
+      console.log('📊 Dados do treino:', workout);
+      
+      // Buscar exercícios do treino
+      let exerciciosCompletos: any[] = [];
+      try {
+        const exerciciosResponse = await exTreinoSerieService.buscarExercicioByTreino(workoutId);
+        const exerciciosData = exerciciosResponse.exercicio_treino_serie || exerciciosResponse.exercicios_treino_serie || [];
+        exerciciosCompletos = Array.isArray(exerciciosData) ? exerciciosData : [];
+        console.log('💪 Exercícios encontrados:', exerciciosCompletos);
+      } catch (err) {
+        console.warn('⚠️ Erro ao buscar exercícios do treino, usando dados do treino:', err);
+        // Se falhar, tentar usar os dados do próprio treino
+        exerciciosCompletos = workout.exercicios || workout.exercicio || [];
+      }
+      
+      // Agrupar exercícios e suas séries
+      const exerciciosAgrupados = exerciciosCompletos.reduce((acc: any, item: any) => {
+        const exId = item.id_exercicio || item.id_exercicio_treino_serie;
+        if (!acc[exId]) {
+          acc[exId] = {
+            id_exercicio: exId,
+            descanso: item.descanso || item.tempo_descanso || 60,
+            series: []
+          };
+        }
+        
+        // Adicionar série se tiver dados
+        if (item.id_serie) {
+          // Buscar dados da série se necessário
+          acc[exId].series.push({
+            repeticoes: item.repeticoes || 0,
+            carga: item.carga || 0
+          });
+        }
+        
+        return acc;
+      }, {});
+      
+      const exerciciosFormatados = Object.values(exerciciosAgrupados);
+      
+      // Salvar detalhes
+      setWorkoutDetails(prev => ({
+        ...prev,
+        [workoutId]: {
+          ...workout,
+          exercicios: exerciciosFormatados.length > 0 ? exerciciosFormatados : (workout.exercicios || workout.exercicio || [])
+        }
+      }));
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar detalhes do treino:', error);
+      // Em caso de erro, usar dados básicos do treino
+      const currentWorkout = savedWorkouts.find(w => w.id === workoutId);
+      if (currentWorkout) {
+        setWorkoutDetails(prev => ({
+          ...prev,
+          [workoutId]: currentWorkout
+        }));
+      } else {
+        // Se não encontrar, criar objeto vazio para evitar erros
+        setWorkoutDetails(prev => ({
+          ...prev,
+          [workoutId]: {
+            id: workoutId,
+            exercicios: [],
+            notas: ''
+          }
+        }));
+      }
+    } finally {
+      setLoadingWorkoutDetails(prev => ({ ...prev, [workoutId]: false }));
+    }
+  };
+
+  // Função para deletar treino
+  const handleDeleteWorkout = async (workoutId: string | number) => {
+    if (!confirm('Tem certeza que deseja excluir este treino?')) {
+      return;
+    }
+    
+    try {
+      setDeletingWorkoutId(workoutId);
+      await treinoService.excluirTreino(workoutId);
+      
+      // Recarregar lista de treinos
+      try {
+        const listRes = await treinoService.listarTreinos();
+        const listData = listRes.treinos ?? listRes.treino ?? [];
+        const allWorkouts = Array.isArray(listData) ? listData : [];
+        
+        setSavedWorkouts(allWorkouts);
+      } catch (err) {
+        console.warn('Erro ao recarregar treinos após exclusão', err);
+      }
+      
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 2000);
+    } catch (error) {
+      console.error('Erro ao excluir treino:', error);
+      alert('Erro ao excluir treino. Tente novamente.');
+    } finally {
+      setDeletingWorkoutId(null);
+    }
+  };
+
   const handleSaveWorkout = async () => {
     if (!currentWorkout.title.trim()) {
       alert('Por favor, adicione um título ao treino');
@@ -381,13 +779,16 @@ const Treinos: React.FC = () => {
       // se retornar id, atribuir ao estado
       if (res.status) {
         setCurrentWorkout({ title: '', notes: '', exercises: [] })
+        setEditingWorkoutId(null)
         setShowSuccessMessage(true)
         setTimeout(() => setShowSuccessMessage(false), 2000)
         // recarregar lista de treinos salvos
         try {
           const listRes = await treinoService.listarTreinos()
           const listData = listRes.treinos ?? listRes.treino ?? []
-          setSavedWorkouts(Array.isArray(listData) ? listData : [])
+          const allWorkouts = Array.isArray(listData) ? listData : []
+          
+          setSavedWorkouts(allWorkouts)
         } catch (err) {
           console.warn('Erro ao recarregar treinos', err)
         }
@@ -396,6 +797,7 @@ const Treinos: React.FC = () => {
         setShowSuccessMessage(true)
         setTimeout(() => setShowSuccessMessage(false), 2000)
         setCurrentWorkout({ title: '', notes: '', exercises: [] })
+        setEditingWorkoutId(null)
       }
     } catch (error: any) {
       console.error('❌ Erro ao salvar treino - Detalhes completos:', {
@@ -617,6 +1019,203 @@ const Treinos: React.FC = () => {
               onChange={(e) => setCurrentWorkout(prev => ({ ...prev, notes: e.target.value }))}
             />
           </InputGroup>
+
+          {/* Seção de Treinos Salvos */}
+          {savedWorkouts.length > 0 && (
+            <SavedWorkoutsSection>
+              <SavedWorkoutsHeader>
+                <SavedWorkoutsTitle>Meus Treinos Salvos</SavedWorkoutsTitle>
+                <SavedWorkoutsCount>({savedWorkouts.length})</SavedWorkoutsCount>
+              </SavedWorkoutsHeader>
+
+              <SavedWorkoutsList>
+                <AnimatePresence mode="popLayout">
+                  {savedWorkouts.map((workout, index) => (
+                    <SavedWorkoutCard
+                      key={workout.id || index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      <SavedWorkoutHeader>
+                        <SavedWorkoutInfo>
+                          <SavedWorkoutTitle>{workout.nome || workout.titulo || 'Treino sem nome'}</SavedWorkoutTitle>
+                          {workout.data_criacao && (
+                            <SavedWorkoutDate>
+                              Criado em: {new Date(workout.data_criacao).toLocaleDateString('pt-BR')}
+                            </SavedWorkoutDate>
+                          )}
+                          {workout.exercicios && (
+                            <SavedWorkoutExercisesCount>
+                              {Array.isArray(workout.exercicios) ? workout.exercicios.length : 0} exercício(s)
+                            </SavedWorkoutExercisesCount>
+                          )}
+                        </SavedWorkoutInfo>
+                        <SavedWorkoutActions>
+                          <ActionButton
+                            onClick={() => handleViewWorkout(workout.id)}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Visualizar"
+                          >
+                            <FiEye />
+                          </ActionButton>
+                          <ActionButton
+                            onClick={() => handleLoadWorkoutForEdit(workout.id)}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Editar"
+                            isEdit
+                          >
+                            <FiEdit2 />
+                          </ActionButton>
+                          <ActionButton
+                            onClick={() => handleDeleteWorkout(workout.id)}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            title="Excluir"
+                            isDelete
+                            disabled={deletingWorkoutId === workout.id}
+                          >
+                            {deletingWorkoutId === workout.id ? (
+                              <LoadingSpinner style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                            ) : (
+                              <FiTrash2 />
+                            )}
+                          </ActionButton>
+                        </SavedWorkoutActions>
+                      </SavedWorkoutHeader>
+
+                      {/* Detalhes do treino quando visualizando */}
+                      <AnimatePresence>
+                        {viewingWorkoutId === workout.id && (
+                          <SavedWorkoutDetails
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            {loadingWorkoutDetails[workout.id] ? (
+                              <SavedWorkoutLoading>
+                                <LoadingSpinner style={{ width: '30px', height: '30px', borderWidth: '3px' }} />
+                                <span>Carregando detalhes do treino...</span>
+                              </SavedWorkoutLoading>
+                            ) : (() => {
+                              try {
+                                // Usar detalhes carregados ou dados básicos do treino
+                                const workoutData = workoutDetails[workout.id] || workout;
+                                
+                                // Debug: Log dos dados do treino
+                                console.log('📋 Visualizando treino:', workout.id);
+                                console.log('📋 Dados completos:', workoutData);
+                                console.log('📋 Exercícios:', workoutData.exercicios);
+                                console.log('📋 Exercício (singular):', workoutData.exercicio);
+                                
+                                // Tentar diferentes campos possíveis
+                                const exercicios = workoutData.exercicios || workoutData.exercicio || workoutData.exercicio_treino_serie || [];
+                                const notas = workoutData.notas || workoutData.descricao || workoutData.observacoes || '';
+                                
+                                return (
+                                  <>
+                                    {notas && (
+                                      <SavedWorkoutNotes>
+                                        <strong>Notas:</strong> {notas}
+                                      </SavedWorkoutNotes>
+                                    )}
+                                    {Array.isArray(exercicios) && exercicios.length > 0 ? (
+                                      <SavedWorkoutExercisesList>
+                                        <strong>Exercícios ({exercicios.length}):</strong>
+                                        {exercicios.map((ex: any, idx: number) => {
+                                          try {
+                                            console.log(`📦 Exercício ${idx}:`, ex);
+                                            
+                                            const exId = ex.id_exercicio || ex.id_exercicio_treino_serie || ex.id;
+                                            const fullExercise = exercises.find(e => e.id === String(exId));
+                                            const exerciseName = fullExercise ? fullExercise.name : `Exercício ${exId || idx + 1}`;
+                                            
+                                            // Tentar diferentes campos para séries
+                                            const series = ex.series || ex.serie || ex.series_data || [];
+                                            const restTime = ex.descanso || ex.restTime || ex.tempo_descanso || 60;
+                                            
+                                            console.log(`  - Nome: ${exerciseName}`);
+                                            console.log(`  - Séries:`, series);
+                                            console.log(`  - Descanso: ${restTime}s`);
+                                            
+                                            return (
+                                              <SavedWorkoutExerciseCard key={idx}>
+                                                <SavedWorkoutExerciseHeader>
+                                                  <SavedWorkoutExerciseName>{exerciseName}</SavedWorkoutExerciseName>
+                                                  {restTime && (
+                                                    <SavedWorkoutRestTime>
+                                                      <FiClock /> {restTime}s
+                                                    </SavedWorkoutRestTime>
+                                                  )}
+                                                </SavedWorkoutExerciseHeader>
+                                                
+                                                {Array.isArray(series) && series.length > 0 ? (
+                                                  <SavedWorkoutSeriesTable>
+                                                    <thead>
+                                                      <tr>
+                                                        <th>Série</th>
+                                                        <th>Repetições</th>
+                                                        <th>Carga (kg)</th>
+                                                      </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                      {series.map((serie: any, serieIdx: number) => (
+                                                        <tr key={serieIdx}>
+                                                          <td>{serieIdx + 1}</td>
+                                                          <td>{serie.repeticoes || serie.reps || serie.repeticao || '-'}</td>
+                                                          <td>{serie.carga || serie.weight || serie.carga_kg || '-'}</td>
+                                                        </tr>
+                                                      ))}
+                                                    </tbody>
+                                                  </SavedWorkoutSeriesTable>
+                                                ) : (
+                                                  <SavedWorkoutNoSeries>
+                                                    Nenhuma série configurada
+                                                  </SavedWorkoutNoSeries>
+                                                )}
+                                              </SavedWorkoutExerciseCard>
+                                            );
+                                          } catch (err) {
+                                            console.error(`Erro ao renderizar exercício ${idx}:`, err);
+                                            return (
+                                              <SavedWorkoutExerciseCard key={idx}>
+                                                <SavedWorkoutNoSeries>
+                                                  Erro ao carregar exercício
+                                                </SavedWorkoutNoSeries>
+                                              </SavedWorkoutExerciseCard>
+                                            );
+                                          }
+                                        })}
+                                      </SavedWorkoutExercisesList>
+                                    ) : (
+                                      <SavedWorkoutNoSeries>
+                                        Nenhum exercício encontrado neste treino.
+                                      </SavedWorkoutNoSeries>
+                                    )}
+                                  </>
+                                );
+                              } catch (err) {
+                                console.error('Erro ao renderizar detalhes do treino:', err);
+                                return (
+                                  <SavedWorkoutNoSeries>
+                                    Erro ao carregar detalhes do treino. Tente novamente.
+                                  </SavedWorkoutNoSeries>
+                                );
+                              }
+                            })()}
+                          </SavedWorkoutDetails>
+                        )}
+                      </AnimatePresence>
+                    </SavedWorkoutCard>
+                  ))}
+                </AnimatePresence>
+              </SavedWorkoutsList>
+            </SavedWorkoutsSection>
+          )}
         </LeftColumn>
 
         {/* Coluna Direita - Biblioteca de Exercícios */}
@@ -1799,5 +2398,489 @@ const SuccessMessage = styled(motion.div)`
 
   svg {
     font-size: 1.5rem;
+  }
+`;
+
+// Styled Components para Treinos Salvos
+const SavedWorkoutsSection = styled.div`
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+  [data-theme="light"] & {
+    border-top-color: rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const SavedWorkoutsHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+`;
+
+const SavedWorkoutsTitle = styled.h2`
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+
+  [data-theme="light"] & {
+    color: #1e293b;
+  }
+`;
+
+const SavedWorkoutsCount = styled.span`
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.6);
+  }
+`;
+
+const SavedWorkoutsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const SavedWorkoutCard = styled(motion.div)`
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  /* Barrinha LED vertical no lado esquerdo */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(227, 6, 19, 0.15);
+    border-radius: 16px 0 0 16px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 0 rgba(227, 6, 19, 0);
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(227, 6, 19, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(227, 6, 19, 0.15);
+
+    /* LED acende ao passar o mouse */
+    &::before {
+      background: linear-gradient(
+        180deg,
+        rgba(227, 6, 19, 0.4) 0%,
+        rgba(227, 6, 19, 0.8) 50%,
+        rgba(227, 6, 19, 0.4) 100%
+      );
+      box-shadow: 
+        0 0 20px rgba(227, 6, 19, 0.6),
+        0 0 40px rgba(227, 6, 19, 0.4),
+        0 0 60px rgba(227, 6, 19, 0.2);
+      width: 5px;
+    }
+  }
+
+  [data-theme="light"] & {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.95) 50%,
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    &::before {
+      background: rgba(227, 6, 19, 0.1);
+    }
+
+    &:hover::before {
+      background: linear-gradient(
+        180deg,
+        rgba(227, 6, 19, 0.3) 0%,
+        rgba(227, 6, 19, 0.7) 50%,
+        rgba(227, 6, 19, 0.3) 100%
+      );
+      box-shadow: 
+        0 0 15px rgba(227, 6, 19, 0.5),
+        0 0 30px rgba(227, 6, 19, 0.3),
+        0 0 45px rgba(227, 6, 19, 0.15);
+    }
+  }
+
+  [data-theme="light"] &:hover {
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.97) 50%,
+      rgba(255, 255, 255, 0.94) 100%
+    );
+    border-color: rgba(227, 6, 19, 0.25);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  }
+`;
+
+const SavedWorkoutHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+`;
+
+const SavedWorkoutInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const SavedWorkoutTitle = styled.h3`
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+
+  [data-theme="light"] & {
+    color: #E30613;
+  }
+`;
+
+const SavedWorkoutDate = styled.span`
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.6);
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.6);
+  }
+`;
+
+const SavedWorkoutExercisesCount = styled.span`
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.5);
+  }
+`;
+
+const SavedWorkoutActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+`;
+
+interface ActionButtonProps {
+  isEdit?: boolean;
+  isDelete?: boolean;
+}
+
+const ActionButton = styled(motion.button)<ActionButtonProps>`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: ${props => {
+    if (props.isDelete) return 'rgba(239, 68, 68, 0.1)';
+    if (props.isEdit) return 'rgba(59, 130, 246, 0.1)';
+    return 'rgba(255, 255, 255, 0.05)';
+  }};
+  color: ${props => {
+    if (props.isDelete) return '#ef4444';
+    if (props.isEdit) return '#3b82f6';
+    return 'rgba(255, 255, 255, 0.8)';
+  }};
+  border: 1px solid ${props => {
+    if (props.isDelete) return 'rgba(239, 68, 68, 0.3)';
+    if (props.isEdit) return 'rgba(59, 130, 246, 0.3)';
+    return 'rgba(255, 255, 255, 0.1)';
+  }};
+
+  &:hover:not(:disabled) {
+    background: ${props => {
+      if (props.isDelete) return 'rgba(239, 68, 68, 0.2)';
+      if (props.isEdit) return 'rgba(59, 130, 246, 0.2)';
+      return 'rgba(255, 255, 255, 0.1)';
+    }};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  svg {
+    font-size: 1.4rem;
+  }
+
+  [data-theme="light"] & {
+    background: ${props => {
+      if (props.isDelete) return 'rgba(239, 68, 68, 0.08)';
+      if (props.isEdit) return 'rgba(59, 130, 246, 0.08)';
+      return 'rgba(0, 0, 0, 0.05)';
+    }};
+    border-color: ${props => {
+      if (props.isDelete) return 'rgba(239, 68, 68, 0.2)';
+      if (props.isEdit) return 'rgba(59, 130, 246, 0.2)';
+      return 'rgba(0, 0, 0, 0.08)';
+    }};
+  }
+`;
+
+const SavedWorkoutDetails = styled(motion.div)`
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+
+  [data-theme="light"] & {
+    border-top-color: rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const SavedWorkoutNotes = styled.div`
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+
+  strong {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+  }
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.8);
+
+    strong {
+      color: rgba(0, 0, 0, 0.9);
+    }
+  }
+`;
+
+const SavedWorkoutExercisesList = styled.div`
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.8;
+
+  strong {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.8);
+
+    strong {
+      color: rgba(0, 0, 0, 0.9);
+    }
+  }
+`;
+
+const SavedWorkoutExerciseItem = styled.div`
+  padding: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+
+  &::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--primary, #E30613);
+    font-weight: bold;
+  }
+`;
+
+const SavedWorkoutExerciseCard = styled.div`
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(227, 6, 19, 0.2);
+  }
+
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(227, 6, 19, 0.15);
+    }
+  }
+`;
+
+const SavedWorkoutExerciseHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const SavedWorkoutExerciseName = styled.h4`
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+
+  [data-theme="light"] & {
+    color: #E30613;
+  }
+`;
+
+const SavedWorkoutRestTime = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.5rem 1rem;
+  background: rgba(227, 6, 19, 0.1);
+  border: 1px solid rgba(227, 6, 19, 0.2);
+  border-radius: 8px;
+
+  svg {
+    font-size: 1.2rem;
+    color: rgba(227, 6, 19, 0.8);
+  }
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.7);
+    background: rgba(227, 6, 19, 0.08);
+    border-color: rgba(227, 6, 19, 0.15);
+
+    svg {
+      color: #E30613;
+    }
+  }
+`;
+
+const SavedWorkoutSeriesTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  thead {
+    tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+      [data-theme="light"] & {
+        border-bottom-color: rgba(0, 0, 0, 0.1);
+      }
+
+      th {
+        padding: 0.8rem 1rem;
+        text-align: left;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        [data-theme="light"] & {
+          color: rgba(0, 0, 0, 0.7);
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.03);
+
+        [data-theme="light"] & {
+          background: rgba(0, 0, 0, 0.02);
+        }
+      }
+
+      td {
+        padding: 0.8rem 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.3rem;
+
+        &:first-child {
+          color: rgba(255, 255, 255, 0.6);
+          font-weight: 600;
+          font-size: 1.4rem;
+
+          [data-theme="light"] & {
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+
+        [data-theme="light"] & {
+          color: rgba(0, 0, 0, 0.9);
+        }
+      }
+    }
+  }
+`;
+
+const SavedWorkoutNoSeries = styled.div`
+  padding: 1rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.2rem;
+  font-style: italic;
+  margin-top: 1rem;
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.5);
+  }
+`;
+
+const SavedWorkoutLoading = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  gap: 1.5rem;
+
+  span {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.3rem;
+
+    [data-theme="light"] & {
+      color: rgba(0, 0, 0, 0.7);
+    }
   }
 `;

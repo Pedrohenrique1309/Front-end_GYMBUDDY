@@ -45,10 +45,17 @@ export const atualizarTreino = async (id: string | number, dados: Partial<Treino
   }
 }
 
-export const listarTreinos = async (): Promise<TreinoResponse> => {
+export const listarTreinos = async (userId?: string | number): Promise<TreinoResponse> => {
   try {
-    console.log('📋 Listando treinos...')
-    const response = await api.get('/v1/gymbuddy/treino')
+    console.log('📋 Listando treinos...', userId ? `para usuário ${userId}` : 'todos os treinos')
+    
+    // Se userId for fornecido, tentar usar como parâmetro de query
+    let url = '/v1/gymbuddy/treino'
+    if (userId) {
+      url += `?id_usuario=${userId}`
+    }
+    
+    const response = await api.get(url)
     console.log('✅ Treinos listados:', response.data)
     return response.data
   } catch (error: any) {
