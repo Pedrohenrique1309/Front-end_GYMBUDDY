@@ -400,7 +400,7 @@ const Header = ({ isVisible = true }: HeaderProps) => {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 20, scale: 0.9 }}
               transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.95 }}
             >
               <FiGlobe className="icon" />
@@ -848,6 +848,7 @@ const SocialButton = styled(motion.button)`
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(227, 6, 19, 0.35);
   margin-left: 0.2rem;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 
   .icon {
     width: 2.2rem;
@@ -860,13 +861,20 @@ const SocialButton = styled(motion.button)`
     position: absolute;
     inset: 0;
     background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 55%);
-    opacity: 0.9;
+    opacity: 0;
     mix-blend-mode: screen;
+    transition: opacity 0.3s ease;
   }
 
   &:hover {
     box-shadow: 0 12px 32px rgba(227, 6, 19, 0.45);
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.05);
+    border-color: var(--primary);
+    filter: brightness(1.05);
+  }
+
+  &:hover::before {
+    opacity: 0.9;
   }
 
   @media (max-width: 768px) {

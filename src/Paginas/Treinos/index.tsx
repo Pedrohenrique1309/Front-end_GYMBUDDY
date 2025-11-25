@@ -277,6 +277,7 @@ const Treinos: React.FC = () => {
   const [deletingWorkoutId, setDeletingWorkoutId] = useState<string | number | null>(null)
   const [workoutDetails, setWorkoutDetails] = useState<Record<string | number, any>>({})
   const [loadingWorkoutDetails, setLoadingWorkoutDetails] = useState<Record<string | number, boolean>>({})
+  const [showSavedPanel, setShowSavedPanel] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -895,6 +896,15 @@ const Treinos: React.FC = () => {
 
   return (
     <Container>
+      <PageActionsBar>
+        <SavedToggleBigButton
+          onClick={() => setShowSavedPanel(true)}
+          whileHover={{ scale: 1.03, y: -1 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          Treinos Salvos
+        </SavedToggleBigButton>
+      </PageActionsBar>
       <PageWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1296,6 +1306,49 @@ const Treinos: React.FC = () => {
 
         {/* Coluna Direita - Biblioteca de Exercícios */}
         <RightColumn>
+          <AnimatePresence>
+            {showSavedPanel && (
+              <SavedPanel
+                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ duration: 0.25 }}
+              >
+                <SavedPanelClose
+                  onClick={() => setShowSavedPanel(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Fechar"
+                >
+                  <FiX />
+                </SavedPanelClose>
+
+                <SavedPanelList>
+                  {savedWorkouts.length > 0 ? (
+                    savedWorkouts.map((workout) => (
+                      <SavedPanelItem key={workout.id}>
+                        <div className="info">
+                          <strong>{workout.nome || workout.titulo || 'Treino'}</strong>
+                          {workout.data_criacao && (
+                            <span>{new Date(workout.data_criacao).toLocaleDateString('pt-BR')}</span>
+                          )}
+                        </div>
+                        <PanelActionButton onClick={() => { setShowSavedPanel(false); handleLoadWorkoutForEdit(workout.id) }}>
+                          Carregar
+                        </PanelActionButton>
+                      </SavedPanelItem>
+                    ))
+                  ) : (
+                    <EmptyState>
+                      <FaDumbbell size={48} />
+                      <p>Nenhum treino salvo</p>
+                    </EmptyState>
+                  )}
+                </SavedPanelList>
+              </SavedPanel>
+            )}
+          </AnimatePresence>
+
           <LibraryHeader>
             <LibraryTitle>Biblioteca de Exercícios</LibraryTitle>
           </LibraryHeader>
@@ -1392,6 +1445,176 @@ const Container = styled.div`
   @media (max-width: 1024px) {
     padding: 1rem;
     padding-top: 9rem;
+  }
+`;
+
+const PageActionsBar = styled.div`
+  max-width: 95%;
+  margin: 0 auto 1rem auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 1024px) {
+    max-width: 100%;
+    padding: 0 0.25rem;
+  }
+`;
+
+const SavedToggleBigButton = styled(motion.button)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.75rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #E30613, #B91C1C);
+  color: #fff;
+  border: 1px solid rgba(227, 6, 19, 0.45);
+  box-shadow: 0 10px 28px rgba(227, 6, 19, 0.35);
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    filter: brightness(1.06);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+`;
+
+const RightTopActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+`;
+
+const SavedToggleButton = styled(motion.button)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #E30613, #B91C1C);
+  color: white;
+  border: 1px solid rgba(227, 6, 19, 0.5);
+  box-shadow: 0 8px 24px rgba(227, 6, 19, 0.35);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+
+  [data-theme="light"] & {
+    box-shadow: 0 8px 24px rgba(227, 6, 19, 0.25);
+  }
+`;
+
+const SavedPanel = styled(motion.div)`
+  position: relative;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  max-height: 45vh;
+  overflow-y: auto;
+
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+`;
+
+const SavedPanelClose = styled(motion.button)`
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1e293b;
+  }
+`;
+
+const SavedPanelList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const SavedPanelItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  strong { color: white; font-weight: 700; }
+  span { color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; }
+
+  [data-theme="light"] & {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+    strong { color: #1e293b; }
+    span { color: rgba(0, 0, 0, 0.6); }
+  }
+`;
+
+const PanelActionButton = styled.button`
+  padding: 0.45rem 0.9rem;
+  border-radius: 9999px;
+  background: rgba(227, 6, 19, 0.15);
+  border: 1px solid rgba(227, 6, 19, 0.35);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(227, 6, 19, 0.25);
+    border-color: rgba(227, 6, 19, 0.5);
+  }
+
+  [data-theme="light"] & {
+    color: #C41810;
   }
 `;
 
