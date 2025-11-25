@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useEffect } from 'react'
 import Hero from '../../Componentes/Home'
 import SignupPopup from '../../Componentes/CadastroPopUp'
 import LoginPopup from '../../Componentes/LoginPopup'
@@ -15,9 +16,20 @@ const Home = () => {
     openSignup,
     closeLogin,
     closeSignup,
+    closeForgotPassword,
     switchToSignup,
     switchToLogin
   } = usePopup()
+
+  // Garante que qualquer popup de auth seja fechado após login,
+  // evitando que um overlay bloqueie a Home
+  useEffect(() => {
+    if (isLoggedIn) {
+      closeLogin()
+      closeSignup()
+      closeForgotPassword()
+    }
+  }, [isLoggedIn, closeLogin, closeSignup, closeForgotPassword])
 
   return (
     <>
@@ -29,6 +41,7 @@ const Home = () => {
         transition={{ duration: 0.5 }}
       >
         <Hero 
+          key={isLoggedIn ? 'hero-logged' : 'hero-guest'}
           onOpenSignup={openSignup} 
         />
         {/* Add other sections here */}
