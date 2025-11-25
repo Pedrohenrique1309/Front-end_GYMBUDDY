@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createPortal } from 'react-dom'
 import { FiX, FiSend, FiHeart, FiTrash2, FiUser, FiEdit3, FiCheck } from 'react-icons/fi'
 import { useUser } from '../../Contexts/UserContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
@@ -260,7 +261,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <Overlay
         initial={{ opacity: 0 }}
@@ -500,7 +501,8 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
           </LikesModal>
         )}
       </Overlay>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
@@ -513,11 +515,12 @@ const Overlay = styled(motion.div)`
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(10px);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 15000;
+  display: grid;
+  place-items: center;
   padding: 2rem;
+  min-height: 100vh;
+  overflow-y: auto;
 `
 
 const ModalContainer = styled(motion.div)`

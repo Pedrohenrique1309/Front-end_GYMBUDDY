@@ -42,6 +42,63 @@ const UserProfile = () => {
     }
   }, [userId])
 
+  // Carregar quantidade de posts do usuário visualizado
+  useEffect(() => {
+    const loadPostsCount = async (id: number) => {
+      try {
+        // 1) Tenta /publicacao
+        let count = 0
+        try {
+          const resp = await fetch(`${API_BASE_URL}/publicacao`)
+          if (resp.ok) {
+            const data = await resp.json()
+            let allPosts: any[] = []
+            if (data?.publicacao && Array.isArray(data.publicacao)) {
+              allPosts = data.publicacao
+            } else if (Array.isArray(data)) {
+              allPosts = data
+            }
+            if (allPosts.length > 0) {
+              const uid = Number(id)
+              const filtered = allPosts.filter((p: any) => Number(p.id_user) === uid)
+              count = filtered.length
+            }
+          }
+        } catch (e) {
+          // continua para fallback
+        }
+
+        // 2) Fallback /view/feed
+        if (count === 0) {
+          try {
+            const resp2 = await fetch(`${API_BASE_URL}/view/feed`)
+            if (resp2.ok) {
+              const data2 = await resp2.json()
+              if (data2?.view && Array.isArray(data2.view)) {
+                const uid = Number(id)
+                const filtered = data2.view.filter((p: any) => Number(p.id_user) === uid)
+                count = filtered.length
+              }
+            }
+          } catch (e) {
+            // ignora
+          }
+        }
+
+        setProfileUser(prev => prev ? { ...prev, publicacoes: count } : prev)
+      } catch (e) {
+        // Em caso de erro, não bloqueia a página; mantém contagem atual
+      }
+    }
+
+    if (userId) {
+      const idNum = parseInt(userId)
+      if (!Number.isNaN(idNum)) {
+        loadPostsCount(idNum)
+      }
+    }
+  }, [userId])
+
   const loadUserProfile = async (id: number) => {
     console.log('════════════════════════════════')
     console.log('Iniciando carregamento do perfil')

@@ -1,19 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiX, FiImage, FiSend, FiHash, FiEdit3, FiMapPin, FiMusic, FiSearch, FiPlay, FiPause } from 'react-icons/fi'
+import { createPortal } from 'react-dom'
+import { FiX, FiImage, FiSend, FiHash, FiMapPin } from 'react-icons/fi'
 import { useUser } from '../../Contexts/UserContext'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
-import ImageEditor from '../EditorImagem'
-import MusicPicker from '../MusicPicker'
 import { usePublicationActions } from '../../Hooks/usePublicationActions'
-import { formatarDuracao, temPreview } from '../../Services/deezerService'
 
 // Configuração do Azure Storage 
 const AZURE_STORAGE_ACCOUNT = 'gymbuddystorage'
 const AZURE_STORAGE_URL = `https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net`
 const AZURE_CONTAINER = 'fotos'
-const AZURE_SAS_TOKEN = 'sp=acwl&st=2025-11-06T11:47:26Z&se=2025-11-06T21:02:26Z&sv=2024-11-04&sr=c&sig=J5vSWiU%2B3nMAcN5NecxDaHUKJ5RwdAKiDI9WDgXBPR4%3D'
+const AZURE_SAS_TOKEN = 'sp=acwl&st=2025-11-13T11:36:53Z&se=2026-11-13T20:51:53Z&sv=2024-11-04&sr=c&sig=gSkfONBZuvKKLeJSIP4rLihiOLcyHX35dADaok4dYXc%3D'
 
 interface FerramentasPopUpCriarPost {
   isOpen: boolean
@@ -50,13 +48,77 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
   const [localizacao, setLocalizacao] = useState('Academia Iron Gym - São Paulo')
   const [enviando, setEnviando] = useState(false)
   const [progressoUpload, setProgressoUpload] = useState(0)
-  const [mostrarEditorImagem, setMostrarEditorImagem] = useState(false)
-  
-  // Estados para música do Deezer
-  const [musicaSelecionada, setMusicaSelecionada] = useState<any>(null)
-  const [mostrarMusicPicker, setMostrarMusicPicker] = useState(false)
-  const [reproducaoMusicaId, setReproducaoMusicaId] = useState<number | null>(null)
-  const audioPreviewRef = useRef<HTMLAudioElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const body = document.body
+    const html = document.documentElement
+    const scrollY = window.scrollY
+    const prev = {
+      bodyOverflow: body.style.overflow,
+      htmlOverflow: html.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+    }
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    body.style.overflow = 'hidden'
+    html.style.overflow = 'hidden'
+    return () => {
+      body.style.position = prev.bodyPosition
+      body.style.top = prev.bodyTop
+      body.style.width = prev.bodyWidth
+      body.style.overflow = prev.bodyOverflow
+      html.style.overflow = prev.htmlOverflow
+      window.scrollTo(0, scrollY)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const el = containerRef.current
+    if (!el) return
+    const focusables = el.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusables.length > 0) focusables[0].focus()
+    else el.focus()
+  }, [isOpen])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) return
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      lidarComFechamento()
+      return
+    }
+    if (e.key !== 'Tab') return
+    const el = containerRef.current
+    if (!el) return
+    const focusables = el.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    if (focusables.length === 0) {
+      e.preventDefault()
+      return
+    }
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+  }
 
   // Função de configuração do upload 
   const getUploadParams = (file: File) => {
@@ -189,49 +251,6 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setChipsHashtag(prev => prev.filter(tag => tag !== tagParaRemover))
   }
 
-  // Função para tocar/parar a prévia da música selecionada
-  const handleTogglePreviewMusica = () => {
-    if (!musicaSelecionada || !temPreview(musicaSelecionada)) {
-      console.warn('🎵 Música não tem prévia disponível')
-      return
-    }
-
-    if (reproducaoMusicaId === musicaSelecionada.id && audioPreviewRef.current) {
-      // Parar
-      audioPreviewRef.current.pause()
-      setReproducaoMusicaId(null)
-    } else {
-      // Iniciar
-      if (audioPreviewRef.current) {
-        audioPreviewRef.current.src = musicaSelecionada.preview
-        audioPreviewRef.current.play().catch(error => {
-          console.error('❌ Erro ao reproduzir prévia:', error)
-        })
-        setReproducaoMusicaId(musicaSelecionada.id)
-      }
-    }
-  }
-
-  const removerMusica = () => {
-    if (audioPreviewRef.current) {
-      audioPreviewRef.current.pause()
-    }
-    setMusicaSelecionada(null)
-    setReproducaoMusicaId(null)
-  }
-
-  const handleSelecionarMusica = (musica: any) => {
-    setMusicaSelecionada(musica)
-    setMostrarMusicPicker(false)
-    setReproducaoMusicaId(null)
-    console.log('✅ Música selecionada:', musica.title, '-', musica.artist.name)
-  }
-
-  // Parar reprodução quando a música terminar
-  const handleAudioEnded = () => {
-    setReproducaoMusicaId(null)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -345,20 +364,6 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
         id_user: Number(user?.id || userId) // ID real do usuário logado
       }
       
-      // Adicionar música se selecionada
-      if (musicaSelecionada) {
-        backendPayload.musica = JSON.stringify({
-          id: musicaSelecionada.id,
-          titulo: musicaSelecionada.title,
-          artista: musicaSelecionada.artist.name,
-          album: musicaSelecionada.album.title,
-          capa: musicaSelecionada.album.cover_medium,
-          preview: musicaSelecionada.preview,
-          duracao: musicaSelecionada.duration
-        })
-        console.log('🎵 Música adicionada ao post:', musicaSelecionada.title)
-      }
-      
       console.log('✅ Enviando dados reais do usuário!')
       
       console.log('🎯 Payload detalhado:')
@@ -396,12 +401,6 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
       setEntradaHashtag('')
       setChipsHashtag([])
       setProgressoUpload(0)
-      setMusicaSelecionada(null)
-      setMostrarMusicPicker(false)
-      setReproducaoMusicaId(null)
-      if (audioPreviewRef.current) {
-        audioPreviewRef.current.pause()
-      }
       
       // Chamar callback para recarregar posts
       if (onPostCreated) {
@@ -429,18 +428,12 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
     setEntradaHashtag('')
     setChipsHashtag([])
     setProgressoUpload(0)
-    setMusicaSelecionada(null)
-    setMostrarMusicPicker(false)
-    setReproducaoMusicaId(null)
-    if (audioPreviewRef.current) {
-      audioPreviewRef.current.pause()
-    }
     onClose()
   }
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <PopupOverlay
         initial={{ opacity: 0 }}
@@ -455,9 +448,15 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="criarpost-title"
+          tabIndex={-1}
+          ref={containerRef}
+          onKeyDown={handleKeyDown}
         >
           <PopupHeader>
-            <HeaderTitle>Criar novo post</HeaderTitle>
+            <HeaderTitle id="criarpost-title">Criar novo post</HeaderTitle>
             <BotaoFechar onClick={lidarComFechamento}>
               <FiX />
             </BotaoFechar>
@@ -540,16 +539,6 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
                   </UploadProgress>
                 )}
                 <ImageActions>
-                  {tipoArquivo === 'imagem' && (
-                    <EditImageButton
-                      type="button"
-                      onClick={() => setMostrarEditorImagem(true)}
-                      disabled={enviando}
-                      title="Editar imagem"
-                    >
-                      <FiEdit3 />
-                    </EditImageButton>
-                  )}
                   <RemoveImageButton
                     type="button"
                     onClick={() => {
@@ -601,60 +590,6 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
               </HashtagInputContainer>
             </HashtagSection>
 
-            {/* Seção de Música */}
-            <MusicSection>
-              {musicaSelecionada ? (
-                <SelectedMusicCard>
-                  <MusicCardContent>
-                    <MusicCover 
-                      src={musicaSelecionada.album?.cover_medium || musicaSelecionada.album?.cover_small} 
-                      alt={musicaSelecionada.album?.title} 
-                    />
-                    <MusicInfoDetailed>
-                      <MusicTitleDetailed>{musicaSelecionada.title}</MusicTitleDetailed>
-                      <MusicArtistDetailed>{musicaSelecionada.artist?.name}</MusicArtistDetailed>
-                      <MusicAlbumDetailed>{musicaSelecionada.album?.title}</MusicAlbumDetailed>
-                      <MusicDurationDetailed>
-                        {formatarDuracao(musicaSelecionada.duration)}
-                      </MusicDurationDetailed>
-                    </MusicInfoDetailed>
-                  </MusicCardContent>
-                  
-                  <MusicActionsDetailed>
-                    {temPreview(musicaSelecionada) && (
-                      <PreviewPlayButton
-                        type="button"
-                        onClick={handleTogglePreviewMusica}
-                        isPlaying={reproducaoMusicaId === musicaSelecionada.id}
-                        title={reproducaoMusicaId === musicaSelecionada.id ? 'Parar prévia' : 'Ouvir prévia'}
-                      >
-                        {reproducaoMusicaId === musicaSelecionada.id ? (
-                          <FiPause />
-                        ) : (
-                          <FiPlay />
-                        )}
-                      </PreviewPlayButton>
-                    )}
-                    <RemoveMusicButton
-                      type="button"
-                      onClick={removerMusica}
-                      disabled={enviando}
-                    >
-                      <FiX />
-                    </RemoveMusicButton>
-                  </MusicActionsDetailed>
-                </SelectedMusicCard>
-              ) : (
-                <MusicSearchButton
-                  type="button"
-                  onClick={() => setMostrarMusicPicker(!mostrarMusicPicker)}
-                  disabled={enviando}
-                >
-                  <FiMusic />
-                  {mostrarMusicPicker ? 'Fechar busca' : 'Adicionar música'}
-                </MusicSearchButton>
-              )}
-            </MusicSection>
 
             <ActionButtons>
               <ImageUploadButton type="button" disabled={enviando}>
@@ -695,40 +630,8 @@ const PopupCriarPost = ({ isOpen, onClose, onPostCreated }: FerramentasPopUpCria
         </PopupContainer>
       </PopupOverlay>
       
-      {/* Editor de Imagem */}
-      {mostrarEditorImagem && imagem && (
-        <ImageEditor
-          isOpen={mostrarEditorImagem}
-          imageUrl={imagem}
-          onClose={() => setMostrarEditorImagem(false)}
-          onSave={(editedImageUrl) => {
-            setImagem(editedImageUrl)
-            // Converter base64 para File se necessário
-            fetch(editedImageUrl)
-              .then(res => res.blob())
-              .then(blob => {
-                const file = new File([blob], "edited-image.jpg", { type: "image/jpeg" })
-                setArquivoSelecionado(file)
-              })
-            setMostrarEditorImagem(false)
-          }}
-        />
-      )}
-
-      {/* Music Picker Modal */}
-      <MusicPicker
-        isOpen={mostrarMusicPicker}
-        onSelect={handleSelecionarMusica}
-        onClose={() => setMostrarMusicPicker(false)}
-      />
-
-      {/* Audio player oculto para preview */}
-      <audio
-        ref={audioPreviewRef}
-        onEnded={handleAudioEnded}
-        crossOrigin="anonymous"
-      />
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 
@@ -742,9 +645,8 @@ const PopupOverlay = styled(motion.div)`
   background: rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(20px);
   z-index: 15000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   padding: 2rem;
   overflow-y: auto;
   
@@ -790,7 +692,7 @@ const PopupContainer = styled(motion.div)`
   max-width: 60rem;
   max-height: 85vh;
   overflow-y: auto;
-  margin: auto;
+  margin: 0;
   box-shadow: 
     0 30px 60px rgba(0, 0, 0, 0.6),
     0 10px 30px rgba(229, 57, 53, 0.1),
@@ -859,11 +761,8 @@ const PopupHeader = styled.div`
 const HeaderTitle = styled.h2`
   font-size: 2.4rem;
   font-weight: 700;
-  color: var(--text-primary, var(--white));
+  color: #E53935;
   margin: 0;
-  background: linear-gradient(135deg, #E53935, #FF5722);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 `
 
 const BotaoFechar = styled.button`
@@ -926,7 +825,7 @@ const UserName = styled.span`
 
 const UserNickname = styled.span`
   font-size: 1.4rem;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  color: #E53935;
 `
 
 const DateDisplay = styled.div`
@@ -935,7 +834,7 @@ const DateDisplay = styled.div`
   color: var(--text-secondary, rgba(255, 255, 255, 0.7));
   border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   margin-bottom: 1rem;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 0.8rem;
   
@@ -1002,7 +901,7 @@ const CharacterCount = styled.div<{ $isNearLimit: boolean }>`
   bottom: 1rem;
   right: 1.5rem;
   font-size: 1.2rem;
-  color: ${props => props.$isNearLimit ? '#FF5722' : 'var(--text-secondary, rgba(255, 255, 255, 0.5))'};
+  color: var(--text-primary, var(--white));
   font-weight: 500;
 `
 
@@ -1026,36 +925,6 @@ const ImageActions = styled.div`
   right: 1rem;
   display: flex;
   gap: 0.8rem;
-`
-
-const EditImageButton = styled.button`
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  svg {
-    font-size: 1.8rem;
-    color: white;
-  }
-  
-  &:hover {
-    background: rgba(29, 78, 216, 0.8);
-    border-color: rgba(29, 78, 216, 0.5);
-    transform: scale(1.1);
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 `
 
 const RemoveImageButton = styled.button`
@@ -1154,7 +1023,7 @@ const LocationInput = styled.input`
   }
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-secondary, rgba(255, 255, 255, 0.4));
   }
   
   &:disabled {
@@ -1179,12 +1048,16 @@ const ImageUploadButton = styled.button`
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.2rem;
   padding: 1.2rem 2rem;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
+  color: var(--text-primary, var(--white));
   font-size: 1.4rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   
+  svg {
+    color: var(--text-primary, var(--white));
+  }
+
   label {
     display: flex;
     align-items: center;
@@ -1212,7 +1085,7 @@ const SubmitButton = styled(motion.button)`
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  background: linear-gradient(135deg, #E53935, #FF5722);
+  background: #E53935;
   border: none;
   border-radius: 1.2rem;
   padding: 1.4rem 3rem;
@@ -1268,7 +1141,7 @@ const HashtagChip = styled.div`
   font-weight: 500;
   
   span {
-    color: #E53935;
+    color: white;
   }
 `
 

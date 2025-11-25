@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { FiSearch, FiHeart, FiMessageCircle, FiChevronRight, FiSend, FiPlus, FiX } from 'react-icons/fi'
 import { useUser } from '../../Contexts/UserContext'
 import { useHeader } from '../../Contexts/HeaderContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import DefaultAvatar from '../../Recursos/avatarpadrao'
 import CreatePostPopup from '../../Componentes/PopUpCriarPost'
 import CommentsModal from '../../Componentes/ModalComentarios'
@@ -1429,6 +1429,7 @@ const Social = () => {
   const { user } = useUser()
   const { setAiChatOpen } = useHeader()
   const navigate = useNavigate()
+  const location = useLocation()
   const [users, setUsers] = useState<User[]>([])
   const [randomUsers, setRandomUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -1442,6 +1443,18 @@ const Social = () => {
   const [isChatLoading, setIsChatLoading] = useState(false)
   const [showCreatePostPopup, setShowCreatePostPopup] = useState(false)
   
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '')
+    const flag = (params.get('compose') || params.get('criar') || params.get('post') || '').toLowerCase()
+    const byQuery = flag === '1' || flag === 'true'
+    const byHash = typeof location.hash === 'string' && /compose|criar|post/i.test(location.hash)
+    const stateAny = (location as unknown as { state?: any })?.state
+    const byState = !!(stateAny && stateAny.openCreatePost)
+    if (!showCreatePostPopup && (byQuery || byHash || byState)) {
+      setShowCreatePostPopup(true)
+    }
+  }, [location, showCreatePostPopup])
+
   // Estado para o texto dinâmico do ShinyText
   const [shinyTextMessage, setShinyTextMessage] = useState('Como será seu treino hoje?')
   const shinyTextOptions = [

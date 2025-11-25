@@ -21,7 +21,7 @@ export interface TreinoResponse {
   treinos?: TreinoPayload[]
 }
 
-export const inserirTreino = async (dados: TreinoPayload): Promise<TreinoResponse> => {
+export const inserirTreino = async (dados: any): Promise<TreinoResponse> => {
   try {
     console.log('🚀 Inserindo treino:', dados)
     const response = await api.post('/v1/gymbuddy/treino', dados)
@@ -33,7 +33,7 @@ export const inserirTreino = async (dados: TreinoPayload): Promise<TreinoRespons
   }
 }
 
-export const atualizarTreino = async (id: string | number, dados: Partial<TreinoPayload>): Promise<TreinoResponse> => {
+export const atualizarTreino = async (id: string | number, dados: any): Promise<TreinoResponse> => {
   try {
     console.log('🔄 Atualizando treino:', id, dados)
     const response = await api.put(`/v1/gymbuddy/treino/${id}`, dados)
@@ -88,10 +88,23 @@ export const excluirTreino = async (id: string | number): Promise<TreinoResponse
   }
 }
 
+export const buscarTreinoByUser = async (userId: string | number): Promise<TreinoResponse> => {
+  try {
+    console.log('🔍 Buscando treinos do usuário:', userId)
+    const response = await api.get(`/v1/gymbuddy/treino/usuario/${userId}`)
+    console.log('✅ Treinos do usuário encontrados:', response.data)
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Erro ao buscar treinos do usuário:', error)
+    throw error.response?.data || { message: 'Erro ao buscar treinos do usuário', status: false }
+  }
+}
+
 export default {
   inserirTreino,
   atualizarTreino,
   listarTreinos,
   buscarTreino,
   excluirTreino,
+  buscarTreinoByUser,
 }

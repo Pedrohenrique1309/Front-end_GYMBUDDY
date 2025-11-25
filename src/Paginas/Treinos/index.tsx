@@ -21,6 +21,7 @@ interface Exercise {
   gifUrl: string;
   target: string;
   muscles: string[]; // Músculos treinados - preparado para API futura
+  description?: string;
 }
 
 interface WorkoutSet {
@@ -70,7 +71,7 @@ const ExerciseGifWithFallback: React.FC<ExerciseGifWithFallbackProps> = ({ src, 
   };
   
   const fallbackUrl = `https://via.placeholder.com/${width.replace('px', '')}x${height.replace('px', '')}/E30613/FFFFFF?text=${encodeURIComponent(alt)}`;
-  
+
   // Atualizar imageSrc quando src mudar
   useEffect(() => {
     if (!src || !isValidUrl(src)) {
@@ -353,12 +354,33 @@ const Treinos: React.FC = () => {
           return `https://via.placeholder.com/400x300/E30613/FFFFFF?text=${encodeURIComponent(ex.nome || 'Exercício')}`;
         };
         
+        // Função para obter a descrição do exercício a partir de possíveis campos
+        const getExerciseDescription = (ex: any): string => {
+          const possibleFields = [
+            ex.descricao,
+            ex.descricao_exercicio,
+            ex.description,
+            ex.instrucoes,
+            ex.instruction,
+            ex.how_to,
+            ex.tutorial,
+            ex.obs,
+            ex.observacoes
+          ];
+          const found = possibleFields.find((v) => typeof v === 'string' && v.trim() !== '' );
+          if (typeof found === 'string') return found.trim();
+          // Fallback descritivo básico
+          const alvo = ex.grupo_muscular || ex.target || 'músculos alvo';
+          return `Exercício focado em ${alvo}.`;
+        };
+        
         // Converter para formato da UI se houver exercícios reais
         if (realEx.length > 0) {
           console.log('📦 Primeiro exercício completo (para debug):', realEx[0]);
           
           const convertedExercises = realEx.map((ex: any) => {
             const gifUrl = getExerciseGif(ex);
+            const description = getExerciseDescription(ex);
             
             console.log(`🎬 Exercício "${ex.nome}":`); 
             console.log(`   - ID: ${ex.id}`);
@@ -383,7 +405,8 @@ const Treinos: React.FC = () => {
               equipment: ex.equipamento || 'livre',
               gifUrl: gifUrl,
               target: ex.grupo_muscular || 'músculos',
-              muscles: [ex.grupo_muscular || 'Geral']
+              muscles: [ex.grupo_muscular || 'Geral'],
+              description
             };
           })
           console.log(`✅ ${convertedExercises.length} exercícios convertidos com sucesso`);
@@ -399,21 +422,21 @@ const Treinos: React.FC = () => {
       
       // Fallback para exercícios mock
       const mockExercises: Exercise[] = [
-        { id: '1', name: 'Supino Reto (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/lEVlWOUhFXBwKb', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior'] },
-        { id: '2', name: 'Supino Reto (Halteres)', bodyPart: 'peito', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/7pKN4ktbR6SMvN', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior', 'Core'] },
-        { id: '3', name: 'Remada Curvada (Barra)', bodyPart: 'costas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/nE8c2B0bZN4oJ5', target: 'costas superior', muscles: ['Grande Dorsal', 'Trapézio', 'Romboides', 'Bíceps'] },
-        { id: '4', name: 'Rosca Direta (Halteres)', bodyPart: 'bíceps/tríceps', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/1TZs38TwMmC3Yr', target: 'bíceps', muscles: ['Bíceps Braquial', 'Braquial', 'Braquiorradial'] },
-        { id: '5', name: 'Crucifixo no Cross (Cabo)', bodyPart: 'peito', equipment: 'cabo', gifUrl: 'https://v2.exercisedb.io/image/H8P2aqkuRsFSH5', target: 'peitorais', muscles: ['Peitoral Maior', 'Deltoide Anterior'] },
-        { id: '6', name: 'Levantamento Terra (Barra)', bodyPart: 'costas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/hM3zPYvtBPnOVl', target: 'lombar', muscles: ['Eretores da Espinha', 'Glúteos', 'Isquiotibiais', 'Grande Dorsal', 'Trapézio'] },
-        { id: '7', name: 'Puxada Facial (Cabo)', bodyPart: 'ombros', equipment: 'cabo', gifUrl: 'https://v2.exercisedb.io/image/XpJqV2nJaD8xDe', target: 'deltoides', muscles: ['Deltoide Posterior', 'Trapézio Médio', 'Romboides'] },
-        { id: '8', name: 'Rosca Martelo (Halteres)', bodyPart: 'bíceps/tríceps', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/yO0vUMWYrfBaNO', target: 'bíceps', muscles: ['Braquiorradial', 'Bíceps Braquial', 'Braquial'] },
-        { id: '9', name: 'Supino Inclinado (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/oqR7GnH3SbBvuz', target: 'peitorais', muscles: ['Peitoral Superior', 'Deltoide Anterior', 'Tríceps'] },
-        { id: '10', name: 'Cadeira Extensora (Máquina)', bodyPart: 'pernas', equipment: 'máquina', gifUrl: 'https://v2.exercisedb.io/image/KPwXm05u1Wskl6', target: 'quadríceps', muscles: ['Quadríceps', 'Reto Femoral', 'Vasto Lateral', 'Vasto Medial'] },
-        { id: '11', name: 'Leg Press (Máquina)', bodyPart: 'pernas', equipment: 'máquina', gifUrl: 'https://v2.exercisedb.io/image/vvgThKSl5T1Jfn', target: 'glúteos', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Panturrilha'] },
-        { id: '12', name: 'Elevação Lateral (Halteres)', bodyPart: 'ombros', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/1hHK1jW3xtQF0y', target: 'deltoides', muscles: ['Deltoide Lateral', 'Trapézio Superior'] },
-        { id: '13', name: 'Agachamento Livre (Barra)', bodyPart: 'pernas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/f1pU7B1pVLbdcO', target: 'glúteos', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Core', 'Eretores'] },
-        { id: '14', name: 'Barra Fixa', bodyPart: 'costas', equipment: 'peso corporal', gifUrl: 'https://v2.exercisedb.io/image/OLvQpghP8fB4Nn', target: 'dorsais', muscles: ['Grande Dorsal', 'Bíceps', 'Trapézio', 'Romboides', 'Core'] },
-        { id: '15', name: 'Desenvolvimento com Halteres', bodyPart: 'ombros', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/xDrDhXkxR0twxl', target: 'deltoides', muscles: ['Deltoide Anterior', 'Deltoide Lateral', 'Tríceps', 'Trapézio'] },
+        { id: '1', name: 'Supino Reto (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/lEVlWOUhFXBwKb', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior'], description: 'Exercício composto para peitorais, com foco em força.' },
+        { id: '2', name: 'Supino Reto (Halteres)', bodyPart: 'peito', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/7pKN4ktbR6SMvN', target: 'peitorais', muscles: ['Peitoral Maior', 'Tríceps', 'Deltoide Anterior', 'Core'], description: 'Variação com halteres para maior amplitude e estabilidade.' },
+        { id: '3', name: 'Remada Curvada (Barra)', bodyPart: 'costas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/nE8c2B0bZN4oJ5', target: 'costas superior', muscles: ['Grande Dorsal', 'Trapézio', 'Romboides', 'Bíceps'], description: 'Trabalha dorsais e musculatura posterior da cadeia.' },
+        { id: '4', name: 'Rosca Direta (Halteres)', bodyPart: 'bíceps/tríceps', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/1TZs38TwMmC3Yr', target: 'bíceps', muscles: ['Bíceps Braquial', 'Braquial', 'Braquiorradial'], description: 'Isolamento de bíceps com halteres.' },
+        { id: '5', name: 'Crucifixo no Cross (Cabo)', bodyPart: 'peito', equipment: 'cabo', gifUrl: 'https://v2.exercisedb.io/image/H8P2aqkuRsFSH5', target: 'peitorais', muscles: ['Peitoral Maior', 'Deltoide Anterior'], description: 'Ênfase em alongamento e contração do peitoral.' },
+        { id: '6', name: 'Levantamento Terra (Barra)', bodyPart: 'costas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/hM3zPYvtBPnOVl', target: 'lombar', muscles: ['Eretores da Espinha', 'Glúteos', 'Isquiotibiais', 'Grande Dorsal', 'Trapézio'], description: 'Exercício completo de força para cadeia posterior.' },
+        { id: '7', name: 'Puxada Facial (Cabo)', bodyPart: 'ombros', equipment: 'cabo', gifUrl: 'https://v2.exercisedb.io/image/XpJqV2nJaD8xDe', target: 'deltoides', muscles: ['Deltoide Posterior', 'Trapézio Médio', 'Romboides'], description: 'Fortalece deltoides posteriores e região escapular.' },
+        { id: '8', name: 'Rosca Martelo (Halteres)', bodyPart: 'bíceps/tríceps', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/yO0vUMWYrfBaNO', target: 'bíceps', muscles: ['Braquiorradial', 'Bíceps Braquial', 'Braquial'], description: 'Variação focada em braquiorradial.' },
+        { id: '9', name: 'Supino Inclinado (Barra)', bodyPart: 'peito', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/oqR7GnH3SbBvuz', target: 'peitorais', muscles: ['Peitoral Superior', 'Deltoide Anterior', 'Tríceps'], description: 'Ênfase no feixe superior do peitoral.' },
+        { id: '10', name: 'Cadeira Extensora (Máquina)', bodyPart: 'pernas', equipment: 'máquina', gifUrl: 'https://v2.exercisedb.io/image/KPwXm05u1Wskl6', target: 'quadríceps', muscles: ['Quadríceps', 'Reto Femoral', 'Vasto Lateral', 'Vasto Medial'], description: 'Isolamento de quadríceps.' },
+        { id: '11', name: 'Leg Press (Máquina)', bodyPart: 'pernas', equipment: 'máquina', gifUrl: 'https://v2.exercisedb.io/image/vvgThKSl5T1Jfn', target: 'glúteos', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Panturrilha'], description: 'Movimento multiarticular para membros inferiores.' },
+        { id: '12', name: 'Elevação Lateral (Halteres)', bodyPart: 'ombros', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/1hHK1jW3xtQF0y', target: 'deltoides', muscles: ['Deltoide Lateral', 'Trapézio Superior'], description: 'Ênfase no deltoide lateral.' },
+        { id: '13', name: 'Agachamento Livre (Barra)', bodyPart: 'pernas', equipment: 'barra', gifUrl: 'https://v2.exercisedb.io/image/f1pU7B1pVLbdcO', target: 'glúteos', muscles: ['Quadríceps', 'Glúteos', 'Isquiotibiais', 'Core', 'Eretores'], description: 'Exercício base para pernas e core.' },
+        { id: '14', name: 'Barra Fixa', bodyPart: 'costas', equipment: 'peso corporal', gifUrl: 'https://v2.exercisedb.io/image/OLvQpghP8fB4Nn', target: 'dorsais', muscles: ['Grande Dorsal', 'Bíceps', 'Trapézio', 'Romboides', 'Core'], description: 'Puxada com peso corporal para dorsais.' },
+        { id: '15', name: 'Desenvolvimento com Halteres', bodyPart: 'ombros', equipment: 'halteres', gifUrl: 'https://v2.exercisedb.io/image/xDrDhXkxR0twxl', target: 'deltoides', muscles: ['Deltoide Anterior', 'Deltoide Lateral', 'Tríceps', 'Trapézio'], description: 'Empurrada vertical para ombros.' },
       ];
       setExercises(mockExercises);
       setFilteredExercises(mockExercises);
@@ -428,13 +451,20 @@ const Treinos: React.FC = () => {
   useEffect(() => {
     const fetchSaved = async () => {
       try {
-        const res = await treinoService.listarTreinos()
-        // usar treinos da interface definida
+        // Buscar treinos do usuário pelo endpoint /treino/usuario/:search_id
+        if (!user?.id) {
+          console.warn('⚠️ Sem searchId para buscar treinos do usuário')
+          setSavedWorkouts([])
+          return
+        }
+
+        const searchId = String(user.id)
+        const res = await treinoService.buscarTreinoByUser(searchId)
         const data = res.treinos ?? res.treino ?? []
-        const allWorkouts = Array.isArray(data) ? data : []
-        
-        console.log(`✅ Treinos carregados:`, allWorkouts.length, 'treinos totais')
-        setSavedWorkouts(allWorkouts)
+        const userWorkouts = Array.isArray(data) ? data : []
+
+        console.log(`✅ Treinos do usuário carregados:`, userWorkouts.length)
+        setSavedWorkouts(userWorkouts)
       } catch (err) {
         // não bloqueante
         console.warn('Não foi possível carregar treinos salvos', err)
@@ -539,13 +569,14 @@ const Treinos: React.FC = () => {
       
       if (workoutData && workoutData.length > 0) {
         const workout = Array.isArray(workoutData) ? workoutData[0] : workoutData;
+        const w: any = workout;
         
         // Converter dados do backend para formato da UI
         const convertedExercises: ExerciseInWorkout[] = [];
         
         // Se o treino tiver exercícios, convertê-los
-        if (workout.exercicios || workout.exercicio) {
-          const exercicios = workout.exercicios || workout.exercicio || [];
+        if (w.exercicios || w.exercicio) {
+          const exercicios = w.exercicios || w.exercicio || [];
           
           for (const exData of exercicios) {
             // Buscar o exercício completo na lista de exercícios disponíveis
@@ -568,9 +599,9 @@ const Treinos: React.FC = () => {
         }
         
         setCurrentWorkout({
-          id: workout.id,
-          title: workout.nome || workout.titulo || '',
-          notes: workout.notas || workout.descricao || '',
+          id: String(w.id),
+          title: w.nome || w.titulo || '',
+          notes: w.notas || w.descricao || '',
           exercises: convertedExercises
         });
         
@@ -605,10 +636,25 @@ const Treinos: React.FC = () => {
     try {
       console.log('🔍 Buscando detalhes completos do treino:', workoutId);
       
-      // Buscar treino completo
-      const treinoResponse = await treinoService.buscarTreino(workoutId);
-      const treinoData = treinoResponse.treino || treinoResponse.treinos;
-      const workout = Array.isArray(treinoData) ? treinoData[0] : treinoData;
+      // Buscar treinos do usuário e filtrar pelo ID solicitado
+      let workout: any = null;
+      try {
+        if (user?.id) {
+          const searchId = String(user.id)
+          const byUserRes = await treinoService.buscarTreinoByUser(searchId);
+          const list = (byUserRes.treinos ?? byUserRes.treino ?? []) as any[];
+          workout = list.find((w: any) => String(w.id) === String(workoutId)) || null;
+        }
+      } catch (e) {
+        console.warn('⚠️ Falha ao buscar treinos do usuário para visualizar, tentando por ID direto...', e);
+      }
+
+      // Fallback: buscar treino direto por ID
+      if (!workout) {
+        const treinoResponse = await treinoService.buscarTreino(workoutId);
+        const treinoData = treinoResponse.treino || treinoResponse.treinos;
+        workout = Array.isArray(treinoData) ? treinoData[0] : treinoData;
+      }
       
       console.log('📊 Dados do treino:', workout);
       
@@ -696,11 +742,15 @@ const Treinos: React.FC = () => {
       
       // Recarregar lista de treinos
       try {
-        const listRes = await treinoService.listarTreinos();
-        const listData = listRes.treinos ?? listRes.treino ?? [];
-        const allWorkouts = Array.isArray(listData) ? listData : [];
-        
-        setSavedWorkouts(allWorkouts);
+        if (user?.id) {
+          const searchId = String(user.id);
+          const listRes = await treinoService.buscarTreinoByUser(searchId);
+          const listData = listRes.treinos ?? listRes.treino ?? [];
+          const userWorkouts = Array.isArray(listData) ? listData : [];
+          setSavedWorkouts(userWorkouts);
+        } else {
+          setSavedWorkouts([]);
+        }
       } catch (err) {
         console.warn('Erro ao recarregar treinos após exclusão', err);
       }
@@ -784,11 +834,15 @@ const Treinos: React.FC = () => {
         setTimeout(() => setShowSuccessMessage(false), 2000)
         // recarregar lista de treinos salvos
         try {
-          const listRes = await treinoService.listarTreinos()
-          const listData = listRes.treinos ?? listRes.treino ?? []
-          const allWorkouts = Array.isArray(listData) ? listData : []
-          
-          setSavedWorkouts(allWorkouts)
+          if (user?.id) {
+            const searchId = String(user.id)
+            const listRes = await treinoService.buscarTreinoByUser(searchId)
+            const listData = listRes.treinos ?? listRes.treino ?? []
+            const userWorkouts = Array.isArray(listData) ? listData : []
+            setSavedWorkouts(userWorkouts)
+          } else {
+            setSavedWorkouts([])
+          }
         } catch (err) {
           console.warn('Erro ao recarregar treinos', err)
         }
@@ -852,7 +906,7 @@ const Treinos: React.FC = () => {
             <HeaderIcon onClick={() => navigate(-1)}>
               <FiArrowLeft />
             </HeaderIcon>
-            <HeaderTitle>Criar Treino</HeaderTitle>
+            <HeaderTitle>Treinos do Usuário</HeaderTitle>
           </SectionHeader>
 
           <InputGroup>
@@ -912,6 +966,11 @@ const Treinos: React.FC = () => {
                         }}
                       >
                       <ExerciseDetails onClick={(e) => e.stopPropagation()}>
+                        {exerciseItem.exercise.description && (
+                          <ExerciseDescription>
+                            {exerciseItem.exercise.description}
+                          </ExerciseDescription>
+                        )}
                         <InputGroup>
                           <InputLabel>Observações</InputLabel>
                           <StyledTextArea placeholder="Adicione observações sobre este exercício..." rows={2} />
@@ -1153,6 +1212,23 @@ const Treinos: React.FC = () => {
                                                   )}
                                                 </SavedWorkoutExerciseHeader>
                                                 
+                                                {(() => {
+                                                  // Descrição do exercício (se disponível)
+                                                  const possibleDesc = [
+                                                    fullExercise?.description,
+                                                    ex.descricao,
+                                                    ex.description,
+                                                    ex.obs,
+                                                    ex.observacoes
+                                                  ]
+                                                  const desc = possibleDesc.find((v: any) => typeof v === 'string' && v.trim() !== '')
+                                                  return desc ? (
+                                                    <SavedWorkoutExerciseDescription>
+                                                      {String(desc)}
+                                                    </SavedWorkoutExerciseDescription>
+                                                  ) : null
+                                                })()}
+                                                
                                                 {Array.isArray(series) && series.length > 0 ? (
                                                   <SavedWorkoutSeriesTable>
                                                     <thead>
@@ -1257,8 +1333,6 @@ const Treinos: React.FC = () => {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: index * 0.03 }}
                       onClick={() => handleAddExerciseToWorkout(exercise)}
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
                     >
                       <ExerciseLibraryGifWithFallback src={exercise.gifUrl} alt={exercise.name} />
                       <ExerciseLibraryInfo>
@@ -1404,7 +1478,7 @@ const RightColumn = styled.div`
     border-color: rgba(0, 0, 0, 0.06);
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.15),
-      0 0 0 1px rgba(227, 6, 19, 0.2);
+      inset 0 1px 0 0 rgba(227, 6, 19, 0.1);
   }
 
   @media (max-width: 1024px) {
@@ -1851,6 +1925,23 @@ const ExerciseDetails = styled.div`
   gap: 1.5rem;
 `;
 
+const ExerciseDescription = styled.p`
+  font-size: 1.4rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+  }
+`;
+
 const RestTimeGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -1943,7 +2034,7 @@ const SetsTable = styled.table`
 
       [data-theme="light"] & {
         &:hover {
-          background: rgba(227, 6, 19, 0.04);
+          background: rgba(0, 0, 0, 0.02);
         }
       }
 
@@ -2271,11 +2362,40 @@ const ExerciseLibraryItem = styled(motion.div)`
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  /* LED vertical apagado por padrão */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(227, 6, 19, 0.1);
+    border-radius: 14px 0 0 14px;
+    box-shadow: 0 0 0 rgba(227, 6, 19, 0);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(227, 6, 19, 0.3);
-    transform: translateX(4px);
+    /* LED aceso */
+    &::before {
+      background: linear-gradient(
+        180deg,
+        rgba(227, 6, 19, 0.35) 0%,
+        rgba(227, 6, 19, 0.85) 50%,
+        rgba(227, 6, 19, 0.35) 100%
+      );
+      box-shadow:
+        0 0 16px rgba(227, 6, 19, 0.55),
+        0 0 28px rgba(227, 6, 19, 0.35),
+        inset 0 0 6px rgba(227, 6, 19, 0.35);
+      width: 5px;
+    }
   }
 
   [data-theme="light"] & {
@@ -2285,6 +2405,10 @@ const ExerciseLibraryItem = styled(motion.div)`
       rgba(255, 255, 255, 0.9) 100%
     );
     border-color: rgba(0, 0, 0, 0.06);
+
+    &::before {
+      background: rgba(227, 6, 19, 0.08);
+    }
   }
 
   [data-theme="light"] &:hover {
@@ -2294,6 +2418,20 @@ const ExerciseLibraryItem = styled(motion.div)`
       rgba(255, 255, 255, 0.94) 100%
     );
     border-color: rgba(227, 6, 19, 0.2);
+
+    &::before {
+      background: linear-gradient(
+        180deg,
+        rgba(227, 6, 19, 0.25) 0%,
+        rgba(227, 6, 19, 0.7) 50%,
+        rgba(227, 6, 19, 0.25) 100%
+      );
+      box-shadow:
+        0 0 14px rgba(227, 6, 19, 0.45),
+        0 0 24px rgba(227, 6, 19, 0.3),
+        inset 0 0 5px rgba(227, 6, 19, 0.3);
+      width: 5px;
+    }
   }
 `;
 
@@ -2301,10 +2439,10 @@ const ExerciseLibraryInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; // Aumentado de 0.25rem para 0.5rem
-  justify-content: flex-end; // Empurrar conteúdo para baixo
-  padding-bottom: 0.05rem; // Quase zero
-  margin-top: 2.2rem; // Reduzido drasticamente - proporcional
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding-bottom: 0.05rem;
+  margin-top: 2.2rem;
 `;
 
 const ExerciseLibraryName = styled.h4`
@@ -2677,6 +2815,23 @@ const SavedWorkoutNotes = styled.div`
     strong {
       color: rgba(0, 0, 0, 0.9);
     }
+  }
+`;
+
+const SavedWorkoutExerciseDescription = styled.p`
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0.25rem 0 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+
+  [data-theme="light"] & {
+    color: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
   }
 `;
 
