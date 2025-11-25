@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiEye, FiEyeOff, FiX } from 'react-icons/fi'
 import styled from 'styled-components'
-import { useNavigate } from 'react-router-dom'
 import { loginUser, LoginResponse } from '../../Config/api'
 import { useUser } from '../../Contexts/UserContext'
 import { usePopup } from '../../Contexts/PopupContext'
@@ -23,7 +22,6 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
   })
   const [isDarkMode, setIsDarkMode] = useState(true)
   
-  const navigate = useNavigate()
   const { login } = useUser()
   const { switchToForgotPassword, closeAllPopups } = usePopup()
 
@@ -96,11 +94,14 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
                                resposta?.message?.toLowerCase().includes('sucesso') ||
                                resposta?.message?.toLowerCase().includes('success')
       
+      const statusAny: any = (resposta as any)?.status
+      const statusCodeAny: any = (resposta as any)?.status_code
       const loginSucesso = resposta && (
-        resposta.status === true || 
-        resposta.status === 'true' || 
-        resposta.status === 1 ||
-        resposta.status_code === 200 ||
+        statusAny === true || 
+        statusAny === 'true' || 
+        statusAny === 1 ||
+        statusCodeAny === 200 ||
+        statusCodeAny === '200' ||
         (!!userData && mensagemSucesso) ||
         !!userData
       )
@@ -126,13 +127,6 @@ const PopupLogin = ({ estaAberto, aoFechar, aoTrocarParaCadastro }: PropsPopupLo
           
           // Limpar formulário
           limparFormulario()
-          
-          // Aguardar um pouco para garantir que o estado foi atualizado e popup foi fechado
-          setTimeout(() => {
-            // Redirecionar para a página de treinos (home do usuário logado)
-            console.log('🚀 Redirecionando para /treinos')
-            navigate('/treinos', { replace: true })
-          }, 300)
           
           // Não definir setEstaCarregando(false) aqui - deixar que o componente desmonte
           return // Sair da função para não executar o finally
