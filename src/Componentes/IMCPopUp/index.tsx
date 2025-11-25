@@ -47,11 +47,6 @@ const WeightHeightPopup = ({ isOpen, onClose, onSubmit, onSkip }: WeightHeightPo
             exit={{ opacity: 0, scale: 0.9, y: 50 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
-            <RequiredIndicator>
-              <RequiredDot />
-              <RequiredText>Obrigatório</RequiredText>
-            </RequiredIndicator>
-
             <PopupHeader>
               <IconWrapper>
                 <FiActivity />
@@ -322,46 +317,6 @@ const SkipText = styled.p`
   font-size: 1.3rem;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 0.5rem;
-`;
-
-const RequiredIndicator = styled.div`
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: rgba(227, 6, 19, 0.1);
-  border: 1px solid rgba(227, 6, 19, 0.3);
-  border-radius: 2rem;
-  padding: 0.8rem 1.6rem;
-`;
-
-const RequiredDot = styled.div`
-  width: 0.8rem;
-  height: 0.8rem;
-  background: rgba(227, 6, 19, 0.9);
-  border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
-
-  @keyframes pulse-dot {
-    0%, 100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.7;
-      transform: scale(1.2);
-    }
-  }
-`;
-
-const RequiredText = styled.span`
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: rgba(227, 6, 19, 0.9);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 `;
 
 export default WeightHeightPopup;
