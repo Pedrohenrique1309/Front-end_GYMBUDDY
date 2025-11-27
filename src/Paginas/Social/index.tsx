@@ -161,10 +161,11 @@ const ChatSidebar = styled(motion.div)<{ isOpen?: boolean }>`
 const ChatToggleButton = styled(motion.div)<{ isOpen?: boolean }>`
   position: fixed;
   left: 20px;
-  top: 50%;
+  top: 20%;
   transform: translateY(-50%);
   width: 64px;
   height: 64px;
+  z-index: 9999;
   
   /* Liquid Glass Base */
   background: linear-gradient(135deg, 
@@ -2937,8 +2938,8 @@ const CreateFirstPostButton = styled(motion.button)`
 
 const CreatePostButton = styled(motion.button)`
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 2rem;
+  right: 2rem;
   width: 6.5rem;
   height: 6.5rem;
   border-radius: 50%;
@@ -2948,7 +2949,7 @@ const CreatePostButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 998;
+  z-index: 9998;
   
   box-shadow: 
     0 15px 35px rgba(227, 6, 19, 0.4),

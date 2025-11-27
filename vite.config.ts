@@ -9,8 +9,8 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
-        //target: 'https://gymbuddy-backend-c0d6cwevgbdfczhy.canadacentral-01.azurewebsites.net',
+        //target: 'http://localhost:8080',
+        target: 'https://gymbuddy-backend-c0d6cwevgbdfczhy.canadacentral-01.azurewebsites.net',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false,

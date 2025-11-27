@@ -6,7 +6,7 @@ import { FaDumbbell } from 'react-icons/fa';
 import { useUser } from '../../Contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import * as treinoService from '../../Services/treinoService'
-//import * as serieService from '../../Services/serieService'
+import * as serieService from '../../Services/serieService'
 import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
 import * as exercicioService from '../../Services/exercicioService'
 //import ExerciseManager from '../../Componentes/ExerciseManager'
@@ -670,36 +670,109 @@ const Treinos: React.FC = () => {
       
       console.log('📊 Dados do treino:', workout);
       
-      // Buscar exercícios do treino
+      // Buscar exercícios do treino - tentar múltiplas fontes
       let exerciciosCompletos: any[] = [];
+      
+      // Primeiro, tentar buscar de exercicio_treino (tabela de relacionamento)
       try {
-        const exerciciosResponse = await exTreinoSerieService.buscarExercicioByTreino(workoutId);
-        const exerciciosData = exerciciosResponse.exercicio_treino_serie || exerciciosResponse.exercicios_treino_serie || [];
-        exerciciosCompletos = Array.isArray(exerciciosData) ? exerciciosData : [];
-        console.log('💪 Exercícios encontrados:', exerciciosCompletos);
+        // Buscar todos os exercicio_treino para este treino
+        const exercicioTreinoResponse = await exTreinoSerieService.listarExercicioTreinoSerie();
+        const allExercicioTreino = exercicioTreinoResponse.exercicio_treino_serie || exercicioTreinoResponse.exercicios_treino_serie || [];
+        const exerciciosDoTreino = Array.isArray(allExercicioTreino) 
+          ? allExercicioTreino.filter((item: any) => String(item.id_treino) === String(workoutId))
+          : [];
+        
+        console.log('📋 Exercícios do treino (exercicio_treino):', exerciciosDoTreino);
+        
+        // Para cada exercicio_treino, buscar os detalhes da série
+        for (const item of exerciciosDoTreino) {
+          const itemAny = item as any;
+          if (itemAny.id_serie) {
+            try {
+              const serieResponse = await serieService.buscarSerie(itemAny.id_serie);
+              const serieData: any = Array.isArray(serieResponse.serie) ? serieResponse.serie[0] : (serieResponse.serie || {});
+              
+              exerciciosCompletos.push({
+                id_exercicio: itemAny.id_exercicio,
+                id_exercicio_treino_serie: itemAny.id,
+                id_serie: itemAny.id_serie,
+                id_treino: itemAny.id_treino,
+                repeticoes: serieData.repeticoes || (serieData as any).repetitions || 0,
+                carga: (serieData as any).peso || (serieData as any).weight || serieData.carga || 0,
+                descanso: itemAny.descanso || itemAny.tempo_descanso || 60
+              });
+            } catch (serieErr) {
+              console.warn(`⚠️ Erro ao buscar série ${itemAny.id_serie}:`, serieErr);
+              // Adicionar mesmo sem detalhes da série
+              exerciciosCompletos.push({
+                id_exercicio: itemAny.id_exercicio,
+                id_exercicio_treino_serie: itemAny.id,
+                id_serie: itemAny.id_serie,
+                id_treino: itemAny.id_treino,
+                repeticoes: 0,
+                carga: 0,
+                descanso: itemAny.descanso || itemAny.tempo_descanso || 60
+              });
+            }
+          } else {
+            // Se não tiver id_serie, adicionar mesmo assim
+            exerciciosCompletos.push({
+              id_exercicio: itemAny.id_exercicio,
+              id_exercicio_treino_serie: itemAny.id,
+              id_treino: itemAny.id_treino,
+              repeticoes: 0,
+              carga: 0,
+              descanso: itemAny.descanso || itemAny.tempo_descanso || 60
+            });
+          }
+        }
       } catch (err) {
-        console.warn('⚠️ Erro ao buscar exercícios do treino, usando dados do treino:', err);
-        // Se falhar, tentar usar os dados do próprio treino
-        exerciciosCompletos = workout.exercicios || workout.exercicio || [];
+        console.warn('⚠️ Erro ao buscar exercicio_treino, tentando buscarExercicioByTreino:', err);
+        
+        // Fallback: tentar buscarExercicioByTreino
+        try {
+          const exerciciosResponse = await exTreinoSerieService.buscarExercicioByTreino(workoutId);
+          const exerciciosResponseAny = exerciciosResponse as any;
+          const exerciciosData = exerciciosResponseAny.exercicio || exerciciosResponse.exercicio_treino_serie || exerciciosResponse.exercicios_treino_serie || [];
+          exerciciosCompletos = Array.isArray(exerciciosData) ? exerciciosData : [];
+          console.log('💪 Exercícios encontrados (buscarExercicioByTreino):', exerciciosCompletos);
+        } catch (err2) {
+          console.warn('⚠️ Erro ao buscar exercícios do treino, usando dados do treino:', err2);
+          // Se falhar, tentar usar os dados do próprio treino
+          exerciciosCompletos = workout.exercicios || workout.exercicio || [];
+        }
       }
       
       // Agrupar exercícios e suas séries
       const exerciciosAgrupados = exerciciosCompletos.reduce((acc: any, item: any) => {
-        const exId = item.id_exercicio || item.id_exercicio_treino_serie;
+        const exId = item.id_exercicio || item.id_exercicio_treino_serie || item.id;
+        if (!exId) {
+          console.warn('⚠️ Item sem ID de exercício:', item);
+          return acc;
+        }
+        
         if (!acc[exId]) {
           acc[exId] = {
             id_exercicio: exId,
-            descanso: item.descanso || item.tempo_descanso || 60,
+            descanso: item.descanso || item.tempo_descanso || item.tempo_descanso_segundos || 60,
             series: []
           };
         }
         
-        // Adicionar série se tiver dados
-        if (item.id_serie) {
-          // Buscar dados da série se necessário
+        // Adicionar série se tiver dados de repeticoes ou carga
+        const hasRepeticoes = item.repeticoes !== undefined && item.repeticoes !== null;
+        const hasCarga = item.carga !== undefined && item.carga !== null;
+        const hasIdSerie = item.id_serie !== undefined && item.id_serie !== null;
+        const hasPeso = item.peso !== undefined && item.peso !== null;
+        
+        if (hasIdSerie || hasRepeticoes || hasCarga || hasPeso) {
           acc[exId].series.push({
-            repeticoes: item.repeticoes || 0,
-            carga: item.carga || 0
+            repeticoes: item.repeticoes !== undefined && item.repeticoes !== null 
+              ? item.repeticoes 
+              : (item.reps || item.repeticao || item.repetitions || 0),
+            carga: item.carga !== undefined && item.carga !== null 
+              ? item.carga 
+              : (item.peso || item.weight || item.carga_kg || item.load || 0)
           });
         }
         
@@ -707,6 +780,8 @@ const Treinos: React.FC = () => {
       }, {});
       
       const exerciciosFormatados = Object.values(exerciciosAgrupados);
+      
+      console.log('✅ Exercícios formatados:', exerciciosFormatados);
       
       // Salvar detalhes
       setWorkoutDetails(prev => ({
@@ -907,15 +982,6 @@ const Treinos: React.FC = () => {
 
   return (
     <Container>
-      <PageActionsBar>
-        <SavedToggleBigButton
-          onClick={() => setShowSavedPanel(true)}
-          whileHover={{ scale: 1.03, y: -1 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          Treinos Salvos
-        </SavedToggleBigButton>
-      </PageActionsBar>
       <PageWrapper
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1192,17 +1258,22 @@ const Treinos: React.FC = () => {
                                 console.log('📋 Exercícios:', workoutData.exercicios);
                                 console.log('📋 Exercício (singular):', workoutData.exercicio);
                                 
-                                // Tentar diferentes campos possíveis
+                                // Tentar diferentes campos possíveis para exercícios
                                 const exercicios = workoutData.exercicios || workoutData.exercicio || workoutData.exercicio_treino_serie || [];
-                                const notas = workoutData.notas || workoutData.descricao || workoutData.observacoes || '';
+                                
+                                // Tentar diferentes campos possíveis para notas/conteúdo salvo
+                                const notas = workoutData.notas || workoutData.descricao || workoutData.observacoes || workoutData.conteudo || '';
                                 
                                 return (
                                   <>
-                                    {notas && (
+                                    {/* Conteúdo Salvo (Notas) */}
+                                    {notas && notas.trim() !== '' && (
                                       <SavedWorkoutNotes>
-                                        <strong>Notas:</strong> {notas}
+                                        <strong>Conteúdo Salvo:</strong> {notas}
                                       </SavedWorkoutNotes>
                                     )}
+                                    
+                                    {/* Exercícios */}
                                     {Array.isArray(exercicios) && exercicios.length > 0 ? (
                                       <SavedWorkoutExercisesList>
                                         <strong>Exercícios ({exercicios.length}):</strong>
@@ -1210,13 +1281,19 @@ const Treinos: React.FC = () => {
                                           try {
                                             console.log(`📦 Exercício ${idx}:`, ex);
                                             
+                                            // Identificar o ID do exercício
                                             const exId = ex.id_exercicio || ex.id_exercicio_treino_serie || ex.id;
+                                            
+                                            // Buscar informações completas do exercício
                                             const fullExercise = exercises.find(e => e.id === String(exId));
-                                            const exerciseName = fullExercise ? fullExercise.name : `Exercício ${exId || idx + 1}`;
+                                            const exerciseName = fullExercise ? fullExercise.name : (ex.nome || ex.name || `Exercício ${exId || idx + 1}`);
                                             
                                             // Tentar diferentes campos para séries
+                                            // handleViewWorkout cria: { id_exercicio, descanso, series: [{ repeticoes, carga }] }
                                             const series = ex.series || ex.serie || ex.series_data || [];
-                                            const restTime = ex.descanso || ex.restTime || ex.tempo_descanso || 60;
+                                            
+                                            // Tentar diferentes campos para tempo de descanso
+                                            const restTime = ex.descanso || ex.restTime || ex.tempo_descanso || ex.tempo_descanso_segundos || 60;
                                             
                                             console.log(`  - Nome: ${exerciseName}`);
                                             console.log(`  - Séries:`, series);
@@ -1226,30 +1303,32 @@ const Treinos: React.FC = () => {
                                               <SavedWorkoutExerciseCard key={idx}>
                                                 <SavedWorkoutExerciseHeader>
                                                   <SavedWorkoutExerciseName>{exerciseName}</SavedWorkoutExerciseName>
-                                                  {restTime && (
+                                                  {restTime && restTime > 0 && (
                                                     <SavedWorkoutRestTime>
                                                       <FiClock /> {restTime}s
                                                     </SavedWorkoutRestTime>
                                                   )}
                                                 </SavedWorkoutExerciseHeader>
                                                 
+                                                {/* Descrição do exercício (se disponível) */}
                                                 {(() => {
-                                                  // Descrição do exercício (se disponível)
                                                   const possibleDesc = [
                                                     fullExercise?.description,
                                                     ex.descricao,
                                                     ex.description,
                                                     ex.obs,
-                                                    ex.observacoes
-                                                  ]
-                                                  const desc = possibleDesc.find((v: any) => typeof v === 'string' && v.trim() !== '')
+                                                    ex.observacoes,
+                                                    ex.conteudo
+                                                  ];
+                                                  const desc = possibleDesc.find((v: any) => typeof v === 'string' && v.trim() !== '');
                                                   return desc ? (
                                                     <SavedWorkoutExerciseDescription>
                                                       {String(desc)}
                                                     </SavedWorkoutExerciseDescription>
-                                                  ) : null
+                                                  ) : null;
                                                 })()}
                                                 
+                                                {/* Séries */}
                                                 {Array.isArray(series) && series.length > 0 ? (
                                                   <SavedWorkoutSeriesTable>
                                                     <thead>
@@ -1260,18 +1339,26 @@ const Treinos: React.FC = () => {
                                                       </tr>
                                                     </thead>
                                                     <tbody>
-                                                      {series.map((serie: any, serieIdx: number) => (
-                                                        <tr key={serieIdx}>
-                                                          <td>{serieIdx + 1}</td>
-                                                          <td>{serie.repeticoes || serie.reps || serie.repeticao || '-'}</td>
-                                                          <td>{serie.carga || serie.weight || serie.carga_kg || '-'}</td>
-                                                        </tr>
-                                                      ))}
+                                                      {series.map((serie: any, serieIdx: number) => {
+                                                        // Tentar diferentes campos para repeticoes e carga
+                                                        const repeticoes = serie.repeticoes || serie.reps || serie.repeticao || serie.repetitions || '-';
+                                                        const carga = serie.carga !== undefined && serie.carga !== null 
+                                                          ? serie.carga 
+                                                          : (serie.weight || serie.carga_kg || serie.load || '-');
+                                                        
+                                                        return (
+                                                          <tr key={serieIdx}>
+                                                            <td>{serieIdx + 1}</td>
+                                                            <td>{repeticoes}</td>
+                                                            <td>{carga}</td>
+                                                          </tr>
+                                                        );
+                                                      })}
                                                     </tbody>
                                                   </SavedWorkoutSeriesTable>
                                                 ) : (
                                                   <SavedWorkoutNoSeries>
-                                                    Nenhuma série configurada
+                                                    Nenhuma série configurada para este exercício
                                                   </SavedWorkoutNoSeries>
                                                 )}
                                               </SavedWorkoutExerciseCard>
@@ -1281,7 +1368,7 @@ const Treinos: React.FC = () => {
                                             return (
                                               <SavedWorkoutExerciseCard key={idx}>
                                                 <SavedWorkoutNoSeries>
-                                                  Erro ao carregar exercício
+                                                  Erro ao carregar exercício: {err instanceof Error ? err.message : 'Erro desconhecido'}
                                                 </SavedWorkoutNoSeries>
                                               </SavedWorkoutExerciseCard>
                                             );
@@ -1300,6 +1387,7 @@ const Treinos: React.FC = () => {
                                 return (
                                   <SavedWorkoutNoSeries>
                                     Erro ao carregar detalhes do treino. Tente novamente.
+                                    {err instanceof Error && ` (${err.message})`}
                                   </SavedWorkoutNoSeries>
                                 );
                               }
@@ -1459,48 +1547,6 @@ const Container = styled.div`
   }
 `;
 
-const PageActionsBar = styled.div`
-  max-width: 95%;
-  margin: 0 auto 1rem auto;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 1rem;
-
-  @media (max-width: 1024px) {
-    max-width: 100%;
-    padding: 0 0.25rem;
-  }
-`;
-
-const SavedToggleBigButton = styled(motion.button)`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 1.75rem;
-  border-radius: 9999px;
-  background: linear-gradient(135deg, #E30613, #B91C1C);
-  color: #fff;
-  border: 1px solid rgba(227, 6, 19, 0.45);
-  box-shadow: 0 10px 28px rgba(227, 6, 19, 0.35);
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    filter: brightness(1.06);
-    transform: translateY(-2px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  @media (max-width: 480px) {
-    width: 100%;
-  }
-`;
 
 const RightTopActions = styled.div`
   display: flex;

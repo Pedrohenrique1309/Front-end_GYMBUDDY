@@ -556,25 +556,30 @@ const Message = styled.div`
       h1, h2, h3, h4, h5, h6 {
         margin: 1rem 0 0.5rem 0;
         font-weight: 600;
+        font-size: 2.5rem;
       }
       
       p {
         margin: 0.5rem 0;
         line-height: 1.6;
+        font-size: 2.5rem;
       }
       
       ul, ol {
         margin: 0.5rem 0;
         padding-left: 2rem;
+        font-size: 2.5rem;
       }
       
       li {
         margin: 0.3rem 0;
+        font-size: 2.5rem;
       }
       
       strong {
         color: var(--primary);
         font-weight: 600;
+        font-size: 2.5rem;
       }
       
       code {
@@ -582,6 +587,7 @@ const Message = styled.div`
         padding: 0.2rem 0.4rem;
         border-radius: 0.3rem;
         font-family: monospace;
+        font-size: 2.5rem;
       }
     }
     
@@ -602,7 +608,7 @@ const Message = styled.div`
     padding: 1rem 1.5rem;
     border-radius: 1rem;
     max-width: 80%;
-    font-size: 1.4rem;
+    font-size: 2.5rem;
   }
   
   .time {
@@ -624,7 +630,7 @@ const Message = styled.div`
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 1rem;
-      font-size: 1.2rem;
+      font-size: 1.6rem;
       cursor: pointer;
       transition: all 0.3s ease;
       
@@ -654,7 +660,7 @@ const SugestoesRapidas = styled.div`
     color: white;
     padding: 0.8rem 1.5rem;
     border-radius: 2rem;
-    font-size: 1.3rem;
+    font-size: 1.7rem;
     cursor: pointer;
     transition: all 0.3s ease;
     
@@ -681,7 +687,7 @@ const InputArea = styled.div`
     background: transparent;
     border: none;
     color: white;
-    font-size: 1.4rem;
+    font-size: 1.8rem;
     padding: 0.5rem;
     
     &::placeholder {
