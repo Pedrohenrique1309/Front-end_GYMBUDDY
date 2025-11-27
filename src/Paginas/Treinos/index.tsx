@@ -278,6 +278,7 @@ const Treinos: React.FC = () => {
   const [workoutDetails, setWorkoutDetails] = useState<Record<string | number, any>>({})
   const [loadingWorkoutDetails, setLoadingWorkoutDetails] = useState<Record<string | number, boolean>>({})
   const [showSavedPanel, setShowSavedPanel] = useState(false)
+  const [selectedExerciseDetail, setSelectedExerciseDetail] = useState<Exercise | null>(null)
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
@@ -573,6 +574,15 @@ const Treinos: React.FC = () => {
     // Pode adicionar lógica para recarregar exercícios disponíveis se necessário
   };
 
+  const handleOpenExerciseDetail = (exercise: Exercise | null | undefined) => {
+    if (!exercise) return;
+    setSelectedExerciseDetail(exercise);
+  };
+
+  const handleCloseExerciseDetail = () => {
+    setSelectedExerciseDetail(null);
+  };
+
   // Função para carregar treino para edição
   const handleLoadWorkoutForEdit = async (workoutId: string | number) => {
     try {
@@ -826,8 +836,20 @@ const Treinos: React.FC = () => {
     try {
       setDeletingWorkoutId(workoutId);
       await treinoService.excluirTreino(workoutId);
+
+      // Atualizar imediatamente o estado local para remover o treino da lista
+      setSavedWorkouts(prev =>
+        prev.filter((w: any) => String(w.id) !== String(workoutId))
+      );
+      setViewingWorkoutId(prev => (prev === workoutId ? null : prev));
+      setEditingWorkoutId(prev => (prev === workoutId ? null : prev));
+      setWorkoutDetails(prev => {
+        const copy: any = { ...prev };
+        delete copy[workoutId as any];
+        return copy;
+      });
       
-      // Recarregar lista de treinos
+      // Recarregar lista de treinos do backend para garantir sincronização
       try {
         if (user?.id) {
           const searchId = String(user.id);
@@ -857,24 +879,13 @@ const Treinos: React.FC = () => {
       alert('Por favor, adicione um título ao treino');
       return;
     }
-    if (currentWorkout.exercises.length === 0) {
-      alert('Adicione pelo menos um exercício ao treino');
-      return;
-    }
-    
     console.log('🔍 Estado atual do treino antes de salvar:', currentWorkout);
     
     try {
-      // Validar dados dos exercícios
-      const invalidExercises = currentWorkout.exercises.filter(ex => 
-        !ex.exercise.id || ex.sets.length === 0
+      // Validar dados dos exercícios, permitindo que exercícios sem séries sejam ignorados
+      const validExercises = currentWorkout.exercises.filter(ex => 
+        ex.exercise.id && ex.sets.length > 0
       );
-      
-      if (invalidExercises.length > 0) {
-        console.error('❌ Exercícios inválidos encontrados:', invalidExercises);
-        alert('Alguns exercícios estão sem ID ou sem séries configuradas');
-        return;
-      }
 
       // 📝 Obter ID do usuário do contexto autenticado
       if (!user || !user.id) {
@@ -882,11 +893,11 @@ const Treinos: React.FC = () => {
         return;
       }
       
-      // montar payload EXATAMENTE como o backend espera
+      // montar payload EXATAMENTE como o backend espera, usando apenas exercícios válidos (se houver)
       const payload = {
         nome: currentWorkout.title,        // ✅ Backend espera "nome", não "titulo"
         id_user: parseInt(String(user.id)),  // ✅ Campo obrigatório obtido do contexto autenticado!
-        exercicio: currentWorkout.exercises.map(ex => ({ // ✅ "exercicio" singular, não "exercicios"
+        exercicio: validExercises.map(ex => ({ // ✅ "exercicio" singular, não "exercicios"
           id_exercicio: parseInt(ex.exercise.id) || ex.exercise.id,
           descanso: ex.restTime || 60,
           series: ex.sets.map(s => ({ 
@@ -914,7 +925,83 @@ const Treinos: React.FC = () => {
       // backend pode retornar o treino criado em diferentes formatos
       const created = res.treino ?? res.treinos ?? res
       // se retornar id, atribuir ao estado
-      if (res.status) {
+      const isSuccess = res.status === true || res.status_code === 200
+
+      if (isSuccess) {
+        const isNewWorkout = !currentWorkout.id
+        const treinoCriado: any = Array.isArray(created) ? created[0] : created
+        const treinoId = isNewWorkout
+          ? treinoCriado?.id
+          : parseInt(String(currentWorkout.id))
+
+        if (treinoId) {
+          // Se for atualização, limpar relações antigas (exercicio_treino + séries)
+          if (!isNewWorkout) {
+            try {
+              const relRes: any = await exTreinoSerieService.listarExercicioTreinoSerie()
+              const allRelations = relRes.exercicio_treino_serie || relRes.exercicios_treino_serie || []
+              const relationsDoTreino = Array.isArray(allRelations)
+                ? allRelations.filter((item: any) => String(item.id_treino) === String(treinoId))
+                : []
+
+              for (const rel of relationsDoTreino) {
+                const relId = (rel as any).id
+                const serieId = (rel as any).id_serie
+
+                if (relId) {
+                  try {
+                    await exTreinoSerieService.excluirExercicioTreinoSerie(relId)
+                  } catch (e) {
+                    console.warn('⚠️ Erro ao excluir exercicio_treino antigo', relId, e)
+                  }
+                }
+
+                if (serieId) {
+                  try {
+                    await serieService.excluirSerie(serieId)
+                  } catch (e) {
+                    console.warn('⚠️ Erro ao excluir série antiga', serieId, e)
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('⚠️ Erro ao limpar relações antigas de exercicio_treino', e)
+            }
+          }
+
+          // Criar relações atuais (novo ou atualizado) apenas para exercícios válidos
+          const exercisesForRelations = currentWorkout.exercises.filter(ex => 
+            ex.exercise.id && ex.sets.length > 0
+          );
+
+          for (const ex of exercisesForRelations) {
+            const idExercicio = parseInt(ex.exercise.id) || ex.exercise.id
+
+            const seriesPayload = ex.sets.map(s => ({
+              repeticoes: s.reps || 0,
+              carga: s.weight || 0,
+            }))
+
+            try {
+              await exTreinoSerieService.inserirExercicioTreinoSerie({
+                id_treino: treinoId,
+                id_exercicio: idExercicio,
+                // @ts-expect-error: o backend aceita "series" mesmo não estando tipado em todos os lugares
+                series: seriesPayload,
+              })
+            } catch (err) {
+              console.error('❌ Erro ao criar relação exercicio_treino para exercício', ex, err)
+            }
+          }
+
+          // Após salvar/atualizar, limpar detalhes em cache para este treino
+          setWorkoutDetails(prev => {
+            const copy: any = { ...prev }
+            delete copy[treinoId as any]
+            return copy
+          })
+        }
+
         setCurrentWorkout({ title: '', notes: '', exercises: [] })
         setEditingWorkoutId(null)
         setShowSuccessMessage(true)
@@ -1024,7 +1111,7 @@ const Treinos: React.FC = () => {
                   >
                     <ExerciseGifWithFallback src={exerciseItem.exercise.gifUrl} alt={exerciseItem.exercise.name} />
                     <ExerciseInfo>
-                      <ExerciseName>{exerciseItem.exercise.name}</ExerciseName>
+                      <ExerciseName onClick={() => handleOpenExerciseDetail(exerciseItem.exercise)}>{exerciseItem.exercise.name}</ExerciseName>
                       <MusclesContainer>
                         {exerciseItem.exercise.muscles.map((muscle, idx) => (
                           <MuscleTag key={idx}>{muscle}</MuscleTag>
@@ -1302,7 +1389,15 @@ const Treinos: React.FC = () => {
                                             return (
                                               <SavedWorkoutExerciseCard key={idx}>
                                                 <SavedWorkoutExerciseHeader>
-                                                  <SavedWorkoutExerciseName>{exerciseName}</SavedWorkoutExerciseName>
+                                                  <SavedWorkoutExerciseName
+                                                    onClick={() => {
+                                                      if (fullExercise) {
+                                                        handleOpenExerciseDetail(fullExercise)
+                                                      }
+                                                    }}
+                                                  >
+                                                    {exerciseName}
+                                                  </SavedWorkoutExerciseName>
                                                   {restTime && restTime > 0 && (
                                                     <SavedWorkoutRestTime>
                                                       <FiClock /> {restTime}s
@@ -1484,14 +1579,19 @@ const Treinos: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3, delay: index * 0.03 }}
-                      onClick={() => handleAddExerciseToWorkout(exercise)}
+                      onClick={() => handleOpenExerciseDetail(exercise)}
                     >
                       <ExerciseLibraryGifWithFallback src={exercise.gifUrl} alt={exercise.name} />
                       <ExerciseLibraryInfo>
                         <ExerciseLibraryName>{exercise.name}</ExerciseLibraryName>
                         <ExerciseLibraryTarget>{exercise.target}</ExerciseLibraryTarget>
                       </ExerciseLibraryInfo>
-                      <AddIcon>
+                      <AddIcon
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleAddExerciseToWorkout(exercise)
+                        }}
+                      >
                         <FiPlus />
                       </AddIcon>
                     </ExerciseLibraryItem>
@@ -1509,6 +1609,71 @@ const Treinos: React.FC = () => {
           </ExercisesLibrary>
         </RightColumn>
       </PageWrapper>
+
+      <AnimatePresence>
+        {selectedExerciseDetail && (
+          <ExerciseDetailOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCloseExerciseDetail}
+          >
+            <ExerciseDetailModal
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExerciseDetailHeader>
+                <ExerciseDetailTitle>{selectedExerciseDetail.name}</ExerciseDetailTitle>
+                <ExerciseDetailMeta>
+                  <span>{selectedExerciseDetail.bodyPart}</span>
+                  <span>•</span>
+                  <span>{selectedExerciseDetail.target}</span>
+                  <span>•</span>
+                  <span>{selectedExerciseDetail.equipment}</span>
+                </ExerciseDetailMeta>
+              </ExerciseDetailHeader>
+
+              <ExerciseDetailContent>
+                <ExerciseDetailGifWrapper>
+                  <ExerciseGifWithFallback
+                    src={selectedExerciseDetail.gifUrl}
+                    alt={selectedExerciseDetail.name}
+                    width="360px"
+                    height="360px"
+                  />
+                </ExerciseDetailGifWrapper>
+
+                <ExerciseDetailInfo>
+                  {selectedExerciseDetail.description && (
+                    <ExerciseDetailDescription>
+                      {selectedExerciseDetail.description}
+                    </ExerciseDetailDescription>
+                  )}
+                  {selectedExerciseDetail.muscles && selectedExerciseDetail.muscles.length > 0 && (
+                    <ExerciseDetailMuscles>
+                      {selectedExerciseDetail.muscles.map((muscle) => (
+                        <ExerciseDetailMuscleTag key={muscle}>{muscle}</ExerciseDetailMuscleTag>
+                      ))}
+                    </ExerciseDetailMuscles>
+                  )}
+                </ExerciseDetailInfo>
+              </ExerciseDetailContent>
+
+              <ExerciseDetailCloseButton
+                onClick={handleCloseExerciseDetail}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FiX />
+                <span>Fechar</span>
+              </ExerciseDetailCloseButton>
+            </ExerciseDetailModal>
+          </ExerciseDetailOverlay>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
 
@@ -2311,21 +2476,6 @@ const SetsTable = styled.table`
       &:hover {
         background: rgba(255, 255, 255, 0.03);
       }
-
-      [data-theme="light"] & {
-        &:hover {
-          background: rgba(0, 0, 0, 0.02);
-        }
-      }
-
-      td {
-        padding: 1rem;
-        color: white;
-        font-size: 1.6rem;
-
-        &:first-child {
-          color: rgba(255, 255, 255, 0.6);
-          font-weight: 600;
           font-size: 1.7rem;
         }
       }
@@ -2777,6 +2927,158 @@ const EmptyState = styled.div`
 
   [data-theme="light"] & {
     color: rgba(0, 0, 0, 0.3);
+  }
+`;
+
+const ExerciseDetailOverlay = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9990;
+`;
+
+const ExerciseDetailModal = styled(motion.div)`
+  width: 100%;
+  max-width: 900px;
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 2rem 2.5rem;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+
+  [data-theme="light"] & {
+    background: #ffffff;
+    border-color: rgba(15, 23, 42, 0.12);
+  }
+`;
+
+const ExerciseDetailHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const ExerciseDetailTitle = styled.h2`
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0;
+
+  [data-theme="light"] & {
+    color: #0f172a;
+  }
+`;
+
+const ExerciseDetailMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.9);
+
+  span:nth-child(2n) {
+    color: rgba(148, 163, 184, 0.6);
+  }
+
+  [data-theme="light"] & {
+    color: rgba(71, 85, 105, 0.9);
+  }
+`;
+
+const ExerciseDetailContent = styled.div`
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.75rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ExerciseDetailGifWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ExerciseDetailInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ExerciseDetailDescription = styled.p`
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #e5e7eb;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+
+  [data-theme="light"] & {
+    color: #111827;
+    background: #f9fafb;
+    border-color: rgba(15, 23, 42, 0.08);
+  }
+`;
+
+const ExerciseDetailMuscles = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+`;
+
+const ExerciseDetailMuscleTag = styled.span`
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #bfdbfe;
+
+  [data-theme="light"] & {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.35);
+    color: #1d4ed8;
+  }
+`;
+
+const ExerciseDetailCloseButton = styled(motion.button)`
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.3rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+
+  svg {
+    font-size: 1.1rem;
+  }
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.95);
+  }
+
+  [data-theme="light"] & {
+    background: #f9fafb;
+    color: #111827;
+    border-color: rgba(15, 23, 42, 0.12);
   }
 `;
 
