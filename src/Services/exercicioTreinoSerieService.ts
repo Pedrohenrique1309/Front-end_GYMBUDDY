@@ -20,6 +20,10 @@ export interface ExercicioTreinoSerieResponse {
   status: boolean
   status_code: number
   message?: string
+  // Novos nomes de coleção baseados em exercicio_treino
+  exercicio_treino?: ExercicioTreinoSeriePayload[]
+  exercicios_treino?: ExercicioTreinoSeriePayload[]
+  // Nomes antigos mantidos por compatibilidade
   exercicio_treino_serie?: ExercicioTreinoSeriePayload[]
   exercicios_treino_serie?: ExercicioTreinoSeriePayload[]
 }
@@ -86,9 +90,9 @@ export const buscarExercicioByTreino = async (id_treino: string | number): Promi
 
 export const excluirExercicioTreinoSerie = async (id: string | number): Promise<ExercicioTreinoSerieResponse> => {
   try {
-    console.log('🗑️ Excluindo exercício-treino-série:', id)
+    console.log('🗑️ Excluindo exercício_treino (relação treino-exercício):', id)
     const response = await api.delete(`/v1/gymbuddy/exercicio_treino/${id}`)
-    console.log('✅ Exercício-treino-série excluído com sucesso:', response.data)
+    console.log('✅ exercício_treino excluído com sucesso via /exercicio_treino:', response.data)
     return response.data
   } catch (error: any) {
     console.error('❌ Erro ao excluir exercício-treino-série:', error)

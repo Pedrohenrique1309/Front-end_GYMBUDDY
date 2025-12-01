@@ -6,9 +6,10 @@ import { FaDumbbell } from 'react-icons/fa';
 import { useUser } from '../../Contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import * as treinoService from '../../Services/treinoService'
-import * as serieService from '../../Services/serieService'
-import * as exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
 import * as exercicioService from '../../Services/exercicioService'
+import api from '../../Services/api'
+import exTreinoSerieService from '../../Services/exercicioTreinoSerieService'
+import serieService from '../../Services/serieService'
 //import ExerciseManager from '../../Componentes/ExerciseManager'
 //import SeriesManager from '../../Componentes/SeriesManager'
 
@@ -554,11 +555,38 @@ const Treinos: React.FC = () => {
     }));
   };
 
-  const handleRemoveExercise = (exerciseId: string) => {
-    setCurrentWorkout(prev => ({ ...prev, exercises: prev.exercises.filter(ex => ex.id !== exerciseId) }));
-    if (selectedExerciseForWorkout?.id === exerciseId) {
-      setSelectedExerciseForWorkout(null);
+  const handleRemoveExercise = async (exerciseId: string) => {
+    const exerciseToRemove = currentWorkout.exercises.find(ex => ex.id === exerciseId);
+
+    // Se estiver editando treino salvo, remover do backend usando a conexão exerciciotreino
+    if (currentWorkout.id && exerciseToRemove?.exercise?.id) {
+      try {
+        const relRes = await exTreinoSerieService.buscarExercicioByTreino(currentWorkout.id);
+        const allRelations =
+          relRes.exercicio_treino ||
+          relRes.exercicios_treino ||
+          relRes.exercicio_treino_serie ||
+          relRes.exercicios_treino_serie ||
+          [];
+
+        const toDelete = (Array.isArray(allRelations) ? allRelations : []).filter(
+          (r: any) => String(r.id_exercicio) === String(exerciseToRemove.exercise.id)
+        );
+
+        for (const rel of toDelete) {
+          if (rel.id) {
+            // DELETE /v1/gymbuddy/exercicio_treino/:id com o id da conexão
+            await exTreinoSerieService.excluirExercicioTreinoSerie(rel.id);
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao remover exercício do backend:', err);
+      }
     }
+
+    // Remover do estado local
+    setCurrentWorkout(prev => ({ ...prev, exercises: prev.exercises.filter(ex => ex.id !== exerciseId) }));
+    if (selectedExerciseForWorkout?.id === exerciseId) setSelectedExerciseForWorkout(null);
   };
 
   const handleUpdateRestTime = (exerciseId: string, restTime: number) => {
@@ -687,7 +715,12 @@ const Treinos: React.FC = () => {
       try {
         // Buscar todos os exercicio_treino para este treino
         const exercicioTreinoResponse = await exTreinoSerieService.listarExercicioTreinoSerie();
-        const allExercicioTreino = exercicioTreinoResponse.exercicio_treino_serie || exercicioTreinoResponse.exercicios_treino_serie || [];
+        const allExercicioTreino =
+          exercicioTreinoResponse.exercicio_treino ||
+          exercicioTreinoResponse.exercicios_treino ||
+          exercicioTreinoResponse.exercicio_treino_serie ||
+          exercicioTreinoResponse.exercicios_treino_serie ||
+          [];
         const exerciciosDoTreino = Array.isArray(allExercicioTreino) 
           ? allExercicioTreino.filter((item: any) => String(item.id_treino) === String(workoutId))
           : [];
@@ -879,182 +912,116 @@ const Treinos: React.FC = () => {
       alert('Por favor, adicione um título ao treino');
       return;
     }
-    console.log('🔍 Estado atual do treino antes de salvar:', currentWorkout);
-    
+
+    if (!user?.id) {
+      alert('Usuário não autenticado. Faça login para salvar treinos.');
+      return;
+    }
+
     try {
-      // Validar dados dos exercícios, permitindo que exercícios sem séries sejam ignorados
-      const validExercises = currentWorkout.exercises.filter(ex => 
-        ex.exercise.id && ex.sets.length > 0
-      );
-
-      // 📝 Obter ID do usuário do contexto autenticado
-      if (!user || !user.id) {
-        alert('Usuário não autenticado. Faça login para salvar treinos.');
-        return;
-      }
-      
-      // montar payload EXATAMENTE como o backend espera, usando apenas exercícios válidos (se houver)
-      const payload = {
-        nome: currentWorkout.title,        // ✅ Backend espera "nome", não "titulo"
-        id_user: parseInt(String(user.id)),  // ✅ Campo obrigatório obtido do contexto autenticado!
-        exercicio: validExercises.map(ex => ({ // ✅ "exercicio" singular, não "exercicios"
-          id_exercicio: parseInt(ex.exercise.id) || ex.exercise.id,
-          descanso: ex.restTime || 60,
-          series: ex.sets.map(s => ({ 
-            repeticoes: s.reps || 0, 
-            carga: s.weight || 0 
-          }))
-        }))
+      const treinoPayload = {
+        nome: currentWorkout.title,
+        id_user: parseInt(String(user.id)),
+        is_ia_generated: 0,
       };
-      
-      console.log('✅ Payload corrigido para corresponder ao backend:', {
-        camposEsperados: ['nome', 'id_user', 'exercicio'],
-        camposEnviados: Object.keys(payload),
-        payloadCompleto: payload
-      });
-      
-      console.log('📤 Payload que será enviado:', JSON.stringify(payload, null, 2));
 
-      let res
+      let treinoId: number;
+
       if (currentWorkout.id) {
-        res = await treinoService.atualizarTreino(currentWorkout.id, payload)
+        await treinoService.atualizarTreino(currentWorkout.id, treinoPayload);
+        treinoId = parseInt(String(currentWorkout.id));
       } else {
-        res = await treinoService.inserirTreino(payload)
+        const res = await treinoService.inserirTreino(treinoPayload);
+        let createdTreino: any = null;
+
+        const maybeTreino: any = (res as any).treino;
+        const maybeTreinos: any = (res as any).treinos;
+
+        if (Array.isArray(maybeTreino) && maybeTreino.length > 0) {
+          createdTreino = maybeTreino[0];
+        } else if (maybeTreino && typeof maybeTreino === 'object') {
+          createdTreino = maybeTreino;
+        } else if (Array.isArray(maybeTreinos) && maybeTreinos.length > 0) {
+          createdTreino = maybeTreinos[0];
+        } else if (maybeTreinos && typeof maybeTreinos === 'object') {
+          createdTreino = maybeTreinos;
+        } else {
+          createdTreino = res as any;
+        }
+
+        treinoId = parseInt(String(createdTreino?.id));
       }
 
-      // backend pode retornar o treino criado em diferentes formatos
-      const created = res.treino ?? res.treinos ?? res
-      // se retornar id, atribuir ao estado
-      const isSuccess = res.status === true || res.status_code === 200
+      if (!treinoId || Number.isNaN(treinoId)) {
+        throw new Error('ID do treino não retornado');
+      }
 
-      if (isSuccess) {
-        const isNewWorkout = !currentWorkout.id
-        const treinoCriado: any = Array.isArray(created) ? created[0] : created
-        const treinoId = isNewWorkout
-          ? treinoCriado?.id
-          : parseInt(String(currentWorkout.id))
+      // 2. Limpar vínculos antigos se for edição
+      if (currentWorkout.id) {
+        try {
+          const relRes = await exTreinoSerieService.listarExercicioTreinoSerie();
+          const allRelations =
+            relRes.exercicio_treino ||
+            relRes.exercicios_treino ||
+            relRes.exercicio_treino_serie ||
+            relRes.exercicios_treino_serie ||
+            [];
 
-        if (treinoId) {
-          // Se for atualização, limpar relações antigas (exercicio_treino + séries)
-          if (!isNewWorkout) {
-            try {
-              const relRes: any = await exTreinoSerieService.listarExercicioTreinoSerie()
-              const allRelations = relRes.exercicio_treino_serie || relRes.exercicios_treino_serie || []
-              const relationsDoTreino = Array.isArray(allRelations)
-                ? allRelations.filter((item: any) => String(item.id_treino) === String(treinoId))
-                : []
-
-              for (const rel of relationsDoTreino) {
-                const relId = (rel as any).id
-                const serieId = (rel as any).id_serie
-
-                if (relId) {
-                  try {
-                    await exTreinoSerieService.excluirExercicioTreinoSerie(relId)
-                  } catch (e) {
-                    console.warn('⚠️ Erro ao excluir exercicio_treino antigo', relId, e)
-                  }
-                }
-
-                if (serieId) {
-                  try {
-                    await serieService.excluirSerie(serieId)
-                  } catch (e) {
-                    console.warn('⚠️ Erro ao excluir série antiga', serieId, e)
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn('⚠️ Erro ao limpar relações antigas de exercicio_treino', e)
-            }
-          }
-
-          // Criar relações atuais (novo ou atualizado) apenas para exercícios válidos
-          const exercisesForRelations = currentWorkout.exercises.filter(ex => 
-            ex.exercise.id && ex.sets.length > 0
+          const oldRelations = (Array.isArray(allRelations) ? allRelations : []).filter(
+            (r: any) => String(r.id_treino) === String(treinoId)
           );
 
-          for (const ex of exercisesForRelations) {
-            const idExercicio = parseInt(ex.exercise.id) || ex.exercise.id
-
-            const seriesPayload = ex.sets.map(s => ({
-              repeticoes: s.reps || 0,
-              carga: s.weight || 0,
-            }))
-
-            try {
-              await exTreinoSerieService.inserirExercicioTreinoSerie({
-                id_treino: treinoId,
-                id_exercicio: idExercicio,
-                // @ts-expect-error: o backend aceita "series" mesmo não estando tipado em todos os lugares
-                series: seriesPayload,
-              })
-            } catch (err) {
-              console.error('❌ Erro ao criar relação exercicio_treino para exercício', ex, err)
+          for (const rel of oldRelations) {
+            if (rel.id) {
+              await exTreinoSerieService.excluirExercicioTreinoSerie(rel.id);
             }
           }
-
-          // Após salvar/atualizar, limpar detalhes em cache para este treino
-          setWorkoutDetails(prev => {
-            const copy: any = { ...prev }
-            delete copy[treinoId as any]
-            return copy
-          })
-        }
-
-        setCurrentWorkout({ title: '', notes: '', exercises: [] })
-        setEditingWorkoutId(null)
-        setShowSuccessMessage(true)
-        setTimeout(() => setShowSuccessMessage(false), 2000)
-        // recarregar lista de treinos salvos
-        try {
-          if (user?.id) {
-            const searchId = String(user.id)
-            const listRes = await treinoService.buscarTreinoByUser(searchId)
-            const listData = listRes.treinos ?? listRes.treino ?? []
-            const userWorkouts = Array.isArray(listData) ? listData : []
-            setSavedWorkouts(userWorkouts)
-          } else {
-            setSavedWorkouts([])
-          }
         } catch (err) {
-          console.warn('Erro ao recarregar treinos', err)
+          console.warn('Erro ao limpar vínculos antigos de exercicio_treino:', err);
         }
-      } else {
-        // caso o backend retorne mensagem simples
-        setShowSuccessMessage(true)
-        setTimeout(() => setShowSuccessMessage(false), 2000)
-        setCurrentWorkout({ title: '', notes: '', exercises: [] })
-        setEditingWorkoutId(null)
+      }
+
+      // 3. Enviar cada exercício individualmente (sem criar séries no backend por enquanto)
+      const failedExercises: string[] = [];
+
+      for (let index = 0; index < currentWorkout.exercises.length; index++) {
+        const ex = currentWorkout.exercises[index];
+        if (!ex.exercise.id) continue;
+
+        const exerciseName = ex.exercise.name || `Exercício ${index + 1}`;
+
+        try {
+          await exTreinoSerieService.inserirExercicioTreinoSerie({
+            id_treino: treinoId,
+            id_exercicio: parseInt(String(ex.exercise.id)),
+          });
+        } catch (err) {
+          console.error('Erro ao inserir exercício-treino-série para', exerciseName, err);
+          failedExercises.push(exerciseName);
+        }
+      }
+
+      // 4. Limpar e recarregar
+      setCurrentWorkout({ title: '', notes: '', exercises: [] });
+      setEditingWorkoutId(null);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 2000);
+
+      const listRes = await treinoService.buscarTreinoByUser(String(user.id));
+      setSavedWorkouts((listRes.treinos ?? listRes.treino ?? []) as any[]);
+
+      if (failedExercises.length > 0) {
+        alert(
+          `Treino salvo, mas houve erro ao vincular alguns exercícios: ${failedExercises.join(
+            ', '
+          )}`
+        );
       }
     } catch (error: any) {
-      console.error('❌ Erro ao salvar treino - Detalhes completos:', {
-        message: error?.message,
-        response: error?.response,
-        data: error?.response?.data,
-        status: error?.response?.status,
-        statusText: error?.response?.statusText,
-        config: error?.config,
-        fullError: error
-      });
-      
-      // Mostrar mensagem mais informativa
-      const errorMessage = error?.response?.data?.message || 
-                          error?.response?.data?.error ||
-                          error?.message || 
-                          'Erro desconhecido ao salvar treino';
-      
-      const statusCode = error?.response?.status;
-      
-      if (statusCode === 400) {
-        alert(`Erro de validação (400): ${errorMessage}\n\nVerifique se todos os campos estão preenchidos corretamente.`);
-      } else if (statusCode === 401) {
-        alert('Erro de autenticação (401): Você precisa fazer login novamente.');
-      } else if (statusCode === 500) {
-        alert('Erro interno do servidor (500): Tente novamente em alguns minutos.');
-      } else {
-        alert(`Erro ao salvar treino: ${errorMessage}`);
-      }
+      console.error('Erro ao salvar treino:', error);
+      const backendMessage =
+        error?.response?.data?.message || error?.response?.message || error?.message;
+      alert(backendMessage || 'Erro ao salvar treino');
     }
   };
 
