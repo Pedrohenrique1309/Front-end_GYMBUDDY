@@ -995,13 +995,9 @@ const Treinos: React.FC = () => {
       const listRes = await treinoService.buscarTreinoByUser(String(user.id));
       setSavedWorkouts((listRes.treinos ?? listRes.treino ?? []) as any[]);
 
-      if (failedExercises.length > 0) {
-        alert(
-          `Treino salvo, mas houve erro ao vincular alguns exercícios: ${failedExercises.join(
-            ', '
-          )}`
-        );
-      }
+      // Limpar detalhes em cache para refletir alterações automaticamente na UI
+      setWorkoutDetails({});
+      setViewingWorkoutId(null);
     } catch (error: any) {
       console.error('Erro ao salvar treino:', error);
       const backendMessage =
