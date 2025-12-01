@@ -558,27 +558,12 @@ const Treinos: React.FC = () => {
   const handleRemoveExercise = async (exerciseId: string) => {
     const exerciseToRemove = currentWorkout.exercises.find(ex => ex.id === exerciseId);
 
-    // Se estiver editando treino salvo, remover do backend usando a conexão exerciciotreino
+    // Se estiver editando treino salvo, remover do backend usando o endpoint /exercicio_treino/exercicio/:id_exercicio
     if (currentWorkout.id && exerciseToRemove?.exercise?.id) {
       try {
-        const relRes = await exTreinoSerieService.buscarExercicioByTreino(currentWorkout.id);
-        const allRelations =
-          relRes.exercicio_treino ||
-          relRes.exercicios_treino ||
-          relRes.exercicio_treino_serie ||
-          relRes.exercicios_treino_serie ||
-          [];
-
-        const toDelete = (Array.isArray(allRelations) ? allRelations : []).filter(
-          (r: any) => String(r.id_exercicio) === String(exerciseToRemove.exercise.id)
+        await exTreinoSerieService.excluirExercicioTreinoPorExercicio(
+          parseInt(String(exerciseToRemove.exercise.id))
         );
-
-        for (const rel of toDelete) {
-          if (rel.id) {
-            // DELETE /v1/gymbuddy/exercicio_treino/:id com o id da conexão
-            await exTreinoSerieService.excluirExercicioTreinoSerie(rel.id);
-          }
-        }
       } catch (err) {
         console.warn('Erro ao remover exercício do backend:', err);
       }

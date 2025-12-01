@@ -100,6 +100,18 @@ export const excluirExercicioTreinoSerie = async (id: string | number): Promise<
   }
 }
 
+export const excluirExercicioTreinoPorExercicio = async (id_exercicio: string | number): Promise<ExercicioTreinoSerieResponse> => {
+  try {
+    console.log('🗑️ Excluindo exercício_treino por exercício (endpoint /exercicio_treino/exercicio):', id_exercicio)
+    const response = await api.delete(`/v1/gymbuddy/exercicio_treino/exercicio/${id_exercicio}`)
+    console.log('✅ exercício_treino excluído por exercício com sucesso:', response.data)
+    return response.data
+  } catch (error: any) {
+    console.error('❌ Erro ao excluir exercício-treino por exercício:', error)
+    throw error.response?.data || { message: 'Erro ao excluir exercício-treino por exercício', status: false }
+  }
+}
+
 export default {
   inserirExercicioTreinoSerie,
   atualizarExercicioTreinoSerie,
@@ -107,4 +119,5 @@ export default {
   buscarExercicioTreinoSerie,
   buscarExercicioByTreino,
   excluirExercicioTreinoSerie,
+  excluirExercicioTreinoPorExercicio,
 }
