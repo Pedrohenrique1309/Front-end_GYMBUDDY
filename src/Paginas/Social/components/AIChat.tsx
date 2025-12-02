@@ -362,9 +362,8 @@ const Container = styled.div`
   backdrop-filter: blur(20px);
   border: 1px solid rgba(227, 6, 19, 0.2);
   border-radius: 2rem;
-  padding: 2rem;
   height: fit-content;
-  max-height: 70vh;
+  max-height: 20vh;
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
@@ -385,6 +384,11 @@ const MinimizedChat = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  position: fixed;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
   transition: all 0.3s ease;
   
   svg {
@@ -393,7 +397,7 @@ const MinimizedChat = styled.div`
   }
   
   &:hover {
-    transform: scale(1.05);
+    transform: translateY(-50%) scale(1.05);
     box-shadow: 0 10px 30px rgba(227, 6, 19, 0.3);
   }
 `
@@ -447,7 +451,7 @@ const Messages = styled.div`
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 2rem;
-  max-height: 40rem;
+  max-height: 32rem;
   
   &::-webkit-scrollbar {
     width: 0.5rem;
@@ -556,30 +560,30 @@ const Message = styled.div`
       h1, h2, h3, h4, h5, h6 {
         margin: 1rem 0 0.5rem 0;
         font-weight: 600;
-        font-size: 2.5rem;
+        font-size: 3.2rem;
       }
       
       p {
         margin: 0.5rem 0;
         line-height: 1.6;
-        font-size: 2.5rem;
+        font-size: 3.2rem;
       }
       
       ul, ol {
         margin: 0.5rem 0;
         padding-left: 2rem;
-        font-size: 2.5rem;
+        font-size: 3.2rem;
       }
       
       li {
         margin: 0.3rem 0;
-        font-size: 2.5rem;
+        font-size: 3.2rem;
       }
       
       strong {
         color: var(--primary);
         font-weight: 600;
-        font-size: 2.5rem;
+        font-size: 3.2rem;
       }
       
       code {
@@ -587,7 +591,7 @@ const Message = styled.div`
         padding: 0.2rem 0.4rem;
         border-radius: 0.3rem;
         font-family: monospace;
-        font-size: 2.5rem;
+        font-size: 3.2rem;
       }
     }
     
@@ -608,7 +612,7 @@ const Message = styled.div`
     padding: 1rem 1.5rem;
     border-radius: 1rem;
     max-width: 80%;
-    font-size: 2.5rem;
+    font-size: 3.2rem;
   }
   
   .time {
