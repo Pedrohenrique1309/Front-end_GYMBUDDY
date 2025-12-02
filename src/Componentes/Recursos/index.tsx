@@ -126,10 +126,14 @@ const Resources = () => {
     }
   };
 
+  const enableParallax = !reduceMotion && !isMobile;
+  const is3DEnabled = !isMobile && !reduceMotion;
+  const enableIconAnimation = !reduceMotion && !isMobile;
+
   return (
     <ResourcesContainer ref={containerRef}>
       {/* Animated Background (adiado e desativado em reduce-motion) */}
-      {!reduceMotion && showBg && (
+      {enableParallax && showBg && (
         <AnimatedBackground style={{ y: backgroundY }}>
           <BackgroundGrid />
           <FloatingOrbs />
@@ -172,7 +176,7 @@ const Resources = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
-            style={{ y: cardsY }}
+            style={enableParallax ? { y: cardsY } : undefined}
           >
             {resources.map((resource, index) => {
               const IconComponent = resource.icon;
@@ -180,17 +184,17 @@ const Resources = () => {
                 <Card3DWrapper
                   key={resource.id}
                   variants={cardVariants}
-                  onMouseMove={(e) => handleMouseMove(e, resource.id)}
-                  onMouseEnter={() => setHoveredCard(resource.id)}
-                  onMouseLeave={() => {
+                  onMouseMove={is3DEnabled ? (e) => handleMouseMove(e, resource.id) : undefined}
+                  onMouseEnter={is3DEnabled ? () => setHoveredCard(resource.id) : undefined}
+                  onMouseLeave={is3DEnabled ? () => {
                     setHoveredCard(null);
                     mouseX.set(0.5);
                     mouseY.set(0.5);
-                  }}
+                  } : undefined}
                   whileTap={{ scale: 0.95 }}
                   style={{
-                    rotateX: !isMobile && hoveredCard === resource.id ? rotateX : 0,
-                    rotateY: !isMobile && hoveredCard === resource.id ? rotateY : 0,
+                    rotateX: is3DEnabled && hoveredCard === resource.id ? rotateX : 0,
+                    rotateY: is3DEnabled && hoveredCard === resource.id ? rotateY : 0,
                     transformStyle: "preserve-3d",
                   }}
                   transition={{
@@ -202,15 +206,15 @@ const Resources = () => {
                   <ResourceCard 
                     gradient={resource.gradient}
                     style={{
-                      transform: !isMobile && hoveredCard === resource.id ? "translateZ(40px)" : "translateZ(0px)",
-                      boxShadow: hoveredCard === resource.id ? 
+                      transform: is3DEnabled && hoveredCard === resource.id ? "translateZ(40px)" : "translateZ(0px)",
+                      boxShadow: is3DEnabled && hoveredCard === resource.id ? 
                         `${shadowX.get()}px ${shadowY.get()}px 28px rgba(227, 6, 19, 0.35)` : 
                         "0 16px 28px rgba(0, 0, 0, 0.25)",
                       transition: "all 0.3s ease"
                     } as React.CSSProperties}
                   >
                     <CardGlow />
-                    {hoveredCard === resource.id && (
+                    {is3DEnabled && hoveredCard === resource.id && (
                       <MouseLight
                         style={{
                           background: `radial-gradient(
@@ -224,15 +228,15 @@ const Resources = () => {
                     <CardContent>
                       <IconWrapper>
                         <motion.div
-                          animate={{ 
+                          animate={enableIconAnimation ? { 
                             rotate: [0, 10, -10, 0],
-                            scale: [1, 1.1, 1]
-                          }}
-                          transition={{
+                            scale: [1, 1.05, 1]
+                          } : {}}
+                          transition={enableIconAnimation ? {
                             duration: 4,
                             repeat: Infinity,
                             delay: index * 0.5
-                          }}
+                          } : {}}
                         >
                           <IconComponent />
                         </motion.div>
@@ -513,6 +517,15 @@ const IconRipple = styled.div`
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: inherit;
   animation: ${rippleEffect} 3s ease-out infinite;
+  animation-play-state: paused;
+
+  ${ResourceCard}:hover & {
+    animation-play-state: running;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 
 const CardTitle = styled.h2`
@@ -611,6 +624,7 @@ const ParticleEffect = styled.div`
     background: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     animation: ${particleFloat} 6s ease-out infinite;
+    animation-play-state: paused;
   }
   
   &::before {
@@ -630,6 +644,14 @@ const ParticleEffect = styled.div`
     &::after {
       animation-play-state: running;
     }
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
   }
 `;
 
