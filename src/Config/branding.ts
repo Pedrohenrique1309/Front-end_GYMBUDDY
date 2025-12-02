@@ -19,7 +19,7 @@ export const BRAND = {
       position: 'top-right',
       rotate: 12,
       zIndex: 0,
-      stat: '15k+',
+      stat: '2k+',
       title: 'Usuários Ativos',
       description: 'pessoas já transformaram seus corpos usando nossa plataforma de treinos inteligentes.',
       category: 'Comunidade'
@@ -29,7 +29,7 @@ export const BRAND = {
       position: 'bottom-left',
       rotate: 6,
       zIndex: 0,
-      stat: '200+',
+      stat: '50+',
       title: 'Exercícios Disponíveis',
       description: 'diferentes modalidades de treino adaptadas ao seu nível e objetivos pessoais.',
       category: 'Variedade'
